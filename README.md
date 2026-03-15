@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📝 Quizly (クイズリー)
 
-## Getting Started
+小学3年生の子供が楽しく継続して学習できる、問題演習形式のWebサイト「Quizly（クイズリー）」のリポジトリです。
+親しみやすいUIで、算数や歴史などの問題に挑戦でき、解いた履歴やニガテな問題の復習が可能です。
 
-First, run the development server:
+## 🚀 Tech Stack
+
+- **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS
+- **UI Components**: shadcn/ui, Lucide React
+- **Backend / DB**: Supabase (PostgreSQL)
+- **Deployment**: Vercel
+
+## 📁 Project Structure
+
+- `src/app/`: Next.js アプリケーションの各画面 (App Router)
+  - `/`: ログイン画面 (PINコード認証)
+  - `/dashboard`: トップページ (ジャンル選択)
+  - `/setup`: 問題の出題設定 (問題数、モード選択)
+  - `/quiz`: クイズ解答画面
+  - `/result`: 学習結果・振り返り画面
+- `docs/`: 仕様書および設計ドキュメント (`requirements.md`, `db_schema.md`, `ui_design.md`)
+- `supabase_schema.sql`: Supabase データベースの初期構文およびシードデータ
+
+## 🛠️ Getting Started
+
+### 1. Prerequisites
+
+- Node.js 18+ (開発環境ではNode.js 20以上を推奨)
+- Supabase Project
+
+### 2. Environment Setup
+
+Supabaseプロジェクトを作成し、URLとAnon Keyを取得して `.env.local` を作成します。
+
+**Web App (`.env.local`)**
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Database Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Supabaseの SQL Editor で `supabase_schema.sql` の内容を実行し、テーブルの作成と初期データ（ジャンル、問題サンプル）を投入します。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+動作確認のため、テストユーザーを追加する場合は以下のSQLを追加で実行します。
 
-## Learn More
+```sql
+INSERT INTO public.users (id, name, icon_url, pin_code_hash) 
+VALUES (gen_random_uuid(), 'たろう', '🧑‍🎓', '1234');
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Run Development Server
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm install
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+ブラウザで [http://localhost:3000](http://localhost:3000) を開いてアプリケーションにアクセスします。
