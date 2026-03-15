@@ -60,7 +60,6 @@ export default function QuizClient({
       let pool = [...allQuestions];
 
       if (mode === 'review') {
-        // Fetch incorrect history for this user
         const { data: history } = await supabase
           .from('study_history')
           .select('question_id, is_correct')
@@ -68,18 +67,13 @@ export default function QuizClient({
           .eq('is_correct', false);
 
         if (history && history.length > 0) {
-          // Extract unique question IDs that the user has got wrong
           const wrongQuestionIds = Array.from(new Set(history.map(h => h.question_id)));
-          
-          // Filter the pool
           pool = pool.filter(q => wrongQuestionIds.includes(q.id));
         } else {
-          // If no incorrect history, pool becomes empty or just fallback to normal
-          pool = []; // Can show "You have no review questions!"
+          pool = []; 
         }
       }
 
-      // Shuffle and slice to the requested count
       const shuffled = pool.sort(() => 0.5 - Math.random());
       setQuestions(shuffled.slice(0, count));
       setIsLoading(false);
@@ -91,29 +85,37 @@ export default function QuizClient({
   const targetColor =
     genre.color_hint === 'blue' ? 'blue' :
     genre.color_hint === 'orange' ? 'orange' :
-    genre.color_hint === 'green' ? 'green' : 'zinc';
+    genre.color_hint === 'green' ? 'green' :
+    genre.color_hint === 'pink' ? 'pink' :
+    genre.color_hint === 'purple' ? 'purple' : 'zinc';
 
 
   if (isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center h-full">
-        <p className="text-xl text-zinc-500 font-bold">じゅんび中...</p>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-8 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+          <p className="text-2xl font-black text-blue-500 animate-pulse">じゅんび中...</p>
+        </div>
       </div>
     );
   }
 
   if (questions.length === 0) {
     return (
-      <div className="flex flex-col flex-1 items-center justify-center gap-6 h-full text-center">
-        <div className="text-6xl">🎉</div>
-        <p className="text-xl text-zinc-600 font-bold max-w-sm">
+      <div className="flex flex-col flex-1 items-center justify-center gap-6 h-full text-center p-4">
+        <div className="text-8xl animate-bounce-soft">🎉</div>
+        <p className="text-3xl font-black text-zinc-800 bg-white px-8 py-4 rounded-3xl border-4 border-zinc-400 shadow-brutal w-full max-w-lg">
           {mode === 'review' 
-            ? 'ニガテな問題がひとつもありません！すばらしい！' 
-            : 'このジャンルにはまだ問題がありません。'}
+            ? 'ニガテな もんだいが ありません！天才！✨' 
+            : 'このジャンルには もんだいが ありません。'}
         </p>
-        <Button size="lg" className="rounded-full text-lg h-14 px-8 mt-4" onClick={() => router.push('/dashboard')}>
-          ダッシュボードにもどる
-        </Button>
+        <button 
+          className="bg-yellow-400 text-zinc-900 border-4 border-zinc-400 shadow-brutal hover:bg-yellow-500 hover:-translate-y-1 hover:shadow-brutal-lg active-brutal-push rounded-full text-2xl font-black px-12 py-4 mt-8 transition-all"
+          onClick={() => router.push('/dashboard')}
+        >
+          もどる
+        </button>
       </div>
     );
   }
@@ -127,7 +129,6 @@ export default function QuizClient({
     const isCorrect = index === currentQuestion.correct_index;
     if (isCorrect) setCorrectCount(prev => prev + 1);
 
-    // Save history record in memory
     setHistoryRecords(prev => [...prev, {
       question_id: currentQuestion.id,
       is_correct: isCorrect,
@@ -144,7 +145,6 @@ export default function QuizClient({
       setSelectedOption(null);
       setIsAnswered(false);
     } else {
-      // Finish Session
       await saveSessionAndRedirect();
     }
   };
@@ -154,7 +154,6 @@ export default function QuizClient({
     setIsSubmitting(true);
 
     try {
-      // 1. Create Session
       const { data: sessionData, error: sessionError } = await supabase
         .from('study_sessions')
         .insert({
@@ -170,7 +169,6 @@ export default function QuizClient({
 
       if (sessionError) throw sessionError;
 
-      // 2. Create History Records
       const historyToInsert = historyRecords.map(record => ({
         session_id: sessionData.id,
         user_id: userId,
@@ -185,12 +183,10 @@ export default function QuizClient({
 
       if (historyError) throw historyError;
 
-      // 3. Redirect to Result page
       router.push(`/result?session_id=${sessionData.id}`);
 
     } catch (err) {
       console.error('Failed to save session:', err);
-      // Even if saving fails, maybe redirect so user is not stuck?
       alert('通信エラーで記録が保存できませんでした。');
       setIsSubmitting(false);
     }
@@ -198,83 +194,118 @@ export default function QuizClient({
 
 
   return (
-    <div className="flex flex-col h-full gap-6">
-      <header className="flex items-center gap-4 bg-white p-4 rounded-3xl shadow-sm">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full shrink-0 text-zinc-400 hover:text-red-500">
-          <X className="w-6 h-6" />
-        </Button>
-        <div className="flex-1">
-          <div className="flex justify-between items-center mb-2 px-2">
-            <span className="text-sm font-bold text-zinc-500">{currentIndex + 1}問目 / 全{questions.length}問</span>
+    <div className="flex flex-col h-full gap-6 max-w-3xl mx-auto w-full p-2 sm:p-4">
+      {/* Thick Progress Header */}
+      <header className="flex items-center gap-4 bg-white p-4 rounded-full border-4 border-zinc-400 shadow-brutal-sm">
+        <button 
+          onClick={() => router.back()} 
+          className="w-12 h-12 rounded-full bg-red-100 border-4 border-zinc-400 shadow-brutal flex items-center justify-center shrink-0 text-red-500 hover:bg-red-200 active-brutal-push focus:outline-none"
+        >
+          <X className="w-6 h-6 stroke-[3]" />
+        </button>
+        <div className="flex-1 pr-4">
+          <div className="flex justify-between items-center mb-2 px-1">
+            <span className="text-lg font-black text-zinc-700">{currentIndex + 1}もんめ / ぜんぶで {questions.length}もん</span>
           </div>
-          <Progress value={progressValue} className={`h-3 bg-${targetColor}-100`} />
+          {/* Custom thick progress bar */}
+          <div className="w-full h-6 bg-zinc-200 rounded-full border-4 border-zinc-400 overflow-hidden relative">
+             <div 
+               className={`absolute top-0 left-0 h-full bg-${targetColor}-400 rounded-full transition-all duration-500 ease-out`}
+               style={{ width: `${progressValue}%` }}
+             >
+                {/* Shine effect on progress bar */}
+                <div className="absolute top-1 left-2 right-2 h-1 bg-white/40 rounded-full" />
+             </div>
+          </div>
         </div>
       </header>
 
-      <Card className={`flex-1 flex flex-col items-center justify-center p-6 border-b-8 border-${targetColor}-200 rounded-[2rem] min-h-[40vh]`}>
-        <h2 className="text-2xl sm:text-3xl font-bold text-center leading-relaxed text-zinc-800">
+      {/* Massive Question Bubble */}
+      <div className={`relative flex-1 flex flex-col items-center justify-center p-8 sm:p-12 border-4 border-zinc-400 rounded-[3rem] bg-white shadow-brutal min-h-[30vh] md:min-h-[40vh]`}>
+        {/* Decorative corner pin */}
+        <div className="absolute -top-4 -left-4 w-10 h-10 bg-red-400 rounded-full border-4 border-zinc-400 shadow-brutal-sm z-10" />
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-center leading-snug text-zinc-800 drop-shadow-sm">
           {currentQuestion.question_text}
         </h2>
-      </Card>
+      </div>
 
-      <div className="grid grid-cols-1 gap-4 mt-2">
+      {/* Chunky Options */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 mt-2 relative z-10 w-full mb-8">
         {currentQuestion.options.map((option, index) => {
-          let stateClass = "bg-white border-2 border-zinc-200 hover:border-zinc-300 text-zinc-700";
+          let stateClass = "bg-white border-zinc-400 hover:bg-blue-50 text-zinc-800 shadow-brutal active-brutal-push hover:-translate-y-1 hover:shadow-brutal-lg";
+          let badgeColor = "bg-blue-100 text-blue-700";
+
           if (isAnswered) {
              if (index === currentQuestion.correct_index) {
-                stateClass = "bg-green-100 border-4 border-green-500 text-green-900"; // Correct visually obvious
+                stateClass = "bg-green-400 border-zinc-400 text-zinc-900 shadow-[0_0_0_4px_#22c55e,6px_6px_0_0_#a1a1aa] translate-y-[-2px]"; // Super obvious correct
+                badgeColor = "bg-green-100 text-green-800";
              } else if (index === selectedOption) {
-                stateClass = "bg-red-50 border-4 border-red-400 text-red-900 opacity-60"; // Incorrect selected
+                stateClass = "bg-red-300 border-zinc-400 text-zinc-900 shadow-none translate-x-[4px] translate-y-[4px]"; // Pressed and wrong
+                badgeColor = "bg-red-100 text-red-800";
              } else {
-                stateClass = "bg-white opacity-40 border-2 border-zinc-200"; // Untouched
+                stateClass = "bg-zinc-100 border-zinc-300 text-zinc-400 shadow-none"; // Disabled untouched
+                badgeColor = "bg-zinc-200 text-zinc-400";
              }
           }
 
           return (
-            <Button
+            <button
               key={index}
               disabled={isAnswered}
-              className={`h-auto min-h-16 text-xl p-4 sm:p-6 rounded-2xl whitespace-normal break-all font-bold text-left justify-start transition-all shadow-sm ${stateClass}`}
+              className={`min-h-20 text-2xl sm:text-3xl p-4 sm:p-6 rounded-[2rem] border-4 cursor-pointer font-black text-left flex items-center gap-4 transition-all duration-200 w-full focus:outline-none focus:ring-4 focus:ring-blue-400 ${stateClass}`}
               onClick={() => handleOptionClick(index)}
             >
-               <span className="mr-3 text-lg opacity-50 font-sans">{index + 1}.</span> {option}
-            </Button>
+               <div className={`shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl border-2 border-zinc-400 ${badgeColor} shadow-inner text-xl`}>
+                 {index + 1}
+               </div>
+               <span className="flex-1 drop-shadow-sm break-words">{option}</span>
+            </button>
           )
         })}
       </div>
 
-      {/* 解答直後のフィードバック ダイアログの代わりに今回は下部パネル形式 */}
+      {/* Massive Feedback Panel pinned to bottom */}
       {isAnswered && (
-        <div className={`mt-4 p-6 rounded-3xl border-2 flex flex-col gap-4 animate-in slide-in-from-bottom-4 duration-300 ${
-           selectedOption === currentQuestion.correct_index 
-            ? 'bg-green-50 border-green-200' 
-            : 'bg-red-50 border-red-200'
-        }`}>
-           <div className="flex items-center gap-3">
-              {selectedOption === currentQuestion.correct_index ? (
-                 <><CheckCircle className="w-8 h-8 text-green-500" /><span className="text-2xl font-bold text-green-700">せいかい！</span></>
-              ) : (
-                 <><XCircle className="w-8 h-8 text-red-500" /><span className="text-2xl font-bold text-red-700">ざんねん！</span></>
-              )}
-           </div>
-           
-           {currentQuestion.explanation && (
-             <div className="p-4 bg-white/60 rounded-2xl">
-                <p className="text-lg text-zinc-800 font-medium leading-relaxed">{currentQuestion.explanation}</p>
+        <div className="fixed inset-x-0 bottom-0 z-50 p-4 sm:p-8 flex justify-center pointer-events-none">
+          <div className={`pointer-events-auto w-full max-w-3xl p-6 sm:p-8 rounded-[3rem] border-4 border-zinc-400 shadow-brutal flex flex-col gap-6 animate-in slide-in-from-bottom-12 duration-500 will-change-transform ${
+             selectedOption === currentQuestion.correct_index 
+              ? 'bg-green-100' 
+              : 'bg-red-100'
+          }`}>
+             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  {selectedOption === currentQuestion.correct_index ? (
+                     <div className="flex items-center gap-4 animate-bounce-soft">
+                        <CheckCircle className="w-16 h-16 text-green-500 fill-white" />
+                        <span className="text-4xl sm:text-5xl font-black text-green-600 drop-shadow-[2px_2px_0_#a1a1aa]">せいかい！</span>
+                     </div>
+                  ) : (
+                     <div className="flex items-center gap-4 animate-wiggle">
+                        <XCircle className="w-16 h-16 text-red-500 fill-white" />
+                        <span className="text-4xl sm:text-5xl font-black text-red-600 drop-shadow-[2px_2px_0_#a1a1aa]">ざんねん！</span>
+                     </div>
+                  )}
+                </div>
+                
+                <button 
+                  className={`px-8 py-4 sm:py-6 text-2xl sm:text-3xl rounded-full font-black border-4 border-zinc-400 shadow-brutal hover:scale-105 active-brutal-push focus:outline-none w-full sm:w-auto mt-4 sm:mt-0 ${
+                    selectedOption === currentQuestion.correct_index 
+                      ? 'bg-green-400 text-zinc-900 hover:bg-green-500' 
+                      : 'bg-yellow-400 text-zinc-900 hover:bg-yellow-500'
+                  }`}
+                  onClick={handleNext}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'きろく中...' : (currentIndex < questions.length - 1 ? 'つぎへすすむ！' : 'けっかをみる！')}
+                </button>
              </div>
-           )}
-
-           <Button 
-            className={`h-16 text-xl rounded-full font-bold shadow-md w-full mt-2 ${
-              selectedOption === currentQuestion.correct_index 
-                ? 'bg-green-600 hover:bg-green-700 text-white' 
-                : 'bg-red-500 hover:bg-red-600 text-white'
-            }`}
-             onClick={handleNext}
-             disabled={isSubmitting}
-           >
-             {isSubmitting ? 'きろく中...' : (currentIndex < questions.length - 1 ? 'つぎのもんだいへ' : 'けっかをみる')}
-           </Button>
+             
+             {currentQuestion.explanation && (
+               <div className="p-6 bg-white rounded-3xl border-4 border-zinc-400 shadow-inner mt-2">
+                  <p className="text-xl sm:text-2xl text-zinc-800 font-bold leading-relaxed">{currentQuestion.explanation}</p>
+               </div>
+             )}
+          </div>
         </div>
       )}
     </div>

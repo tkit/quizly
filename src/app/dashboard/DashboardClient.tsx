@@ -45,72 +45,96 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-8 w-full">
-      <header className="flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm">
+    <div className="flex flex-col gap-8 w-full max-w-4xl mx-auto p-4 sm:p-8">
+      {/* Playful Header */}
+      <header className="flex justify-between items-center bg-white p-4 sm:p-6 rounded-[2rem] border-4 border-zinc-400 shadow-brutal w-full">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-2xl font-bold text-blue-500">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-yellow-300 rounded-full flex items-center justify-center text-3xl font-black text-zinc-900 border-4 border-zinc-400 shadow-brutal-sm animate-bounce-soft">
             {userName.charAt(0)}
           </div>
           <div>
-            <h1 className="text-2xl font-bold">{userName}さんのトップページ</h1>
-            <p className="text-zinc-500 text-sm">きょうもがんばろう！</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-zinc-800 tracking-wide">{userName}さんのトップページ</h1>
+            <p className="text-md sm:text-lg font-bold text-pink-500 mt-1">きょうも がんばろう！✨</p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-zinc-400 hover:text-red-500">
-          <LogOut className="h-6 w-6" />
-        </Button>
+        <button 
+          onClick={handleLogout} 
+          className="p-3 bg-red-100 rounded-2xl border-4 border-zinc-400 shadow-brutal text-red-600 hover:bg-red-200 active-brutal-push focus:outline-none focus:ring-4 focus:ring-red-400 group transition-colors"
+          title="ログアウト"
+        >
+          <LogOut className="h-6 w-6 group-hover:-translate-x-1 group-hover:scale-110 transition-transform" />
+        </button>
       </header>
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-bold text-zinc-700">がくしゅうをはじめる</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {genres.map((genre) => (
-            <Card 
-              key={genre.id}
-              className={`cursor-pointer border-2 transition-all hover:scale-[1.02] active:scale-95 touch-manipulation overflow-hidden rounded-3xl ${
-                genre.color_hint === 'blue' ? 'border-blue-200 hover:border-blue-500 hover:shadow-blue-100' :
-                genre.color_hint === 'orange' ? 'border-orange-200 hover:border-orange-500 hover:shadow-orange-100' :
-                genre.color_hint === 'green' ? 'border-green-200 hover:border-green-500 hover:shadow-green-100' :
-                'border-zinc-200 hover:border-zinc-500 hover:shadow-zinc-100'
-              } hover:-translate-y-1 shadow-sm`}
-              onClick={() => handleGenreClick(genre.id)}
-            >
-              <CardContent className="p-6 flex items-center gap-6">
-                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-4xl shadow-inner ${
-                  genre.color_hint === 'blue' ? 'bg-blue-100 text-blue-600' :
-                  genre.color_hint === 'orange' ? 'bg-orange-100 text-orange-600' :
-                  genre.color_hint === 'green' ? 'bg-green-100 text-green-600' :
-                  'bg-zinc-100 text-zinc-600'
-                }`}>
+      {/* Genres Section */}
+      <section className="flex flex-col gap-6 w-full">
+        <h2 className="text-2xl font-black text-zinc-800 bg-white inline-block px-6 py-2 rounded-full border-4 border-zinc-400 shadow-brutal w-fit transform -rotate-1">
+          がくしゅうを おこなう！
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          {genres.map((genre) => {
+            // Determine playful colors based on hint
+            let baseColorClass = 'bg-blue-100 hover:bg-blue-200 text-blue-800';
+            let iconBgClass = 'bg-blue-300';
+            
+            if (genre.color_hint === 'orange') {
+              baseColorClass = 'bg-orange-100 hover:bg-orange-200 text-orange-800';
+              iconBgClass = 'bg-orange-300';
+            } else if (genre.color_hint === 'green') {
+              baseColorClass = 'bg-green-100 hover:bg-green-200 text-green-800';
+              iconBgClass = 'bg-green-300';
+            } else if (genre.color_hint === 'pink') {
+              baseColorClass = 'bg-pink-100 hover:bg-pink-200 text-pink-800';
+              iconBgClass = 'bg-pink-300';
+            } else if (genre.color_hint === 'purple') {
+              baseColorClass = 'bg-purple-100 hover:bg-purple-200 text-purple-800';
+              iconBgClass = 'bg-purple-300';
+            }
+
+            return (
+              <button
+                key={genre.id}
+                onClick={() => handleGenreClick(genre.id)}
+                className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-blue-400 p-6 flex items-center gap-6 group overflow-hidden relative ${baseColorClass}`}
+              >
+                {/* Background Decoration */}
+                <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full transform group-hover:scale-150 transition-transform duration-500" />
+                
+                {/* Chunk Icon */}
+                <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${iconBgClass}`}>
                   {genre.icon || '📚'}
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold mb-1">{genre.name}</h3>
-                  <p className="text-zinc-500 text-sm">{genre.description}</p>
+                
+                {/* Text Content */}
+                <div className="flex-1 z-10">
+                  <h3 className="text-2xl sm:text-3xl font-black mb-2 tracking-wide drop-shadow-sm">{genre.name}</h3>
+                  <p className="text-md sm:text-lg font-bold opacity-80">{genre.description}</p>
                 </div>
-                <div className={`text-3xl font-bold opacity-20 ${
-                   genre.color_hint === 'blue' ? 'text-blue-500' :
-                   genre.color_hint === 'orange' ? 'text-orange-500' :
-                   genre.color_hint === 'green' ? 'text-green-500' :
-                   'text-zinc-400'
-                }`}>
+                
+                {/* Arrow */}
+                <div className="text-5xl font-black opacity-30 group-hover:opacity-100 group-hover:translate-x-2 transition-all z-10">
                   →
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </button>
+            );
+          })}
+          
           {genres.length === 0 && (
-             <div className="col-span-full p-8 text-center text-zinc-500 border-2 border-dashed rounded-3xl">
-               ジャンルが登録されていません。
+             <div className="col-span-full p-12 text-center bg-white border-4 border-dashed border-zinc-400 rounded-[2rem] shadow-brutal">
+               <p className="text-2xl font-bold text-zinc-500">ジャンルが まだありません 😢</p>
              </div>
           )}
         </div>
       </section>
 
-      <section className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-3xl shadow-sm border border-blue-100">
-        <div className="flex flex-col gap-2">
-           <h2 className="text-lg font-bold text-blue-800">これまでの記録</h2>
-           <p className="text-blue-600/80">（※履歴機能は準備中だよ！）</p>
+      {/* History Placeholder */}
+      <section className="mt-4 bg-yellow-300 p-6 rounded-[2rem] border-4 border-zinc-400 shadow-brutal transform rotate-1 w-full max-w-2xl mx-auto">
+        <div className="flex flex-col gap-2 items-center text-center">
+           <h2 className="text-2xl font-black text-zinc-900 bg-white px-6 py-2 rounded-xl border-4 border-zinc-400 shadow-brutal-sm -rotate-2">
+             これまでのきろく
+           </h2>
+           <p className="text-xl font-bold text-zinc-800 mt-2">（※いまはまだ じゅんび中だよ！🚧）</p>
         </div>
       </section>
     </div>
