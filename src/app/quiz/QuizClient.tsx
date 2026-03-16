@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { X, CheckCircle, XCircle } from 'lucide-react';
+import { calculateSessionPoints } from '@/lib/points';
 
 interface Question {
   id: string;
@@ -154,6 +155,10 @@ export default function QuizClient({
     setIsSubmitting(true);
 
     try {
+      // Calculate points
+      const pointsResult = calculateSessionPoints(correctCount, questions.length);
+
+      // Save session with earned points
       const { data: sessionData, error: sessionError } = await supabase
         .from('study_sessions')
         .insert({
@@ -162,6 +167,7 @@ export default function QuizClient({
           mode: mode,
           total_questions: questions.length,
           correct_count: correctCount,
+          earned_points: pointsResult.totalPoints,
           completed_at: new Date().toISOString()
         })
         .select()
@@ -169,6 +175,7 @@ export default function QuizClient({
 
       if (sessionError) throw sessionError;
 
+      // Save study history
       const historyToInsert = historyRecords.map(record => ({
         session_id: sessionData.id,
         user_id: userId,
@@ -182,6 +189,57 @@ export default function QuizClient({
         .insert(historyToInsert);
 
       if (historyError) throw historyError;
+
+      // Save point transactions
+      if (pointsResult.totalPoints > 0) {
+        const pointTransactions: { user_id: string; session_id: string; points: number; reason: string }[] = [];
+
+        // Base points for correct answers
+        if (pointsResult.basePoints > 0) {
+          pointTransactions.push({
+            user_id: userId,
+            session_id: sessionData.id,
+            points: pointsResult.basePoints,
+            reason: 'correct_answer',
+          });
+        }
+
+        // Perfect bonus
+        if (pointsResult.bonusPoints > 0) {
+          pointTransactions.push({
+            user_id: userId,
+            session_id: sessionData.id,
+            points: pointsResult.bonusPoints,
+            reason: 'perfect_bonus',
+          });
+        }
+
+        const { error: pointError } = await supabase
+          .from('point_transactions')
+          .insert(pointTransactions);
+
+        if (pointError) {
+          console.error('Failed to save point transactions:', pointError);
+          // Don't throw - points are secondary, session is saved
+        }
+
+        // Update user's total points
+        const { data: userData } = await supabase
+          .from('users')
+          .select('total_points')
+          .eq('id', userId)
+          .single();
+
+        const currentPoints = userData?.total_points || 0;
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ total_points: currentPoints + pointsResult.totalPoints })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('Failed to update total points:', updateError);
+        }
+      }
 
       router.push(`/result?session_id=${sessionData.id}`);
 

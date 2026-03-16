@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, Star } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface Genre {
   id: string;
@@ -17,6 +18,7 @@ interface Genre {
 export default function DashboardClient({ genres }: { genres: Genre[] }) {
   const router = useRouter();
   const [userName, setUserName] = useState<string | null>(null);
+  const [totalPoints, setTotalPoints] = useState<number>(0);
 
   useEffect(() => {
     // Check if user is logged in
@@ -27,6 +29,17 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
       router.push('/');
     } else {
       setUserName(storedName);
+      // Fetch total points
+      supabase
+        .from('users')
+        .select('total_points')
+        .eq('id', userId)
+        .single()
+        .then(({ data }) => {
+          if (data?.total_points != null) {
+            setTotalPoints(data.total_points);
+          }
+        });
     }
   }, [router]);
 
@@ -65,6 +78,20 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
           <LogOut className="h-6 w-6 group-hover:-translate-x-1 group-hover:scale-110 transition-transform" />
         </button>
       </header>
+
+      {/* Points Badge */}
+      <div className="flex justify-center -mt-4">
+        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-amber-100 to-yellow-200 px-8 py-3 rounded-full border-4 border-amber-400 shadow-brutal transform rotate-1 hover:-rotate-1 transition-transform">
+          <Star className="w-7 h-7 text-amber-500 fill-amber-400" />
+          <span className="text-xl sm:text-2xl font-black text-amber-800">
+            もっているポイント
+          </span>
+          <span className="text-3xl sm:text-4xl font-black text-amber-600 tabular-nums">
+            {totalPoints.toLocaleString()}
+          </span>
+          <span className="text-xl sm:text-2xl font-black text-amber-800">pt</span>
+        </div>
+      </div>
 
       {/* Genres Section */}
       <section className="flex flex-col gap-6 w-full">
@@ -140,3 +167,4 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
     </div>
   );
 }
+

@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, Home, RotateCcw } from 'lucide-react';
+import { CheckCircle, XCircle, Home, RotateCcw, Star } from 'lucide-react';
+import { POINTS_PER_CORRECT } from '@/lib/points';
 
 interface QuestionDetails {
   question_text: string;
@@ -22,12 +24,42 @@ interface Session {
   genre_id: string;
   total_questions: number;
   correct_count: number;
+  earned_points: number;
   mode: string;
   genres: {
     name: string;
     icon: string;
     color_hint: string;
   } | null;
+}
+
+/**
+ * Hook for animated count-up effect
+ */
+function useCountUp(target: number, duration: number = 1200) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (target <= 0) return;
+
+    const startTime = Date.now();
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+
+      if (progress >= 1) {
+        clearInterval(timer);
+        setCount(target);
+      }
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, [target, duration]);
+
+  return count;
 }
 
 export default function ResultClient({
@@ -41,6 +73,11 @@ export default function ResultClient({
 
   const isPerfect = session.correct_count === session.total_questions;
   const isGood = session.correct_count >= session.total_questions * 0.8;
+  const earnedPoints = session.earned_points || 0;
+  const basePoints = session.correct_count * POINTS_PER_CORRECT;
+  const bonusPoints = earnedPoints - basePoints;
+
+  const displayPoints = useCountUp(earnedPoints, 1500);
 
   const targetColor =
     session.genres?.color_hint === 'blue' ? 'blue' :
@@ -76,6 +113,27 @@ export default function ResultClient({
              {session.total_questions}もん中 <span className={`text-5xl mx-2 ${isPerfect ? 'text-red-500 animate-pulse' : 'text-blue-600'}`}>{session.correct_count}</span> もんせいかい！
           </p>
         </div>
+
+        {/* Points Display */}
+        {earnedPoints > 0 && (
+          <div className="mt-8 relative z-10 animate-points-pop">
+            <div className="inline-flex flex-col items-center gap-2 bg-gradient-to-br from-amber-100 to-yellow-200 px-10 py-5 rounded-[2rem] border-4 border-amber-400 shadow-brutal transform -rotate-1">
+              <div className="flex items-center gap-2">
+                <Star className="w-8 h-8 text-amber-500 fill-amber-400 animate-spin-slow" />
+                <span className="text-2xl sm:text-3xl font-black text-amber-800">ポイントゲット！</span>
+                <Star className="w-8 h-8 text-amber-500 fill-amber-400 animate-spin-slow" />
+              </div>
+              <div className="text-5xl sm:text-7xl font-black text-amber-600 tabular-nums tracking-tight drop-shadow-[2px_2px_0_rgba(217,119,6,0.3)]">
+                +{displayPoints}<span className="text-3xl sm:text-4xl ml-1">pt</span>
+              </div>
+              {isPerfect && bonusPoints > 0 && (
+                <div className="bg-red-500 text-white px-4 py-1 rounded-full text-lg sm:text-xl font-black border-2 border-red-700 shadow-brutal-sm animate-bounce-soft transform rotate-2">
+                  🎯 パーフェクトボーナス ×1.5！ +{bonusPoints}pt
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12 relative z-10">
           <button 
@@ -129,6 +187,11 @@ export default function ResultClient({
                    <p className="font-black text-zinc-800 text-xl sm:text-2xl leading-snug flex-1 drop-shadow-sm">
                       <span className="opacity-50 mr-2">{index + 1}.</span>{q.question_text}
                    </p>
+                   {record.is_correct && (
+                     <span className="text-amber-500 font-black text-lg shrink-0 bg-amber-50 px-2 py-1 rounded-xl border-2 border-amber-300">
+                       +{POINTS_PER_CORRECT}pt
+                     </span>
+                   )}
                 </div>
 
                 <div className="ml-12 flex flex-col gap-4 border-l-4 border-zinc-400 pl-6 mt-2 py-2">
@@ -169,3 +232,4 @@ export default function ResultClient({
     </div>
   );
 }
+

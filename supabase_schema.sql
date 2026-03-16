@@ -4,6 +4,7 @@ CREATE TABLE public.users (
   name text NOT NULL,
   icon_url text,
   pin_code_hash text NOT NULL,
+  total_points integer DEFAULT 0,
   created_at timestamp with time zone DEFAULT now()
 );
 
@@ -50,6 +51,7 @@ CREATE TABLE public.study_sessions (
   mode text DEFAULT 'normal',
   total_questions integer NOT NULL,
   correct_count integer NOT NULL,
+  earned_points integer DEFAULT 0,
   started_at timestamp with time zone DEFAULT now(),
   completed_at timestamp with time zone
 );
@@ -71,6 +73,22 @@ CREATE TABLE public.study_history (
 
 ALTER TABLE public.study_history ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all access to study_history" ON public.study_history FOR ALL USING (true);
+
+
+-- 6. point_transactions テーブル (ポイント履歴)
+CREATE TABLE public.point_transactions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.users(id),
+  session_id uuid REFERENCES public.study_sessions(id),
+  points integer NOT NULL,
+  reason text NOT NULL,
+  created_at timestamp with time zone DEFAULT now()
+);
+
+ALTER TABLE public.point_transactions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all access to point_transactions"
+  ON public.point_transactions FOR ALL USING (true);
+
 
 -- ==== 動作確認用初期データ（シードデータ） ====
 -- ジャンル
