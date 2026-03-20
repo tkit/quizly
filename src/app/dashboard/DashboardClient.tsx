@@ -211,7 +211,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                 {selectedParent.name} のカテゴリを選択
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            <div className="grid grid-cols-1 gap-5 w-full">
               {childGenres.map((genre) => {
                 const styles = getGenreStyle(genre.color_hint);
                 const studyStatus = studyStatusByGenreId[genre.id] ?? 'unattempted';
@@ -219,29 +219,39 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                   <button
                     key={genre.id}
                     onClick={() => router.push(`/quiz?genre=${genre.id}`)}
-                    className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-blue-400 p-6 flex items-center gap-6 group overflow-hidden relative ${styles.baseColorClass}`}
+                    className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-blue-400 p-5 sm:p-6 flex items-start gap-4 sm:gap-5 group overflow-hidden relative ${styles.baseColorClass}`}
                   >
                     <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full transform group-hover:scale-150 transition-transform duration-500" />
-                    <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${styles.iconBgClass}`}>
+                    <div className={`shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${styles.iconBgClass}`}>
                       <GenreIcon
                         iconKey={genre.icon_key}
                         className={ICON_SIZE.card}
                         strokeWidth={ICON_STROKE.medium}
                       />
                     </div>
-                    <div className="flex-1 z-10">
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <h3 className="font-display text-2xl sm:text-3xl font-black tracking-wide drop-shadow-sm">{genre.name}</h3>
-                        {isStudyStatusLoaded ? getStudyStatusIcon(studyStatus) : (
-                          <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-300 bg-zinc-100 animate-pulse" />
-                        )}
-                      </div>
-                      <p className="text-md sm:text-lg font-bold opacity-80">{genre.description}</p>
-                      <p className="mt-2 inline-flex items-center rounded-full border-2 border-zinc-400 bg-white/80 px-3 py-1 text-sm sm:text-base font-black text-zinc-700">
+                    <div className="flex-1 min-w-0 z-10">
+                      <h3
+                        className="font-display text-xl sm:text-2xl font-black tracking-wide drop-shadow-sm leading-tight overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
+                        title={genre.name}
+                      >
+                        {genre.name}
+                      </h3>
+                      <p
+                        className="mt-2 text-sm sm:text-base font-bold opacity-80 leading-snug overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
+                        title={genre.description ?? ''}
+                      >
+                        {genre.description}
+                      </p>
+                      <p className="mt-3 inline-flex items-center rounded-full border-2 border-zinc-400 bg-white/80 px-3 py-1 text-sm sm:text-base font-black text-zinc-700">
                         全{genre.question_count}問
                       </p>
                     </div>
-                    <div className="text-5xl font-black opacity-30 group-hover:opacity-100 group-hover:translate-x-2 transition-all z-10">→</div>
+                    <div className="shrink-0 z-10 min-h-full flex flex-col items-end justify-between gap-3">
+                      {isStudyStatusLoaded ? getStudyStatusIcon(studyStatus) : (
+                        <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-300 bg-zinc-100 animate-pulse" />
+                      )}
+                      <div className="text-4xl sm:text-5xl font-black opacity-30 group-hover:opacity-100 group-hover:translate-x-2 transition-all">→</div>
+                    </div>
                   </button>
                 );
               })}
