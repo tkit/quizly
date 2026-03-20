@@ -3,11 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { X, CheckCircle, XCircle } from 'lucide-react';
 import { calculateSessionPoints } from '@/lib/points';
+import { fireCorrectEffect } from '@/lib/effects/confetti';
 
 interface Question {
   id: string;
@@ -24,6 +22,7 @@ interface Genre {
   name: string;
   icon: string | null;
   color_hint: string | null;
+  parent_id: string | null;
 }
 
 export default function QuizClient({
@@ -128,7 +127,10 @@ export default function QuizClient({
     setIsAnswered(true);
     
     const isCorrect = index === currentQuestion.correct_index;
-    if (isCorrect) setCorrectCount(prev => prev + 1);
+    if (isCorrect) {
+      setCorrectCount(prev => prev + 1);
+      void fireCorrectEffect();
+    }
 
     setHistoryRecords(prev => [...prev, {
       question_id: currentQuestion.id,

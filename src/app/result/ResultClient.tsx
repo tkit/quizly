@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Home, RotateCcw, Star } from 'lucide-react';
 import { POINTS_PER_CORRECT } from '@/lib/points';
+import { fireResultEffect } from '@/lib/effects/confetti';
 
 interface QuestionDetails {
   question_text: string;
@@ -78,6 +78,13 @@ export default function ResultClient({
   const bonusPoints = earnedPoints - basePoints;
 
   const displayPoints = useCountUp(earnedPoints, 1500);
+  const hasTriggeredResultEffect = useRef(false);
+
+  useEffect(() => {
+    if (earnedPoints <= 0 || hasTriggeredResultEffect.current) return;
+    hasTriggeredResultEffect.current = true;
+    void fireResultEffect({ isPerfect });
+  }, [earnedPoints, isPerfect]);
 
   const targetColor =
     session.genres?.color_hint === 'blue' ? 'blue' :
@@ -232,4 +239,3 @@ export default function ResultClient({
     </div>
   );
 }
-
