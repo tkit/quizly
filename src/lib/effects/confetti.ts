@@ -1,4 +1,6 @@
-let confettiModulePromise: Promise<typeof import('canvas-confetti')> | null = null;
+import type confetti from 'canvas-confetti';
+
+let confettiModulePromise: Promise<typeof confetti> | null = null;
 
 const lastFiredAt: Record<'correct' | 'result', number> = {
   correct: 0,
@@ -30,9 +32,8 @@ const canFire = (key: 'correct' | 'result') => {
 };
 
 const getConfetti = async () => {
-  confettiModulePromise ??= import('canvas-confetti');
-  const loadedModule = await confettiModulePromise;
-  return loadedModule.default;
+  confettiModulePromise ??= import('canvas-confetti').then((loadedModule) => loadedModule.default);
+  return confettiModulePromise;
 };
 
 export async function fireCorrectEffect() {
