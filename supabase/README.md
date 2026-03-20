@@ -31,4 +31,3 @@ This baseline represents the current schema and seed state.
 - Add new DB changes as new migration files (append-only).
 - Do not edit historical migration files after they have been applied.
 - Do not make direct schema changes from Supabase SQL Editor for normal development.
-- For legacy manual migration history, refer to `docs/migrations`.

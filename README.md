@@ -112,7 +112,6 @@ npm run db:diff:linked
 
 - DB変更は必ず migration ファイル経由で行う
 - 既存 migration は append-only（追記のみ、原則書き換え禁止）
-- 旧手動 migration の履歴は `docs/migrations` を参照する
 
 ### 5. Run Development Server
 

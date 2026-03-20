@@ -1,7 +1,7 @@
 -- =============================================
 -- Baseline Migration
 -- Version: 20260320000000
--- Source: supabase_schema.sql
+-- Source: initial baseline snapshot (2026-03-20)
 --
 -- Purpose:
 --   - This file is the canonical baseline for migration-based setup.

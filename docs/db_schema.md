@@ -2,6 +2,7 @@
 
 本ドキュメントでは、学習アプリケーションのデータ構造（テーブル定義）を定義します。
 バックエンドとして Supabase (PostgreSQL) を利用し、主に学習記録の保存と簡易認証情報の管理を行います。
+実際の適用順序・厳密な定義は `supabase/migrations` を正本とし、本書は運用・実装のための読みやすい要約として扱います。
 
 ## テーブル一覧
 
@@ -10,6 +11,7 @@
 3. `questions` (問題データ)
 4. `study_sessions` (学習セッション)
 5. `study_history` (解答履歴詳細)
+6. `point_transactions` (ポイント履歴)
 
 ---
 
@@ -23,6 +25,7 @@
 | `name` | text | NOT NULL | 子供の表示名（例: 「たろう」「はなこ」） |
 | `icon_url` | text | | アイコン画像のURL、または絵文字等 |
 | `pin_code_hash` | text | NOT NULL | 4桁の数字PINをハッシュ化した値（生の値は保存しない） |
+| `total_points` | integer | DEFAULT 0 | 累計ポイント |
 | `created_at` | timestamp with time zone | DEFAULT now() | 作成日時 |
 
 ## 2. `genres` テーブル
@@ -33,7 +36,7 @@
 | `id` | text | PRIMARY KEY | ジャンルの一意な識別子（例: 'math', 'history'） |
 | `name` | text | NOT NULL | ジャンルの表示名（例: 「さんすう」「れきし」） |
 | `parent_id` | text | FOREIGN KEY (genres.id), NULL可 | 親カテゴリID。親カテゴリ自身は `NULL` |
-| `icon` | text | | ジャンルに対応するアイコン（絵文字またはURL） |
+| `icon_key` | text | NOT NULL | ジャンルに対応するアイコンキー（例: `calculator`, `book_open`） |
 | `description` | text | | ジャンルの説明 |
 | `color_hint` | text | | UI表示色を分けるためのヒント（例: 'blue', 'orange'） |
 
@@ -69,6 +72,7 @@
 | `mode` | text | DEFAULT 'normal' | 'normal'（通常） または 'review'（復習） |
 | `total_questions` | integer | NOT NULL | 出題された全問題数 |
 | `correct_count`| integer | NOT NULL | 正解数 |
+| `earned_points` | integer | DEFAULT 0 | このセッションで獲得したポイント |
 | `started_at` | timestamp with time zone | DEFAULT now() | 開始日時 |
 | `completed_at` | timestamp with time zone | | 終了日時 |
 
@@ -85,6 +89,20 @@
 | `is_correct` | boolean | NOT NULL | 正解したか（true: 正解, false: 不正解） |
 | `selected_index`| integer | NOT NULL | ユーザーが選んだ選択肢のインデックス |
 | `answered_at`| timestamp with time zone | DEFAULT now() | 解答した日時 |
+
+---
+
+## 6. `point_transactions` テーブル
+ポイントの増減履歴を記録します。学習セッション単位の付与理由を追跡するために利用します。
+
+| カラム名 | データ型 | 制約 | 説明 |
+| :--- | :--- | :--- | :--- |
+| `id` | uuid | PRIMARY KEY, DEFAULT gen_random_uuid() | 取引レコードの一意なID |
+| `user_id` | uuid | FOREIGN KEY (users.id) | 対象ユーザーID |
+| `session_id` | uuid | FOREIGN KEY (study_sessions.id) | 関連セッションID |
+| `points` | integer | NOT NULL | 付与/消費ポイント |
+| `reason` | text | NOT NULL | 付与/消費理由 |
+| `created_at` | timestamp with time zone | DEFAULT now() | 記録日時 |
 
 ---
 
