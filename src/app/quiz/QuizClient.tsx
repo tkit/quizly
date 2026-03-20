@@ -82,12 +82,18 @@ export default function QuizClient({
     fetchReviewQuestionsAndInit();
   }, [allQuestions, count, mode, router]);
 
-  const targetColor =
-    genre.color_hint === 'blue' ? 'blue' :
-    genre.color_hint === 'orange' ? 'orange' :
-    genre.color_hint === 'green' ? 'green' :
-    genre.color_hint === 'pink' ? 'pink' :
-    genre.color_hint === 'purple' ? 'purple' : 'zinc';
+  const tone =
+    genre.color_hint === 'blue'
+      ? { progress: 'bg-blue-400' }
+      : genre.color_hint === 'orange'
+        ? { progress: 'bg-orange-400' }
+        : genre.color_hint === 'green'
+          ? { progress: 'bg-green-400' }
+          : genre.color_hint === 'pink'
+            ? { progress: 'bg-pink-400' }
+            : genre.color_hint === 'purple'
+              ? { progress: 'bg-purple-400' }
+              : { progress: 'bg-zinc-500' };
 
 
   if (isLoading) {
@@ -269,8 +275,8 @@ export default function QuizClient({
           </div>
           {/* Custom thick progress bar */}
           <div className="w-full h-6 bg-zinc-200 rounded-full border-4 border-zinc-400 overflow-hidden relative">
-             <div 
-               className={`absolute top-0 left-0 h-full bg-${targetColor}-400 rounded-full transition-all duration-500 ease-out`}
+             <div
+               className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ease-out ${tone.progress}`}
                style={{ width: `${progressValue}%` }}
              >
                 {/* Shine effect on progress bar */}

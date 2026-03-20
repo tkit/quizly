@@ -155,7 +155,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
             {userName.charAt(0)}
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-zinc-800 tracking-wide">{userName}さんのトップページ</h1>
+            <h1 className="font-display text-2xl sm:text-3xl font-black text-zinc-800 tracking-wide">{userName}さんのトップページ</h1>
             <p className="text-md sm:text-lg font-bold text-pink-500 mt-1">きょうも がんばろう！✨</p>
           </div>
         </div>
@@ -179,7 +179,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
 
       <section className="flex flex-col gap-6 w-full">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-2xl font-black text-zinc-800 bg-white inline-block px-6 py-2 rounded-full border-4 border-zinc-400 shadow-brutal w-fit transform -rotate-1">
+          <h2 className="font-display text-2xl font-black text-zinc-800 bg-white inline-block px-6 py-2 rounded-full border-4 border-zinc-400 shadow-brutal w-fit transform -rotate-1">
             がくしゅうを おこなう！
           </h2>
           {selectedParent && (
@@ -216,7 +216,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                     </div>
                     <div className="flex-1 z-10">
                       <div className="flex items-start justify-between gap-3 mb-2">
-                        <h3 className="text-2xl sm:text-3xl font-black tracking-wide drop-shadow-sm">{genre.name}</h3>
+                        <h3 className="font-display text-2xl sm:text-3xl font-black tracking-wide drop-shadow-sm">{genre.name}</h3>
                         {isStudyStatusLoaded ? getStudyStatusIcon(studyStatus) : (
                           <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-300 bg-zinc-100 animate-pulse" />
                         )}
@@ -250,7 +250,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                     {genre.icon || '📚'}
                   </div>
                   <div className="flex-1 z-10">
-                    <h3 className="text-2xl sm:text-3xl font-black mb-2 tracking-wide drop-shadow-sm">{genre.name}</h3>
+                    <h3 className="font-display text-2xl sm:text-3xl font-black mb-2 tracking-wide drop-shadow-sm">{genre.name}</h3>
                     <p className="text-md sm:text-lg font-bold opacity-80">{genre.description}</p>
                   </div>
                   <div className="text-5xl font-black opacity-30 group-hover:opacity-100 group-hover:translate-x-2 transition-all z-10">→</div>
@@ -269,7 +269,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
 
       <section className="mt-4 bg-yellow-300 p-6 rounded-[2rem] border-4 border-zinc-400 shadow-brutal transform rotate-1 w-full max-w-2xl mx-auto">
         <div className="flex flex-col gap-2 items-center text-center">
-          <h2 className="text-2xl font-black text-zinc-900 bg-white px-6 py-2 rounded-xl border-4 border-zinc-400 shadow-brutal-sm -rotate-2">
+          <h2 className="font-display text-2xl font-black text-zinc-900 bg-white px-6 py-2 rounded-xl border-4 border-zinc-400 shadow-brutal-sm -rotate-2">
             これまでのきろく
           </h2>
           <p className="text-xl font-bold text-zinc-800 mt-2">（※いまはまだ じゅんび中だよ！🚧）</p>

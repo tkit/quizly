@@ -86,12 +86,18 @@ export default function ResultClient({
     void fireResultEffect({ isPerfect });
   }, [earnedPoints, isPerfect]);
 
-  const targetColor =
-    session.genres?.color_hint === 'blue' ? 'blue' :
-    session.genres?.color_hint === 'orange' ? 'orange' :
-    session.genres?.color_hint === 'green' ? 'green' :
-    session.genres?.color_hint === 'pink' ? 'pink' :
-    session.genres?.color_hint === 'purple' ? 'purple' : 'zinc';
+  const retryButtonTone =
+    session.genres?.color_hint === 'blue'
+      ? 'bg-blue-400 hover:bg-blue-500 text-zinc-900'
+      : session.genres?.color_hint === 'orange'
+        ? 'bg-orange-400 hover:bg-orange-500 text-zinc-900'
+        : session.genres?.color_hint === 'green'
+          ? 'bg-green-400 hover:bg-green-500 text-zinc-900'
+          : session.genres?.color_hint === 'pink'
+            ? 'bg-pink-400 hover:bg-pink-500 text-zinc-900'
+            : session.genres?.color_hint === 'purple'
+              ? 'bg-purple-400 hover:bg-purple-500 text-zinc-900'
+              : 'bg-zinc-800 hover:bg-zinc-900 text-white';
 
   return (
     <div className="flex flex-col gap-8 h-full max-w-3xl mx-auto w-full p-2 sm:p-4 pb-12">
@@ -149,15 +155,8 @@ export default function ResultClient({
           >
             <Home className="w-8 h-8" strokeWidth={3} /> トップへ✨
           </button>
-          <button 
-            className={`h-16 px-8 rounded-full text-xl sm:text-2xl font-black border-4 border-zinc-400 shadow-brutal active-brutal-push focus:outline-none flex items-center justify-center gap-2 ${
-               targetColor === 'blue' ? 'bg-blue-400 hover:bg-blue-500' :
-               targetColor === 'orange' ? 'bg-orange-400 hover:bg-orange-500' :
-               targetColor === 'green' ? 'bg-green-400 hover:bg-green-500' :
-               targetColor === 'pink' ? 'bg-pink-400 hover:bg-pink-500' :
-               targetColor === 'purple' ? 'bg-purple-400 hover:bg-purple-500' :
-               'bg-zinc-800 hover:bg-zinc-900 text-white'
-            } ${targetColor !== 'zinc' ? 'text-zinc-900' : ''}`}
+          <button
+            className={`h-16 px-8 rounded-full text-xl sm:text-2xl font-black border-4 border-zinc-400 shadow-brutal active-brutal-push focus:outline-none flex items-center justify-center gap-2 ${retryButtonTone}`}
             onClick={() => router.push(`/setup?genre=${session.genre_id}`)}
           >
             <RotateCcw className="w-8 h-8" strokeWidth={3} /> もういっかい！

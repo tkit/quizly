@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import ResultClient from './ResultClient';
 

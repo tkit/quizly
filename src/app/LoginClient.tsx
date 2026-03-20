@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
+import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
@@ -86,7 +86,13 @@ export default function LoginClient({ users }: { users: User[] }) {
                 {/* Avatar circle */}
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-yellow-100 flex items-center justify-center overflow-hidden border-4 border-zinc-400 shadow-brutal-sm group-hover:bg-yellow-200 transition-colors pointer-events-auto">
                   {user.icon_url?.startsWith('/') ? (
-                    <img src={user.icon_url} alt={user.name} className="w-full h-full object-cover" />
+                    <Image
+                      src={user.icon_url}
+                      alt={user.name}
+                      width={96}
+                      height={96}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <span className="text-4xl sm:text-5xl">{user.icon_url || '👤'}</span>
                   )}
@@ -216,7 +222,13 @@ export default function LoginClient({ users }: { users: User[] }) {
                 onClick={() => handleAvatarSelect(avatar)}
                 className="aspect-square rounded-2xl overflow-hidden border-4 border-transparent hover:border-zinc-400 hover:shadow-brutal bg-pink-100 transition-all active-brutal-push disabled:opacity-50 group"
               >
-                <img src={avatar} alt="avatar option" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                <Image
+                  src={avatar}
+                  alt="avatar option"
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                />
               </button>
             ))}
           </div>
@@ -235,4 +247,3 @@ export default function LoginClient({ users }: { users: User[] }) {
     </>
   );
 }
-

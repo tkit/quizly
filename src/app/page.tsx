@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import LoginClient from './LoginClient';
 
@@ -31,7 +30,7 @@ export default async function Home() {
           <div className="absolute -top-6 -left-4 w-12 h-12 bg-yellow-300 rounded-full border-4 border-zinc-400 animate-wiggle z-0 shadow-brutal-sm" />
           <div className="absolute -bottom-4 -right-2 w-8 h-8 bg-pink-300 rounded-lg border-2 border-zinc-400 rotate-12 z-0" />
           
-          <h1 className="relative z-10 text-5xl sm:text-7xl font-black tracking-widest text-blue-500 drop-shadow-[4px_4px_0_rgba(24,24,27,1)]">
+          <h1 className="font-display relative z-10 text-5xl sm:text-7xl font-black tracking-widest text-blue-500 drop-shadow-[4px_4px_0_rgba(24,24,27,1)]">
             Quizly
           </h1>
           
