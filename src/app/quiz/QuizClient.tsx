@@ -85,15 +85,15 @@ export default function QuizClient({
 
   const tone =
     genre.color_hint === 'blue'
-      ? { progress: 'bg-blue-300' }
+      ? { progress: 'bg-slate-300' }
       : genre.color_hint === 'orange'
-        ? { progress: 'bg-orange-300' }
+        ? { progress: 'bg-teal-200' }
         : genre.color_hint === 'green'
-          ? { progress: 'bg-green-300' }
+          ? { progress: 'bg-teal-300' }
           : genre.color_hint === 'pink'
-            ? { progress: 'bg-pink-300' }
+            ? { progress: 'bg-teal-300' }
             : genre.color_hint === 'purple'
-              ? { progress: 'bg-purple-300' }
+              ? { progress: 'bg-slate-300' }
               : { progress: 'bg-zinc-400' };
 
 
@@ -101,8 +101,8 @@ export default function QuizClient({
     return (
       <div className="flex flex-1 items-center justify-center h-full">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 border-8 border-blue-100 border-t-blue-300 rounded-full animate-spin"></div>
-          <p className="text-2xl font-black text-blue-400 animate-pulse">準備中...</p>
+          <div className="w-16 h-16 border-8 border-slate-100 border-t-slate-300 rounded-full animate-spin"></div>
+          <p className="text-2xl font-black text-teal-500 animate-pulse">準備中...</p>
         </div>
       </div>
     );
@@ -111,20 +111,20 @@ export default function QuizClient({
   if (questions.length === 0) {
     return (
       <div className="flex flex-col flex-1 items-center justify-center gap-6 h-full text-center p-4">
-        <PartyPopper className={`${ICON_SIZE.hero} animate-bounce-soft text-amber-500`} strokeWidth={ICON_STROKE.regular} />
+        <PartyPopper className={`${ICON_SIZE.hero} animate-bounce-soft text-teal-600`} strokeWidth={ICON_STROKE.regular} />
         <p className="text-3xl font-black text-zinc-800 bg-white px-8 py-4 rounded-3xl border-4 border-zinc-400 shadow-brutal w-full max-w-lg">
           {mode === 'review' 
             ? '苦手な問題はありません。すばらしい！' 
             : 'このジャンルには問題がありません。'}
         </p>
         {mode === 'review' && (
-          <div className="inline-flex items-center gap-2 text-amber-600 font-black text-xl">
+          <div className="inline-flex items-center gap-2 text-teal-700 font-black text-xl">
             <Sparkles className={ICON_SIZE.sm} strokeWidth={ICON_STROKE.strong} />
             よくできました
           </div>
         )}
         <button 
-          className="bg-yellow-300 text-zinc-900 border-4 border-zinc-400 shadow-brutal hover:bg-yellow-400 hover:-translate-y-1 hover:shadow-brutal-lg active-brutal-push rounded-full text-2xl font-black px-12 py-4 mt-8 transition-all"
+          className="bg-teal-300 text-zinc-900 border-4 border-zinc-400 shadow-brutal hover:bg-teal-400 hover:-translate-y-1 hover:shadow-brutal-lg active-brutal-push rounded-full text-2xl font-black px-12 py-4 mt-8 transition-all"
           onClick={() => router.push('/dashboard')}
         >
           戻る
@@ -278,7 +278,7 @@ export default function QuizClient({
         </button>
         <div className="flex-1 pr-4">
           <div className="flex justify-between items-center mb-2 px-1">
-            <span className="text-lg font-black text-zinc-700">{currentIndex + 1}もんめ / ぜんぶで {questions.length}もん</span>
+            <span className="text-lg font-black text-zinc-700">{currentIndex + 1}問目 / 全{questions.length}問</span>
           </div>
           {/* Custom thick progress bar */}
           <div className="w-full h-6 bg-zinc-200 rounded-full border-4 border-zinc-400 overflow-hidden relative">
@@ -296,7 +296,7 @@ export default function QuizClient({
       {/* Massive Question Bubble */}
       <div className={`relative flex-1 flex flex-col items-center justify-center p-8 sm:p-12 border-4 border-zinc-400 rounded-[3rem] bg-white shadow-brutal min-h-[30vh] md:min-h-[40vh]`}>
         {/* Decorative corner pin */}
-        <div className="absolute -top-4 -left-4 w-10 h-10 bg-amber-300 rounded-full border-4 border-zinc-400 shadow-brutal-sm z-10" />
+        <div className="absolute -top-4 -left-4 w-10 h-10 bg-teal-300 rounded-full border-4 border-zinc-400 shadow-brutal-sm z-10" />
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-center leading-snug text-zinc-800 drop-shadow-sm">
           {currentQuestion.question_text}
         </h2>
@@ -305,13 +305,13 @@ export default function QuizClient({
       {/* Chunky Options */}
       <div className="grid grid-cols-1 gap-4 sm:gap-6 mt-2 relative z-10 w-full mb-8">
         {currentQuestion.options.map((option, index) => {
-          let stateClass = "bg-white border-zinc-400 hover:bg-blue-50 text-zinc-800 shadow-brutal active-brutal-push hover:-translate-y-1 hover:shadow-brutal-lg";
-          let badgeColor = "bg-blue-100 text-blue-700";
+          let stateClass = "bg-white border-zinc-400 hover:bg-slate-50 text-zinc-800 shadow-brutal active-brutal-push hover:-translate-y-1 hover:shadow-brutal-lg";
+          let badgeColor = "bg-slate-100 text-teal-800";
 
           if (isAnswered) {
              if (index === currentQuestion.correct_index) {
-                stateClass = "bg-green-300 border-zinc-400 text-zinc-900 shadow-[0_0_0_4px_#86efac,6px_6px_0_0_#a1a1aa] translate-y-[-2px]"; // Super obvious correct
-                badgeColor = "bg-green-100 text-green-800";
+                stateClass = "bg-teal-300 border-zinc-400 text-zinc-900 shadow-[0_0_0_4px_#5eead4,6px_6px_0_0_#a1a1aa] translate-y-[-2px]"; // Super obvious correct
+                badgeColor = "bg-teal-100 text-teal-800";
              } else if (index === selectedOption) {
                 stateClass = "bg-red-200 border-zinc-400 text-zinc-900 shadow-none translate-x-[4px] translate-y-[4px]"; // Pressed and wrong
                 badgeColor = "bg-red-100 text-red-800";
@@ -325,7 +325,7 @@ export default function QuizClient({
             <button
               key={index}
               disabled={isAnswered}
-              className={`min-h-20 text-2xl sm:text-3xl p-4 sm:p-6 rounded-[2rem] border-4 cursor-pointer font-black text-left flex items-center gap-4 transition-all duration-200 w-full focus:outline-none focus:ring-4 focus:ring-blue-400 ${stateClass}`}
+              className={`min-h-20 text-2xl sm:text-3xl p-4 sm:p-6 rounded-[2rem] border-4 cursor-pointer font-black text-left flex items-center gap-4 transition-all duration-200 w-full focus:outline-none focus:ring-4 focus:ring-teal-500 ${stateClass}`}
               onClick={() => handleOptionClick(index)}
             >
                <div className={`shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl border-2 border-zinc-400 ${badgeColor} shadow-inner text-xl`}>
@@ -342,20 +342,20 @@ export default function QuizClient({
         <div className="fixed inset-x-0 bottom-0 z-50 p-4 sm:p-8 flex justify-center pointer-events-none">
           <div className={`pointer-events-auto w-full max-w-3xl p-6 sm:p-8 rounded-[3rem] border-4 border-zinc-400 shadow-brutal flex flex-col gap-6 animate-in slide-in-from-bottom-12 duration-500 will-change-transform ${
              selectedOption === currentQuestion.correct_index 
-              ? 'bg-green-50' 
+              ? 'bg-teal-50' 
               : 'bg-red-50'
           }`}>
              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   {selectedOption === currentQuestion.correct_index ? (
                      <div className="flex items-center gap-4 animate-bounce-soft">
-                        <CheckCircle className="w-16 h-16 text-green-500 fill-white" />
-                        <span className="text-4xl sm:text-5xl font-black text-green-600 drop-shadow-[2px_2px_0_#a1a1aa]">せいかい！</span>
+                        <CheckCircle className="w-16 h-16 text-teal-500 fill-white" />
+                        <span className="text-4xl sm:text-5xl font-black text-teal-600 drop-shadow-[2px_2px_0_#a1a1aa]">正解</span>
                      </div>
                   ) : (
                      <div className="flex items-center gap-4 animate-wiggle">
                         <XCircle className="w-16 h-16 text-red-500 fill-white" />
-                        <span className="text-4xl sm:text-5xl font-black text-red-600 drop-shadow-[2px_2px_0_#a1a1aa]">ざんねん！</span>
+                        <span className="text-4xl sm:text-5xl font-black text-red-600 drop-shadow-[2px_2px_0_#a1a1aa]">不正解</span>
                      </div>
                   )}
                 </div>
@@ -363,13 +363,13 @@ export default function QuizClient({
                 <button 
                   className={`px-8 py-4 sm:py-6 text-2xl sm:text-3xl rounded-full font-black border-4 border-zinc-400 shadow-brutal hover:scale-105 active-brutal-push focus:outline-none w-full sm:w-auto mt-4 sm:mt-0 ${
                     selectedOption === currentQuestion.correct_index 
-                      ? 'bg-green-300 text-zinc-900 hover:bg-green-400' 
-                      : 'bg-yellow-300 text-zinc-900 hover:bg-yellow-400'
+                      ? 'bg-teal-300 text-zinc-900 hover:bg-teal-400' 
+                      : 'bg-teal-300 text-zinc-900 hover:bg-teal-400'
                   }`}
                   onClick={handleNext}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'きろく中...' : (currentIndex < questions.length - 1 ? 'つぎへすすむ！' : 'けっかをみる！')}
+                  {isSubmitting ? '記録を保存中...' : (currentIndex < questions.length - 1 ? '次へ進む' : '結果を見る')}
                 </button>
              </div>
              
