@@ -46,7 +46,7 @@ export default async function SetupPage({
         </div>
         <a
           href="/dashboard"
-          className="inline-flex items-center justify-center h-14 px-8 rounded-full border-4 border-zinc-400 bg-yellow-400 hover:bg-yellow-500 shadow-brutal font-black text-zinc-900"
+          className="inline-flex items-center justify-center h-14 px-8 rounded-full border-4 border-zinc-400 bg-yellow-300 hover:bg-yellow-400 shadow-brutal font-black text-zinc-900"
         >
           ダッシュボードにもどる
         </a>

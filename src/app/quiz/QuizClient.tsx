@@ -85,24 +85,24 @@ export default function QuizClient({
 
   const tone =
     genre.color_hint === 'blue'
-      ? { progress: 'bg-blue-400' }
+      ? { progress: 'bg-blue-300' }
       : genre.color_hint === 'orange'
-        ? { progress: 'bg-orange-400' }
+        ? { progress: 'bg-orange-300' }
         : genre.color_hint === 'green'
-          ? { progress: 'bg-green-400' }
+          ? { progress: 'bg-green-300' }
           : genre.color_hint === 'pink'
-            ? { progress: 'bg-pink-400' }
+            ? { progress: 'bg-pink-300' }
             : genre.color_hint === 'purple'
-              ? { progress: 'bg-purple-400' }
-              : { progress: 'bg-zinc-500' };
+              ? { progress: 'bg-purple-300' }
+              : { progress: 'bg-zinc-400' };
 
 
   if (isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center h-full">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 border-8 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
-          <p className="text-2xl font-black text-blue-500 animate-pulse">じゅんび中...</p>
+          <div className="w-16 h-16 border-8 border-blue-100 border-t-blue-300 rounded-full animate-spin"></div>
+          <p className="text-2xl font-black text-blue-400 animate-pulse">じゅんび中...</p>
         </div>
       </div>
     );
@@ -124,7 +124,7 @@ export default function QuizClient({
           </div>
         )}
         <button 
-          className="bg-yellow-400 text-zinc-900 border-4 border-zinc-400 shadow-brutal hover:bg-yellow-500 hover:-translate-y-1 hover:shadow-brutal-lg active-brutal-push rounded-full text-2xl font-black px-12 py-4 mt-8 transition-all"
+          className="bg-yellow-300 text-zinc-900 border-4 border-zinc-400 shadow-brutal hover:bg-yellow-400 hover:-translate-y-1 hover:shadow-brutal-lg active-brutal-push rounded-full text-2xl font-black px-12 py-4 mt-8 transition-all"
           onClick={() => router.push('/dashboard')}
         >
           もどる
@@ -272,7 +272,7 @@ export default function QuizClient({
       <header className="flex items-center gap-4 bg-white p-4 rounded-full border-4 border-zinc-400 shadow-brutal-sm">
         <button 
           onClick={() => router.back()} 
-          className="w-12 h-12 rounded-full bg-red-100 border-4 border-zinc-400 shadow-brutal flex items-center justify-center shrink-0 text-red-500 hover:bg-red-200 active-brutal-push focus:outline-none"
+          className="w-12 h-12 rounded-full bg-zinc-100 border-4 border-zinc-400 shadow-brutal flex items-center justify-center shrink-0 text-zinc-600 hover:bg-zinc-200 active-brutal-push focus:outline-none"
         >
           <X className="w-6 h-6 stroke-[3]" />
         </button>
@@ -296,7 +296,7 @@ export default function QuizClient({
       {/* Massive Question Bubble */}
       <div className={`relative flex-1 flex flex-col items-center justify-center p-8 sm:p-12 border-4 border-zinc-400 rounded-[3rem] bg-white shadow-brutal min-h-[30vh] md:min-h-[40vh]`}>
         {/* Decorative corner pin */}
-        <div className="absolute -top-4 -left-4 w-10 h-10 bg-red-400 rounded-full border-4 border-zinc-400 shadow-brutal-sm z-10" />
+        <div className="absolute -top-4 -left-4 w-10 h-10 bg-amber-300 rounded-full border-4 border-zinc-400 shadow-brutal-sm z-10" />
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-center leading-snug text-zinc-800 drop-shadow-sm">
           {currentQuestion.question_text}
         </h2>
@@ -310,10 +310,10 @@ export default function QuizClient({
 
           if (isAnswered) {
              if (index === currentQuestion.correct_index) {
-                stateClass = "bg-green-400 border-zinc-400 text-zinc-900 shadow-[0_0_0_4px_#22c55e,6px_6px_0_0_#a1a1aa] translate-y-[-2px]"; // Super obvious correct
+                stateClass = "bg-green-300 border-zinc-400 text-zinc-900 shadow-[0_0_0_4px_#86efac,6px_6px_0_0_#a1a1aa] translate-y-[-2px]"; // Super obvious correct
                 badgeColor = "bg-green-100 text-green-800";
              } else if (index === selectedOption) {
-                stateClass = "bg-red-300 border-zinc-400 text-zinc-900 shadow-none translate-x-[4px] translate-y-[4px]"; // Pressed and wrong
+                stateClass = "bg-red-200 border-zinc-400 text-zinc-900 shadow-none translate-x-[4px] translate-y-[4px]"; // Pressed and wrong
                 badgeColor = "bg-red-100 text-red-800";
              } else {
                 stateClass = "bg-zinc-100 border-zinc-300 text-zinc-400 shadow-none"; // Disabled untouched
@@ -342,8 +342,8 @@ export default function QuizClient({
         <div className="fixed inset-x-0 bottom-0 z-50 p-4 sm:p-8 flex justify-center pointer-events-none">
           <div className={`pointer-events-auto w-full max-w-3xl p-6 sm:p-8 rounded-[3rem] border-4 border-zinc-400 shadow-brutal flex flex-col gap-6 animate-in slide-in-from-bottom-12 duration-500 will-change-transform ${
              selectedOption === currentQuestion.correct_index 
-              ? 'bg-green-100' 
-              : 'bg-red-100'
+              ? 'bg-green-50' 
+              : 'bg-red-50'
           }`}>
              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -363,8 +363,8 @@ export default function QuizClient({
                 <button 
                   className={`px-8 py-4 sm:py-6 text-2xl sm:text-3xl rounded-full font-black border-4 border-zinc-400 shadow-brutal hover:scale-105 active-brutal-push focus:outline-none w-full sm:w-auto mt-4 sm:mt-0 ${
                     selectedOption === currentQuestion.correct_index 
-                      ? 'bg-green-400 text-zinc-900 hover:bg-green-500' 
-                      : 'bg-yellow-400 text-zinc-900 hover:bg-yellow-500'
+                      ? 'bg-green-300 text-zinc-900 hover:bg-green-400' 
+                      : 'bg-yellow-300 text-zinc-900 hover:bg-yellow-400'
                   }`}
                   onClick={handleNext}
                   disabled={isSubmitting}

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CircleAlert, Circle, Construction, LogOut, Sparkles, Star, ChevronLeft, Check, CheckCheck } from 'lucide-react';
+import { CircleAlert, Circle, LogOut, Sparkles, Star, ChevronLeft, Check, CheckCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { GenreIcon } from '@/components/GenreIcon';
 import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
@@ -293,18 +293,6 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
             )}
           </div>
         )}
-      </section>
-
-      <section className="mt-4 bg-yellow-300 p-6 rounded-[2rem] border-4 border-zinc-400 shadow-brutal transform rotate-1 w-full max-w-2xl mx-auto">
-        <div className="flex flex-col gap-2 items-center text-center">
-          <h2 className="font-display text-2xl font-black text-zinc-900 bg-white px-6 py-2 rounded-xl border-4 border-zinc-400 shadow-brutal-sm -rotate-2">
-            これまでのきろく
-          </h2>
-          <p className="text-xl font-bold text-zinc-800 mt-2 inline-flex items-center gap-2">
-            （※いまはまだ じゅんび中だよ！）
-            <Construction className={ICON_SIZE.md} strokeWidth={ICON_STROKE.strong} />
-          </p>
-        </div>
       </section>
     </div>
   );
