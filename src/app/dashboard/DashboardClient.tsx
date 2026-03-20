@@ -6,6 +6,7 @@ import { CircleAlert, Circle, LogOut, Sparkles, Star, ChevronLeft, Check, CheckC
 import { supabase } from '@/lib/supabase';
 import { GenreIcon } from '@/components/GenreIcon';
 import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
+import { resolveSubjectTone } from '@/lib/ui/subjectTone';
 
 interface Genre {
   id: string;
@@ -114,38 +115,6 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
     router.push('/');
   };
 
-  const getGenreStyle = (colorHint: string | null) => {
-    if (colorHint === 'orange') {
-      return {
-        baseColorClass: 'bg-teal-50 hover:bg-teal-100 text-teal-800',
-        iconBgClass: 'bg-teal-200',
-      };
-    }
-    if (colorHint === 'green') {
-      return {
-        baseColorClass: 'bg-teal-100 hover:bg-teal-200 text-teal-900',
-        iconBgClass: 'bg-teal-300',
-      };
-    }
-    if (colorHint === 'pink') {
-      return {
-        baseColorClass: 'bg-slate-100 hover:bg-teal-200 text-teal-800',
-        iconBgClass: 'bg-teal-300',
-      };
-    }
-    if (colorHint === 'purple') {
-      return {
-        baseColorClass: 'bg-slate-100 hover:bg-slate-200 text-slate-800',
-        iconBgClass: 'bg-slate-300',
-      };
-    }
-
-    return {
-      baseColorClass: 'bg-slate-100 hover:bg-slate-200 text-teal-900',
-      iconBgClass: 'bg-slate-300',
-    };
-  };
-
   if (!userName) {
     return null;
   }
@@ -213,16 +182,17 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
             </div>
             <div className="grid grid-cols-1 gap-5 w-full">
               {childGenres.map((genre) => {
-                const styles = getGenreStyle(genre.color_hint);
+                const tone = resolveSubjectTone(selectedParent?.id ?? genre.parent_id, genre.color_hint);
                 const studyStatus = studyStatusByGenreId[genre.id] ?? 'unattempted';
                 return (
                   <button
                     key={genre.id}
                     onClick={() => router.push(`/quiz?genre=${genre.id}`)}
-                    className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-teal-500 p-5 sm:p-6 flex items-start gap-4 sm:gap-5 group overflow-hidden relative ${styles.baseColorClass}`}
+                    className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 bg-white hover:bg-slate-50 text-zinc-900 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 ${tone.focusRingClass} p-5 sm:p-6 flex items-start gap-4 sm:gap-5 group overflow-hidden relative`}
                   >
+                    <div className={`absolute left-0 top-0 h-full w-4 ${tone.stripClass}`} />
                     <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full transform group-hover:scale-150 transition-transform duration-500" />
-                    <div className={`shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${styles.iconBgClass}`}>
+                    <div className={`shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${tone.iconBgClass}`}>
                       <GenreIcon
                         iconKey={genre.icon_key}
                         className={ICON_SIZE.card}
@@ -242,7 +212,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                       >
                         {genre.description}
                       </p>
-                      <p className="mt-3 inline-flex items-center rounded-full border-2 border-zinc-400 bg-white/80 px-3 py-1 text-sm sm:text-base font-black text-zinc-700">
+                      <p className={`mt-3 inline-flex items-center rounded-full border-2 px-3 py-1 text-sm sm:text-base font-black ${tone.badgeClass}`}>
                         全{genre.question_count}問
                       </p>
                     </div>
@@ -250,7 +220,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                       {isStudyStatusLoaded ? getStudyStatusIcon(studyStatus) : (
                         <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-300 bg-zinc-100 animate-pulse" />
                       )}
-                      <div className="text-4xl sm:text-5xl font-black opacity-30 group-hover:opacity-100 group-hover:translate-x-2 transition-all">→</div>
+                      <div className={`text-4xl sm:text-5xl font-black opacity-60 group-hover:opacity-100 group-hover:translate-x-2 transition-all ${tone.arrowClass}`}>→</div>
                     </div>
                   </button>
                 );
@@ -269,15 +239,16 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
             {parentGenres.map((genre) => {
-              const styles = getGenreStyle(genre.color_hint);
+              const tone = resolveSubjectTone(genre.id, genre.color_hint);
               return (
                 <button
                   key={genre.id}
                   onClick={() => setSelectedParentId(genre.id)}
-                  className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-teal-500 p-6 flex items-center gap-6 group overflow-hidden relative ${styles.baseColorClass}`}
+                  className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 bg-white hover:bg-slate-50 text-zinc-900 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 ${tone.focusRingClass} p-6 flex items-center gap-6 group overflow-hidden relative`}
                 >
+                  <div className={`absolute left-0 top-0 h-full w-4 ${tone.stripClass}`} />
                   <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full transform group-hover:scale-150 transition-transform duration-500" />
-                  <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${styles.iconBgClass}`}>
+                  <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${tone.iconBgClass}`}>
                     <GenreIcon
                       iconKey={genre.icon_key}
                       className={ICON_SIZE.card}
@@ -288,7 +259,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                     <h3 className="font-display text-2xl sm:text-3xl font-black mb-2 tracking-wide drop-shadow-sm">{genre.name}</h3>
                     <p className="text-md sm:text-lg font-bold opacity-80">{genre.description}</p>
                   </div>
-                  <div className="text-5xl font-black opacity-30 group-hover:opacity-100 group-hover:translate-x-2 transition-all z-10">→</div>
+                  <div className={`text-5xl font-black opacity-60 group-hover:opacity-100 group-hover:translate-x-2 transition-all z-10 ${tone.arrowClass}`}>→</div>
                 </button>
               );
             })}

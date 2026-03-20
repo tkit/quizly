@@ -33,7 +33,7 @@
 
 | カラム名 | データ型 | 制約 | 説明 |
 | :--- | :--- | :--- | :--- |
-| `id` | text | PRIMARY KEY | ジャンルの一意な識別子（例: 'math', 'history'） |
+| `id` | text | PRIMARY KEY | ジャンルの一意な識別子（例: 'math', 'social'） |
 | `name` | text | NOT NULL | ジャンルの表示名（例: 「さんすう」「れきし」） |
 | `parent_id` | text | FOREIGN KEY (genres.id), NULL可 | 親カテゴリID。親カテゴリ自身は `NULL` |
 | `icon_key` | text | NOT NULL | ジャンルに対応するアイコンキー（例: `calculator`, `book_open`） |
