@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Star, ChevronLeft } from 'lucide-react';
+import { LogOut, Star, ChevronLeft, Check, CheckCheck, Circle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface Genre {
@@ -16,12 +16,11 @@ interface Genre {
 
 export default function DashboardClient({ genres }: { genres: Genre[] }) {
   const router = useRouter();
-  const [userName] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('quizly_user_name');
-  });
+  const [userName, setUserName] = useState<string | null>(null);
   const [totalPoints, setTotalPoints] = useState<number>(0);
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
+  const [studyStatusByGenreId, setStudyStatusByGenreId] = useState<Record<string, 'unattempted' | 'studied_not_perfect' | 'perfect_cleared'>>({});
+  const [isStudyStatusLoaded, setIsStudyStatusLoaded] = useState(false);
 
   useEffect(() => {
     const userId = localStorage.getItem('quizly_user_id');
@@ -29,16 +28,42 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
     if (!userId) {
       router.push('/');
     } else {
-      supabase
-        .from('users')
-        .select('total_points')
-        .eq('id', userId)
-        .single()
-        .then(({ data }) => {
-          if (data?.total_points != null) {
-            setTotalPoints(data.total_points);
+      const fetchDashboardMeta = async () => {
+        const [{ data: userData }, { data: sessionsData }] = await Promise.all([
+          supabase
+            .from('users')
+            .select('name, total_points')
+            .eq('id', userId)
+            .single(),
+          supabase
+            .from('study_sessions')
+            .select('genre_id, correct_count, total_questions')
+            .eq('user_id', userId),
+        ]);
+
+        if (userData?.name) {
+          setUserName(userData.name);
+        }
+        if (userData?.total_points != null) {
+          setTotalPoints(userData.total_points);
+        }
+
+        const statusMap: Record<string, 'unattempted' | 'studied_not_perfect' | 'perfect_cleared'> = {};
+        for (const session of sessionsData ?? []) {
+          if (!session.genre_id) continue;
+          const isPerfect = session.total_questions > 0 && session.correct_count === session.total_questions;
+          const current = statusMap[session.genre_id] ?? 'unattempted';
+          if (isPerfect) {
+            statusMap[session.genre_id] = 'perfect_cleared';
+          } else if (current !== 'perfect_cleared') {
+            statusMap[session.genre_id] = 'studied_not_perfect';
           }
-        });
+        }
+        setStudyStatusByGenreId(statusMap);
+        setIsStudyStatusLoaded(true);
+      };
+
+      void fetchDashboardMeta();
     }
   }, [router]);
 
@@ -56,6 +81,29 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
     () => parentGenres.find((genre) => genre.id === selectedParentId) ?? null,
     [parentGenres, selectedParentId],
   );
+  const getStudyStatusIcon = (status: 'unattempted' | 'studied_not_perfect' | 'perfect_cleared') => {
+    if (status === 'perfect_cleared') {
+      return (
+        <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-400 bg-green-200 text-green-800 inline-flex items-center justify-center" title="受講済み（全問正解達成）" aria-label="受講済み（全問正解達成）">
+          <CheckCheck className="w-6 h-6 stroke-[3]" />
+        </span>
+      );
+    }
+
+    if (status === 'studied_not_perfect') {
+      return (
+        <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-400 bg-zinc-200 text-zinc-700 inline-flex items-center justify-center" title="受講済み（不正解あり）" aria-label="受講済み（不正解あり）">
+          <Check className="w-6 h-6 stroke-[3]" />
+        </span>
+      );
+    }
+
+    return (
+      <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-400 bg-white/80 text-zinc-500 inline-flex items-center justify-center" title="未受講" aria-label="未受講">
+        <Circle className="w-6 h-6 stroke-[3]" />
+      </span>
+    );
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('quizly_user_id');
@@ -155,6 +203,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
               {childGenres.map((genre) => {
                 const styles = getGenreStyle(genre.color_hint);
+                const studyStatus = studyStatusByGenreId[genre.id] ?? 'unattempted';
                 return (
                   <button
                     key={genre.id}
@@ -166,7 +215,12 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                       {genre.icon || '📘'}
                     </div>
                     <div className="flex-1 z-10">
-                      <h3 className="text-2xl sm:text-3xl font-black mb-2 tracking-wide drop-shadow-sm">{genre.name}</h3>
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <h3 className="text-2xl sm:text-3xl font-black tracking-wide drop-shadow-sm">{genre.name}</h3>
+                        {isStudyStatusLoaded ? getStudyStatusIcon(studyStatus) : (
+                          <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-300 bg-zinc-100 animate-pulse" />
+                        )}
+                      </div>
                       <p className="text-md sm:text-lg font-bold opacity-80">{genre.description}</p>
                     </div>
                     <div className="text-5xl font-black opacity-30 group-hover:opacity-100 group-hover:translate-x-2 transition-all z-10">→</div>
