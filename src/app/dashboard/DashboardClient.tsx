@@ -87,7 +87,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
   const getStudyStatusIcon = (status: 'unattempted' | 'studied_not_perfect' | 'perfect_cleared') => {
     if (status === 'perfect_cleared') {
       return (
-        <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-400 bg-green-200 text-green-800 inline-flex items-center justify-center" title="受講済み（全問正解達成）" aria-label="受講済み（全問正解達成）">
+        <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-400 bg-teal-200 text-teal-800 inline-flex items-center justify-center" title="受講済み（全問正解達成）" aria-label="受講済み（全問正解達成）">
           <CheckCheck className={ICON_SIZE.md} strokeWidth={ICON_STROKE.bold} />
         </span>
       );
@@ -117,32 +117,32 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
   const getGenreStyle = (colorHint: string | null) => {
     if (colorHint === 'orange') {
       return {
-        baseColorClass: 'bg-orange-100 hover:bg-orange-200 text-orange-800',
-        iconBgClass: 'bg-orange-300',
+        baseColorClass: 'bg-teal-50 hover:bg-teal-100 text-teal-800',
+        iconBgClass: 'bg-teal-200',
       };
     }
     if (colorHint === 'green') {
       return {
-        baseColorClass: 'bg-green-100 hover:bg-green-200 text-green-800',
-        iconBgClass: 'bg-green-300',
+        baseColorClass: 'bg-teal-100 hover:bg-teal-200 text-teal-900',
+        iconBgClass: 'bg-teal-300',
       };
     }
     if (colorHint === 'pink') {
       return {
-        baseColorClass: 'bg-pink-100 hover:bg-pink-200 text-pink-800',
-        iconBgClass: 'bg-pink-300',
+        baseColorClass: 'bg-slate-100 hover:bg-teal-200 text-teal-800',
+        iconBgClass: 'bg-teal-300',
       };
     }
     if (colorHint === 'purple') {
       return {
-        baseColorClass: 'bg-purple-100 hover:bg-purple-200 text-purple-800',
-        iconBgClass: 'bg-purple-300',
+        baseColorClass: 'bg-slate-100 hover:bg-slate-200 text-slate-800',
+        iconBgClass: 'bg-slate-300',
       };
     }
 
     return {
-      baseColorClass: 'bg-blue-100 hover:bg-blue-200 text-blue-800',
-      iconBgClass: 'bg-blue-300',
+      baseColorClass: 'bg-slate-100 hover:bg-slate-200 text-teal-900',
+      iconBgClass: 'bg-slate-300',
     };
   };
 
@@ -154,12 +154,12 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
     <div className="flex flex-col gap-8 w-full max-w-4xl mx-auto p-4 sm:p-8">
       <header className="flex justify-between items-center bg-white p-4 sm:p-6 rounded-[2rem] border-4 border-zinc-400 shadow-brutal w-full">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-yellow-300 rounded-full flex items-center justify-center text-3xl font-black text-zinc-900 border-4 border-zinc-400 shadow-brutal-sm animate-bounce-soft">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-teal-300 rounded-full flex items-center justify-center text-3xl font-black text-zinc-900 border-4 border-zinc-400 shadow-brutal-sm animate-bounce-soft">
             {userName.charAt(0)}
           </div>
           <div>
             <h1 className="font-display text-2xl sm:text-3xl font-black text-zinc-800 tracking-wide">{userName}さんのトップページ</h1>
-            <p className="text-md sm:text-lg font-bold text-pink-500 mt-1 inline-flex items-center gap-2">
+            <p className="text-md sm:text-lg font-bold text-teal-600 mt-1 inline-flex items-center gap-2">
               今日も学習を進めよう
               <Sparkles className={ICON_SIZE.sm} strokeWidth={ICON_STROKE.strong} />
             </p>
@@ -175,11 +175,11 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
       </header>
 
       <div className="flex justify-center -mt-4">
-        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-amber-100 to-yellow-200 px-8 py-3 rounded-full border-4 border-amber-400 shadow-brutal transform rotate-1 hover:-rotate-1 transition-transform">
-          <Star className="w-7 h-7 text-amber-500 fill-amber-400" />
-          <span className="text-xl sm:text-2xl font-black text-amber-800">保有ポイント</span>
-          <span className="text-3xl sm:text-4xl font-black text-amber-600 tabular-nums">{totalPoints.toLocaleString()}</span>
-          <span className="text-xl sm:text-2xl font-black text-amber-800">pt</span>
+        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-teal-100 to-teal-200 px-8 py-3 rounded-full border-4 border-teal-400 shadow-brutal transform rotate-1 hover:-rotate-1 transition-transform">
+          <Star className="w-7 h-7 text-teal-600 fill-teal-400" />
+          <span className="text-xl sm:text-2xl font-black text-teal-900">保有ポイント</span>
+          <span className="text-3xl sm:text-4xl font-black text-teal-700 tabular-nums">{totalPoints.toLocaleString()}</span>
+          <span className="text-xl sm:text-2xl font-black text-teal-900">pt</span>
         </div>
       </div>
 
@@ -219,7 +219,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                   <button
                     key={genre.id}
                     onClick={() => router.push(`/quiz?genre=${genre.id}`)}
-                    className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-blue-400 p-5 sm:p-6 flex items-start gap-4 sm:gap-5 group overflow-hidden relative ${styles.baseColorClass}`}
+                    className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-teal-500 p-5 sm:p-6 flex items-start gap-4 sm:gap-5 group overflow-hidden relative ${styles.baseColorClass}`}
                   >
                     <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full transform group-hover:scale-150 transition-transform duration-500" />
                     <div className={`shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${styles.iconBgClass}`}>
@@ -274,7 +274,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                 <button
                   key={genre.id}
                   onClick={() => setSelectedParentId(genre.id)}
-                  className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-blue-400 p-6 flex items-center gap-6 group overflow-hidden relative ${styles.baseColorClass}`}
+                  className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-teal-500 p-6 flex items-center gap-6 group overflow-hidden relative ${styles.baseColorClass}`}
                 >
                   <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full transform group-hover:scale-150 transition-transform duration-500" />
                   <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${styles.iconBgClass}`}>

@@ -150,15 +150,15 @@
 
 ---
 
-## 10. ⬜ ロゴ・favicon・OGP 画像の対応
+## 10. ✅ ロゴ・favicon・OGP 画像の対応
 
 **目的**: ブランディングの強化と、SNS シェア時の見栄えの向上。
 
 ### やること
-- [ ] Quizly のオリジナルロゴの作成
-- [ ] favicon の作成・設定（各サイズ対応）
-- [ ] OGP（Open Graph Protocol）画像の作成・メタタグ設定
-- [ ] Apple Touch Icon の設定（iPad ホーム画面追加時のアイコン）
+- [x] Quizly のオリジナルロゴの作成
+- [x] favicon の作成・設定（各サイズ対応）
+- [x] OGP（Open Graph Protocol）画像の作成・メタタグ設定
+- [x] Apple Touch Icon の設定（iPad ホーム画面追加時のアイコン）
 
 ---
 

@@ -81,11 +81,11 @@ export default function LoginClient({ users }: { users: User[] }) {
               }}
               role="button"
               tabIndex={0}
-              className="w-full h-full text-left bg-white rounded-3xl border-4 border-zinc-400 shadow-brutal hover:-translate-y-1 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-blue-400 p-4 sm:p-6 cursor-pointer relative"
+              className="w-full h-full text-left bg-white rounded-3xl border-4 border-zinc-400 shadow-brutal hover:-translate-y-1 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-teal-500 p-4 sm:p-6 cursor-pointer relative"
             >
               <div className="flex flex-col items-center gap-4 relative pointer-events-none">
                 {/* Avatar circle */}
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-yellow-100 flex items-center justify-center overflow-hidden border-4 border-zinc-400 shadow-brutal-sm group-hover:bg-yellow-200 transition-colors pointer-events-auto">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-4 border-zinc-400 shadow-brutal-sm group-hover:bg-teal-200 transition-colors pointer-events-auto">
                   {user.icon_url?.startsWith('/') ? (
                     <Image
                       src={user.icon_url}
@@ -104,14 +104,14 @@ export default function LoginClient({ users }: { users: User[] }) {
                 </div>
                 
                 {/* Name Badge */}
-                <span className="text-lg sm:text-xl font-bold text-zinc-800 bg-pink-100 px-4 py-1 rounded-full border-2 border-zinc-400">
+                <span className="text-lg sm:text-xl font-bold text-zinc-800 bg-slate-100 px-4 py-1 rounded-full border-2 border-zinc-400">
                   {user.name}
                 </span>
 
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-blue-100 border-2 border-zinc-400 shadow-brutal-sm text-blue-600 hover:bg-blue-200 hover:text-blue-700 active-brutal-push p-0 pointer-events-auto"
+                  className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-slate-100 border-2 border-zinc-400 shadow-brutal-sm text-teal-700 hover:bg-slate-200 hover:text-teal-800 active-brutal-push p-0 pointer-events-auto"
                   onClick={(e) => {
                     e.stopPropagation();
                     setEditingAvatarUser(user);
@@ -137,20 +137,20 @@ export default function LoginClient({ users }: { users: User[] }) {
       <Dialog open={!!selectedUser} onOpenChange={(open) => {
         if (!open) setSelectedUser(null);
       }}>
-        <DialogContent className="sm:max-w-sm rounded-[2.5rem] p-0 overflow-hidden border-4 border-zinc-400 shadow-brutal-lg bg-emerald-50 max-h-[90vh]">
+        <DialogContent className="sm:max-w-sm rounded-[2.5rem] p-0 overflow-hidden border-4 border-zinc-400 shadow-brutal-lg bg-slate-50 max-h-[90vh]">
           {/* Fun header */}
-          <div className="bg-blue-400 p-6 border-b-4 border-zinc-400 text-center relative">
+          <div className="bg-teal-500 p-6 border-b-4 border-zinc-400 text-center relative">
             <div className="absolute top-2 left-2 w-4 h-4 rounded-full bg-white/50" />
             <div className="absolute bottom-2 right-4 w-6 h-6 rounded-full bg-white/20" />
             <h2 className="text-2xl font-black text-white drop-shadow-[2px_2px_0_rgba(24,24,27,1)]">
               {selectedUser?.name}さんの
             </h2>
-            <h3 className="text-xl font-bold text-yellow-200 drop-shadow-[1px_1px_0_rgba(24,24,27,1)]">
+            <h3 className="text-xl font-bold text-teal-200 drop-shadow-[1px_1px_0_rgba(24,24,27,1)]">
               あんしょうばんごう
             </h3>
           </div>
 
-          <div className="p-6 flex flex-col items-center gap-6 bg-emerald-50">
+          <div className="p-6 flex flex-col items-center gap-6 bg-slate-50">
             {/* PIN Display */}
             <div className="w-full bg-white border-4 border-zinc-400 rounded-2xl p-4 flex justify-center items-center shadow-inner h-20">
               <div className="flex gap-3">
@@ -175,7 +175,7 @@ export default function LoginClient({ users }: { users: User[] }) {
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                 <button
                   key={num}
-                  className="h-16 text-3xl font-black rounded-2xl bg-white border-4 border-zinc-400 shadow-brutal text-blue-600 hover:bg-blue-50 active-brutal-push focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="h-16 text-3xl font-black rounded-2xl bg-white border-4 border-zinc-400 shadow-brutal text-teal-700 hover:bg-slate-50 active-brutal-push focus:outline-none focus:ring-2 focus:ring-teal-500"
                   onClick={() => {
                     if (pinInput.length < 4) setPinInput(prev => prev + num);
                   }}
@@ -185,7 +185,7 @@ export default function LoginClient({ users }: { users: User[] }) {
               ))}
               <div />
               <button
-                className="h-16 text-3xl font-black rounded-2xl bg-white border-4 border-zinc-400 shadow-brutal text-blue-600 hover:bg-blue-50 active-brutal-push focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="h-16 text-3xl font-black rounded-2xl bg-white border-4 border-zinc-400 shadow-brutal text-teal-700 hover:bg-slate-50 active-brutal-push focus:outline-none focus:ring-2 focus:ring-teal-500"
                 onClick={() => {
                   if (pinInput.length < 4) setPinInput(prev => prev + '0');
                 }}
@@ -193,7 +193,7 @@ export default function LoginClient({ users }: { users: User[] }) {
                 0
               </button>
               <button
-                className="h-16 text-lg font-bold rounded-2xl bg-pink-100 border-4 border-zinc-400 shadow-brutal text-pink-700 hover:bg-pink-200 active-brutal-push focus:outline-none focus:ring-2 focus:ring-pink-400"
+                className="h-16 text-lg font-bold rounded-2xl bg-slate-100 border-4 border-zinc-400 shadow-brutal text-teal-700 hover:bg-teal-200 active-brutal-push focus:outline-none focus:ring-2 focus:ring-teal-500"
                 onClick={() => setPinInput(prev => prev.slice(0, -1))}
               >
                 けす
@@ -201,7 +201,7 @@ export default function LoginClient({ users }: { users: User[] }) {
             </div>
 
             <button 
-              className="w-full py-4 text-2xl font-black rounded-full bg-yellow-400 border-4 border-zinc-400 shadow-brutal text-zinc-900 hover:bg-yellow-500 active-brutal-push disabled:opacity-50 disabled:active:shadow-brutal disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:hover:bg-yellow-400 transition-all mt-2"
+              className="w-full py-4 text-2xl font-black rounded-full bg-teal-400 border-4 border-zinc-400 shadow-brutal text-zinc-900 hover:bg-teal-500 active-brutal-push disabled:opacity-50 disabled:active:shadow-brutal disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:hover:bg-teal-400 transition-all mt-2"
               disabled={pinInput.length !== 4}
               onClick={handlePinSubmit}
             >
@@ -215,9 +215,9 @@ export default function LoginClient({ users }: { users: User[] }) {
       <Dialog open={!!editingAvatarUser} onOpenChange={(open) => {
         if (!open) setEditingAvatarUser(null);
       }}>
-        <DialogContent className="sm:max-w-md rounded-[2.5rem] p-6 border-4 border-zinc-400 shadow-brutal-lg bg-pink-50">
+        <DialogContent className="sm:max-w-md rounded-[2.5rem] p-6 border-4 border-zinc-400 shadow-brutal-lg bg-slate-50">
           <DialogHeader>
-            <DialogTitle className="text-center text-3xl font-black text-pink-500 drop-shadow-[2px_2px_0_rgba(24,24,27,1)] mb-4">
+            <DialogTitle className="text-center text-3xl font-black text-teal-600 drop-shadow-[2px_2px_0_rgba(24,24,27,1)] mb-4">
               アバターをえらぶ
             </DialogTitle>
           </DialogHeader>
@@ -228,7 +228,7 @@ export default function LoginClient({ users }: { users: User[] }) {
                 key={avatar}
                 disabled={isUpdatingAvatar}
                 onClick={() => handleAvatarSelect(avatar)}
-                className="aspect-square rounded-2xl overflow-hidden border-4 border-transparent hover:border-zinc-400 hover:shadow-brutal bg-pink-100 transition-all active-brutal-push disabled:opacity-50 group"
+                className="aspect-square rounded-2xl overflow-hidden border-4 border-transparent hover:border-zinc-400 hover:shadow-brutal bg-slate-100 transition-all active-brutal-push disabled:opacity-50 group"
               >
                 <Image
                   src={avatar}

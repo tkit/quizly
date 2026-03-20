@@ -63,9 +63,9 @@
 }
 
 :root {
-  /* Playful Neo-Brutalism Light Theme */
-  --background: #fefce8; /* warm cream / yellow-50 */
-  --foreground: #3f3f46; /* zinc-600 — softer than pure black */
+  /* Slate + Teal Light Theme (aligned with logo) */
+  --background: #f8fafc; /* slate-50 */
+  --foreground: #334155; /* slate-700 */
   
   --card: #ffffff;
   --card-foreground: #3f3f46;
@@ -73,24 +73,24 @@
   --popover: #ffffff;
   --popover-foreground: #3f3f46;
   
-  --primary: #3b82f6; /* blue-500 */
+  --primary: #0f766e; /* teal-700 */
   --primary-foreground: #ffffff;
   
-  --secondary: #fef08a; /* yellow-200 */
-  --secondary-foreground: #854d0e; /* yellow-800 */
+  --secondary: #ccfbf1; /* teal-100 */
+  --secondary-foreground: #134e4a; /* teal-900 */
   
   --muted: #f5f5f4; /* stone-100 */
   --muted-foreground: #71717a; /* zinc-500 */
   
-  --accent: #fbcfe8; /* pink-200 */
-  --accent-foreground: #831843; /* pink-900 */
+  --accent: #e2e8f0; /* slate-200 */
+  --accent-foreground: #0f172a; /* slate-900 */
   
   --destructive: #ef4444; /* red-500 */
   --destructive-foreground: #ffffff;
   
   --border: #a1a1aa; /* zinc-400 — soft border */
   --input: #a1a1aa;
-  --ring: #3b82f6; /* Focus ring color */
+  --ring: #0f766e; /* Focus ring color */
   
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -108,9 +108,8 @@
 }
 
 .dark {
-  /* For kids app, we might just enforce light mode or use a playful dark mode */
-  --background: #18181b;
-  --foreground: #f0fdf4;
+  --background: #0f172a;
+  --foreground: #e2e8f0;
   
   --card: #27272a;
   --card-foreground: #f4f4f5;
@@ -118,24 +117,24 @@
   --popover: #27272a;
   --popover-foreground: #f4f4f5;
   
-  --primary: #60a5fa; /* blue-400 */
-  --primary-foreground: #18181b;
+  --primary: #5eead4; /* teal-300 */
+  --primary-foreground: #042f2e;
   
-  --secondary: #fef08a; /* yellow-200 */
-  --secondary-foreground: #854d0e;
+  --secondary: #1e293b; /* slate-800 */
+  --secondary-foreground: #e2e8f0;
   
   --muted: #3f3f46;
   --muted-foreground: #a1a1aa;
   
-  --accent: #fbcfe8; /* pink-200 */
-  --accent-foreground: #831843;
+  --accent: #334155; /* slate-700 */
+  --accent-foreground: #f8fafc;
   
   --destructive: #f87171; /* red-400 */
   --destructive-foreground: #18181b;
   
   --border: #f4f4f5; /* thick white borders in dark mode */
   --input: #f4f4f5;
-  --ring: #60a5fa;
+  --ring: #5eead4;
   
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
@@ -151,13 +150,6 @@
   body {
     @apply bg-background text-foreground font-sans;
     min-height: 100vh;
-    background-image:
-      radial-gradient(circle at 10% 10%, rgba(253, 224, 71, 0.25), transparent 30%),
-      radial-gradient(circle at 90% 20%, rgba(147, 197, 253, 0.2), transparent 35%),
-      radial-gradient(circle at 40% 90%, rgba(251, 207, 232, 0.22), transparent 30%),
-      radial-gradient(#e7e5e4 0.8px, transparent 0.8px);
-    background-size: auto, auto, auto, 20px 20px;
-    background-attachment: fixed;
   }
 }
 
