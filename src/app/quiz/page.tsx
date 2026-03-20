@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import QuizClient from './QuizClient';
+import MessageCard from '@/components/feedback/MessageCard';
+import PageShell from '@/components/layout/PageShell';
 
 export const revalidate = 0;
 
@@ -16,9 +18,15 @@ export default async function QuizPage({
 
   if (!genreId) {
     return (
-      <div className="flex min-h-screen-safe items-center justify-center p-4 text-red-500">
-        ジャンルが指定されていません。
-      </div>
+      <PageShell maxWidthClass="max-w-3xl" mainClassName="flex flex-1 items-center justify-center">
+        <MessageCard
+          title="ジャンルが指定されていません。"
+          description="ダッシュボードからカテゴリを選んで開始してください。"
+          actionLabel="ダッシュボードへ"
+          actionHref="/dashboard"
+          tone="error"
+        />
+      </PageShell>
     );
   }
 
@@ -31,28 +39,29 @@ export default async function QuizPage({
 
   if (genreError || !genre) {
     return (
-      <div className="flex min-h-screen-safe items-center justify-center p-4 text-red-500">
-        ジャンルの読み込みに失敗しました。
-      </div>
+      <PageShell maxWidthClass="max-w-3xl" mainClassName="flex flex-1 items-center justify-center">
+        <MessageCard
+          title="ジャンルの読み込みに失敗しました。"
+          description="時間をおいて再度お試しください。"
+          actionLabel="ダッシュボードへ"
+          actionHref="/dashboard"
+          tone="error"
+        />
+      </PageShell>
     );
   }
 
   if (genre.parent_id == null) {
     return (
-      <div className="flex min-h-screen-safe flex-col items-center justify-center gap-6 bg-zinc-50 p-6 text-center dark:bg-zinc-950">
-        <div className="w-full max-w-xl rounded-[2rem] border-4 border-zinc-400 bg-white p-6 shadow-brutal sm:p-8">
-          <p className="mb-3 text-[clamp(1.25rem,5vw,1.5rem)] font-black text-zinc-800">サブカテゴリを選択してから開始してください。</p>
-          <p className="text-base font-bold text-zinc-600 sm:text-lg">
-            「{genre.name}」は教科（親カテゴリ）のため、クイズは開始できません。
-          </p>
-        </div>
-        <a
-          href="/dashboard"
-          className="inline-flex min-h-11 items-center justify-center rounded-full border-4 border-zinc-400 bg-teal-400 px-8 py-2 font-black text-zinc-900 shadow-brutal hover:bg-teal-500"
-        >
-          ダッシュボードに戻る
-        </a>
-      </div>
+      <PageShell maxWidthClass="max-w-3xl" mainClassName="flex flex-1 items-center justify-center">
+        <MessageCard
+          title="サブカテゴリを選択してから開始してください。"
+          description={`「${genre.name}」は教科（親カテゴリ）のため、クイズは開始できません。`}
+          actionLabel="ダッシュボードへ戻る"
+          actionHref="/dashboard"
+          tone="warning"
+        />
+      </PageShell>
     );
   }
 
@@ -73,9 +82,15 @@ export default async function QuizPage({
 
   if (questionsError || !allQuestions) {
     return (
-      <div className="flex min-h-screen-safe items-center justify-center p-4 text-red-500">
-        問題の読み込みに失敗しました。
-      </div>
+      <PageShell maxWidthClass="max-w-3xl" mainClassName="flex flex-1 items-center justify-center">
+        <MessageCard
+          title="問題の読み込みに失敗しました。"
+          description="通信状況をご確認のうえ、再度お試しください。"
+          actionLabel="ダッシュボードへ"
+          actionHref="/dashboard"
+          tone="error"
+        />
+      </PageShell>
     );
   }
 
@@ -85,15 +100,13 @@ export default async function QuizPage({
       : allQuestions.length;
 
   return (
-    <div className="flex min-h-screen-safe flex-col items-center bg-zinc-50 px-4 py-5 sm:px-6 sm:py-8 lg:px-8 dark:bg-zinc-950">
-      <main className="w-full max-w-3xl flex flex-col h-full flex-1">
-        <QuizClient 
-          genre={genre} 
-          allQuestions={allQuestions} 
-          mode={mode} 
-          count={count} 
-        />
-      </main>
-    </div>
+    <PageShell maxWidthClass="max-w-3xl" mainClassName="flex h-full flex-1 flex-col">
+      <QuizClient 
+        genre={genre} 
+        allQuestions={allQuestions} 
+        mode={mode} 
+        count={count} 
+      />
+    </PageShell>
   );
 }

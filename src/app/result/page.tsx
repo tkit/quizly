@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import ResultClient from './ResultClient';
+import MessageCard from '@/components/feedback/MessageCard';
+import PageShell from '@/components/layout/PageShell';
 
 export const revalidate = 0;
 
@@ -13,9 +15,15 @@ export default async function ResultPage({
 
   if (!sessionId) {
     return (
-      <div className="flex min-h-screen-safe items-center justify-center p-4 text-red-500">
-        セッションIDが指定されていません。
-      </div>
+      <PageShell maxWidthClass="max-w-3xl" mainClassName="flex flex-1 items-center justify-center">
+        <MessageCard
+          title="セッションIDが指定されていません。"
+          description="クイズ終了後の画面から結果を表示してください。"
+          actionLabel="ダッシュボードへ"
+          actionHref="/dashboard"
+          tone="error"
+        />
+      </PageShell>
     );
   }
 
@@ -36,9 +44,15 @@ export default async function ResultPage({
   if (sessionError || !session) {
     console.error('Error fetching session:', sessionError);
     return (
-      <div className="flex min-h-screen-safe items-center justify-center p-4 text-red-500">
-        結果の読み込みに失敗しました。
-      </div>
+      <PageShell maxWidthClass="max-w-3xl" mainClassName="flex flex-1 items-center justify-center">
+        <MessageCard
+          title="結果の読み込みに失敗しました。"
+          description="時間をおいて再度お試しください。"
+          actionLabel="ダッシュボードへ"
+          actionHref="/dashboard"
+          tone="error"
+        />
+      </PageShell>
     );
   }
 
@@ -63,10 +77,8 @@ export default async function ResultPage({
   }
 
   return (
-    <div className="flex min-h-screen-safe flex-col items-center bg-zinc-50 px-4 py-5 sm:px-6 sm:py-8 lg:px-8 dark:bg-zinc-950">
-      <main className="w-full max-w-3xl flex flex-col gap-8">
-        <ResultClient session={session} history={history || []} />
-      </main>
-    </div>
+    <PageShell maxWidthClass="max-w-3xl">
+      <ResultClient session={session} history={history || []} />
+    </PageShell>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CircleAlert, Circle, LogOut, Sparkles, Star, ChevronLeft, Check, CheckCheck } from 'lucide-react';
+import { CircleAlert, LogOut, Sparkles, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { GenreIcon } from '@/components/GenreIcon';
 import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
@@ -85,26 +85,26 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
     () => parentGenres.find((genre) => genre.id === selectedParentId) ?? null,
     [parentGenres, selectedParentId],
   );
-  const getStudyStatusIcon = (status: 'unattempted' | 'studied_not_perfect' | 'perfect_cleared') => {
+  const getStudyStatusChip = (status: 'unattempted' | 'studied_not_perfect' | 'perfect_cleared') => {
     if (status === 'perfect_cleared') {
       return (
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-zinc-400 bg-teal-200 text-teal-800 sm:h-10 sm:w-10" title="受講済み（全問正解達成）" aria-label="受講済み（全問正解達成）">
-          <CheckCheck className={ICON_SIZE.md} strokeWidth={ICON_STROKE.bold} />
+        <span className="inline-flex items-center rounded-full border-2 border-teal-300 bg-teal-100 px-3 py-1 text-xs font-black text-teal-800 sm:text-sm" title="受講済み（全問正解達成）" aria-label="受講済み（全問正解達成）">
+          全問正解達成
         </span>
       );
     }
 
     if (status === 'studied_not_perfect') {
       return (
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-zinc-400 bg-zinc-200 text-zinc-700 sm:h-10 sm:w-10" title="受講済み（不正解あり）" aria-label="受講済み（不正解あり）">
-          <Check className={ICON_SIZE.md} strokeWidth={ICON_STROKE.bold} />
+        <span className="inline-flex items-center rounded-full border-2 border-zinc-300 bg-zinc-100 px-3 py-1 text-xs font-black text-zinc-700 sm:text-sm" title="受講済み（不正解あり）" aria-label="受講済み（不正解あり）">
+          受講済み
         </span>
       );
     }
 
     return (
-      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-zinc-400 bg-white/80 text-zinc-500 sm:h-10 sm:w-10" title="未受講" aria-label="未受講">
-        <Circle className={ICON_SIZE.md} strokeWidth={ICON_STROKE.bold} />
+      <span className="inline-flex items-center rounded-full border-2 border-zinc-300 bg-white/90 px-3 py-1 text-xs font-black text-zinc-600 sm:text-sm" title="未受講" aria-label="未受講">
+        未受講
       </span>
     );
   };
@@ -199,28 +199,32 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                         strokeWidth={ICON_STROKE.medium}
                       />
                     </div>
-                    <div className="flex-1 min-w-0 z-10">
+                    <div className="z-10 flex min-w-0 flex-1 flex-col gap-2 sm:gap-3">
                       <h3
-                        className="font-display overflow-hidden text-lg font-black leading-tight tracking-wide drop-shadow-sm [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] sm:text-2xl"
+                        className="font-display overflow-hidden text-xl font-black leading-tight tracking-wide text-zinc-900 drop-shadow-sm [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] sm:text-[1.85rem]"
                         title={genre.name}
                       >
                         {genre.name}
                       </h3>
                       <p
-                        className="mt-1.5 overflow-hidden text-sm font-bold leading-snug opacity-80 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] sm:mt-2 sm:text-base"
+                        className="overflow-hidden text-sm font-bold leading-relaxed text-zinc-700/85 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] sm:text-base"
                         title={genre.description ?? ''}
                       >
                         {genre.description}
                       </p>
-                      <p className={`mt-2 inline-flex items-center rounded-full border-2 px-3 py-1 text-xs font-black sm:mt-3 sm:text-base ${tone.badgeClass}`}>
-                        全{genre.question_count}問
-                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 sm:gap-3">
+                        <p className={`inline-flex items-center rounded-full border-2 px-3 py-1 text-xs font-black sm:text-base ${tone.badgeClass}`}>
+                          全{genre.question_count}問
+                        </p>
+                        {isStudyStatusLoaded ? getStudyStatusChip(studyStatus) : (
+                          <span className="inline-flex h-6 w-20 animate-pulse rounded-full border-2 border-zinc-300 bg-zinc-100 sm:h-7" />
+                        )}
+                      </div>
                     </div>
-                    <div className="z-10 hidden min-h-full shrink-0 flex-col items-end justify-between gap-3 sm:flex">
-                      {isStudyStatusLoaded ? getStudyStatusIcon(studyStatus) : (
-                        <span className="h-10 w-10 shrink-0 animate-pulse rounded-full border-2 border-zinc-300 bg-zinc-100" />
-                      )}
-                      <div className={`text-4xl font-black opacity-60 transition-all group-hover:translate-x-2 group-hover:opacity-100 sm:text-5xl ${tone.arrowClass}`}>→</div>
+                    <div className="z-10 shrink-0 self-center">
+                      <span className={`inline-flex h-11 w-11 items-center justify-center rounded-full border-4 border-zinc-400 bg-white text-zinc-600 shadow-brutal-sm transition-all group-hover:translate-x-1 sm:h-12 sm:w-12 ${tone.arrowClass}`}>
+                        <ChevronRight className={ICON_SIZE.md} strokeWidth={ICON_STROKE.bold} />
+                      </span>
                     </div>
                   </button>
                 );
@@ -244,7 +248,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                 <button
                   key={genre.id}
                   onClick={() => setSelectedParentId(genre.id)}
-                  className={`group relative flex w-full items-center gap-4 overflow-hidden rounded-[2rem] border-4 border-zinc-400 bg-white p-4 text-left text-zinc-900 shadow-brutal transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-brutal-lg active-brutal-push focus:ring-4 focus:outline-none ${tone.focusRingClass} sm:gap-6 sm:p-6`}
+                  className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-[2rem] border-4 border-zinc-400 bg-white p-4 text-left text-zinc-900 shadow-brutal transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-brutal-lg active-brutal-push focus:ring-4 focus:outline-none ${tone.focusRingClass} sm:gap-6 sm:p-6`}
                 >
                   <div className={`absolute left-0 top-0 h-full w-4 ${tone.stripClass}`} />
                   <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full transform group-hover:scale-150 transition-transform duration-500" />
@@ -255,11 +259,15 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                       strokeWidth={ICON_STROKE.medium}
                     />
                   </div>
-                  <div className="z-10 min-w-0 flex-1">
-                    <h3 className="font-display mb-1 text-xl font-black tracking-wide drop-shadow-sm sm:mb-2 sm:text-3xl">{genre.name}</h3>
-                    <p className="text-sm font-bold opacity-80 sm:text-lg">{genre.description}</p>
+                  <div className="z-10 flex min-w-0 flex-1 flex-col gap-1.5 sm:gap-2">
+                    <h3 className="font-display text-xl font-black tracking-wide text-zinc-900 drop-shadow-sm sm:text-3xl">{genre.name}</h3>
+                    <p className="text-sm font-bold leading-relaxed text-zinc-700/85 sm:text-lg">{genre.description}</p>
                   </div>
-                  <div className={`z-10 hidden text-5xl font-black opacity-60 transition-all group-hover:translate-x-2 group-hover:opacity-100 sm:block ${tone.arrowClass}`}>→</div>
+                  <div className="z-10 shrink-0">
+                    <span className={`inline-flex h-11 w-11 items-center justify-center rounded-full border-4 border-zinc-400 bg-white text-zinc-600 shadow-brutal-sm transition-all group-hover:translate-x-1 sm:h-12 sm:w-12 ${tone.arrowClass}`}>
+                      <ChevronRight className={ICON_SIZE.md} strokeWidth={ICON_STROKE.bold} />
+                    </span>
+                  </div>
                 </button>
               );
             })}

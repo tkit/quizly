@@ -1,10 +1,10 @@
 import LoginClient from './LoginClient';
 import QuizlyLogo from '@/components/QuizlyLogo';
+import PageShell from '@/components/layout/PageShell';
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen-safe flex-col items-center px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
-      <main className="flex w-full max-w-4xl flex-col items-center gap-6 pt-2 sm:gap-8 sm:pt-8">
+    <PageShell maxWidthClass="max-w-4xl" mainClassName="flex flex-col items-center gap-6 pt-2 sm:gap-8 sm:pt-8">
         {/* Playful Title Banner */}
         <div className="relative mx-auto mb-2 w-full max-w-lg space-y-3 text-center sm:mb-4 sm:space-y-4">
           <QuizlyLogo
@@ -19,10 +19,9 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="w-full rounded-[2rem] border-4 border-zinc-400 bg-white/50 p-4 shadow-brutal backdrop-blur-sm sm:p-7 md:p-8">
+        <div className="bg-accent-soft shadow-soft-accent w-full rounded-[2rem] border-4 border-zinc-400 p-4 backdrop-blur-sm sm:p-7 md:p-8">
           <LoginClient users={[]} />
         </div>
-      </main>
-    </div>
+    </PageShell>
   );
 }

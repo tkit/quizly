@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BadgeCheck, CheckCircle, Home, Medal, NotebookPen, RotateCcw, Sparkles, Star, ThumbsUp, Trophy, XCircle } from 'lucide-react';
+import Image from 'next/image';
+import { BadgeCheck, CheckCircle, Home, NotebookPen, RotateCcw, Sparkles, Star, XCircle } from 'lucide-react';
 import { POINTS_PER_CORRECT } from '@/lib/points';
 import { fireResultEffect } from '@/lib/effects/confetti';
 import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
@@ -71,13 +72,13 @@ export default function ResultClient({
   history: HistoryItem[];
 }) {
   const router = useRouter();
+  const [expandedHistoryByIndex, setExpandedHistoryByIndex] = useState<Record<number, boolean>>({});
 
   const isPerfect = session.correct_count === session.total_questions;
   const isGood = session.correct_count >= session.total_questions * 0.8;
   const earnedPoints = session.earned_points || 0;
   const basePoints = session.correct_count * POINTS_PER_CORRECT;
   const bonusPoints = earnedPoints - basePoints;
-  const ResultIcon = isPerfect ? Trophy : isGood ? Medal : ThumbsUp;
 
   const displayPoints = useCountUp(earnedPoints, 1500);
   const hasTriggeredResultEffect = useRef(false);
@@ -105,18 +106,18 @@ export default function ResultClient({
     ? {
         panel: 'bg-amber-100',
         score: 'text-amber-800',
-        icon: 'text-amber-700',
+        subline: '全問正解です。すばらしい！',
       }
     : isGood
       ? {
         panel: 'bg-slate-100',
         score: 'text-slate-700',
-        icon: 'text-teal-800',
+        subline: 'この調子で次のカテゴリへ進もう。',
       }
       : {
           panel: 'bg-zinc-100',
           score: 'text-zinc-700',
-          icon: 'text-zinc-700',
+          subline: '振り返りを見て、もう一度チャレンジしよう。',
         };
 
   return (
@@ -126,17 +127,27 @@ export default function ResultClient({
         {/* Background decorations */}
         <div className="absolute left-4 top-4 h-10 w-10 rounded-full bg-white/50 blur-sm sm:h-12 sm:w-12" />
         <div className="absolute bottom-10 right-10 h-16 w-16 rounded-full bg-white/40 blur-md sm:bottom-12 sm:right-12 sm:h-24 sm:w-24" />
-        
-        <div className="relative z-10 mb-3 flex justify-center animate-bounce drop-shadow-[4px_4px_0_rgba(24,24,27,1)] sm:mb-4">
-          <ResultIcon
-            className={`${ICON_SIZE.hero} ${resultTone.icon}`}
-            strokeWidth={ICON_STROKE.medium}
-          />
-        </div>
-        
-        <h1 className="relative z-10 mb-4 text-[clamp(2rem,10vw,3.75rem)] font-black tracking-wide text-zinc-900 drop-shadow-sm">
+
+        {isPerfect && (
+          <div className="relative z-10 mb-3 flex justify-center sm:mb-4">
+            <Image
+              src="/illustrations/result-trophy.svg"
+              alt="パーフェクト達成トロフィー"
+              width={170}
+              height={117}
+              priority
+              className="h-auto w-[120px] sm:w-[170px]"
+            />
+          </div>
+        )}
+
+        <h1 className="relative z-10 mb-4 text-[clamp(2rem,10vw,3.4rem)] font-black tracking-wide text-zinc-900 drop-shadow-sm">
           {isPerfect ? 'パーフェクト' : isGood ? 'すばらしい結果です' : 'おつかれさまでした'}
         </h1>
+
+        <p className="relative z-10 mb-2 text-[clamp(1rem,4.5vw,1.2rem)] font-bold text-zinc-700 sm:mb-3">
+          {resultTone.subline}
+        </p>
         
         <div className="relative z-10 mt-1 inline-block rotate-1 rounded-full border-4 border-zinc-400 bg-white px-4 py-2 shadow-brutal sm:mt-2 sm:px-8 sm:py-3">
           <p className="text-[clamp(1.1rem,5vw,1.9rem)] font-black text-zinc-800">
@@ -146,25 +157,49 @@ export default function ResultClient({
 
         {/* Points Display */}
         {earnedPoints > 0 && (
-          <div className="relative z-10 mt-6 animate-points-pop sm:mt-8">
-            <div className={`inline-flex max-w-full -rotate-1 flex-col items-center gap-2 rounded-[2rem] border-4 px-5 py-4 shadow-brutal sm:px-10 sm:py-5 ${
+          <div className="relative z-10 mt-6 sm:mt-8">
+            <div className={`inline-flex max-w-full flex-col items-stretch gap-4 rounded-[2rem] border-4 px-5 py-4 shadow-[0_10px_28px_rgba(15,118,110,0.2)] sm:px-10 sm:py-5 ${
               isPerfect
                 ? 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300'
                 : 'bg-gradient-to-br from-teal-50 to-teal-100 border-teal-300'
             }`}>
-              <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                 <Star className={`h-6 w-6 sm:h-8 sm:w-8 ${isPerfect ? 'text-amber-600 fill-amber-300' : 'text-teal-600 fill-teal-300'}`} />
                 <span className={`text-[clamp(1.25rem,5.2vw,1.9rem)] font-black ${isPerfect ? 'text-amber-900' : 'text-teal-900'}`}>ポイント獲得</span>
                 <Star className={`h-6 w-6 sm:h-8 sm:w-8 ${isPerfect ? 'text-amber-600 fill-amber-300' : 'text-teal-600 fill-teal-300'}`} />
               </div>
-              <div className={`text-[clamp(2.2rem,12vw,4.5rem)] font-black tabular-nums tracking-tight ${isPerfect ? 'text-amber-800' : 'text-teal-800'}`}>
-                +{displayPoints}<span className="ml-1 text-[clamp(1.4rem,7vw,2.25rem)]">pt</span>
+
+              <div className="rounded-[1.6rem] border-4 border-zinc-400 bg-white/90 px-4 py-3 shadow-brutal-sm sm:px-6 sm:py-4">
+                <p className="text-sm font-black text-zinc-600 sm:text-base">合計獲得pt</p>
+                <div className={`mt-1 text-[clamp(2.2rem,12vw,4.5rem)] font-black tabular-nums tracking-tight ${isPerfect ? 'text-amber-800' : 'text-teal-800'}`}>
+                  +{displayPoints}<span className="ml-1 text-[clamp(1.4rem,7vw,2.25rem)]">pt</span>
+                </div>
               </div>
+
+              <div className="grid grid-cols-1 gap-2 rounded-[1.2rem] border-4 border-zinc-400 bg-white/80 p-3 text-left shadow-brutal-sm sm:grid-cols-2 sm:gap-3 sm:p-4">
+                <div className="rounded-xl border-2 border-teal-300 bg-teal-50 px-3 py-2">
+                  <p className="text-xs font-black text-teal-700 sm:text-sm">正答ポイント</p>
+                  <p className="text-xl font-black text-teal-800 sm:text-2xl">+{basePoints}pt</p>
+                </div>
+                <div className={`rounded-xl border-2 px-3 py-2 ${
+                  bonusPoints > 0
+                    ? 'border-amber-300 bg-amber-50'
+                    : 'border-zinc-300 bg-zinc-100'
+                }`}>
+                  <p className={`text-xs font-black sm:text-sm ${
+                    bonusPoints > 0 ? 'text-amber-700' : 'text-zinc-600'
+                  }`}>ボーナス</p>
+                  <p className={`text-xl font-black sm:text-2xl ${
+                    bonusPoints > 0 ? 'text-amber-800' : 'text-zinc-700'
+                  }`}>+{Math.max(bonusPoints, 0)}pt</p>
+                </div>
+              </div>
+
               {isPerfect && bonusPoints > 0 && (
-                <div className="rotate-1 rounded-full border-2 border-amber-300 bg-amber-50 px-3 py-1 text-sm font-black text-amber-900 shadow-brutal-sm sm:px-4 sm:text-xl">
+                <div className="rounded-full border-2 border-amber-300 bg-amber-50 px-3 py-1 text-sm font-black text-amber-900 shadow-brutal-sm sm:px-4 sm:text-xl">
                   <span className="inline-flex items-center gap-2">
                     <BadgeCheck className={ICON_SIZE.sm} strokeWidth={ICON_STROKE.strong} />
-                    パーフェクトボーナス ×1.5！ +{bonusPoints}pt
+                    パーフェクトボーナス ×1.5 適用
                   </span>
                 </div>
               )}
@@ -203,10 +238,30 @@ export default function ResultClient({
           {history.map((record, index) => {
             const q = Array.isArray(record.questions) ? record.questions[0] : record.questions;
             if (!q) return null;
+            const awardedPoints = record.is_correct ? POINTS_PER_CORRECT : 0;
             return (
               <div key={index} className={`flex flex-col gap-3 rounded-[1.6rem] border-4 border-zinc-400 p-4 shadow-brutal-sm sm:gap-4 sm:rounded-[2rem] sm:p-8 ${
                 record.is_correct ? 'bg-teal-50/50' : 'bg-rose-50'
               }`}>
+                <div className="flex items-start justify-between gap-3 sm:gap-4">
+                  <div className="mt-0.5 flex shrink-0 gap-2 sm:gap-3">
+                    <span className={`rounded-full border-2 px-3 py-1 text-xs font-black sm:text-sm ${
+                      record.is_correct
+                        ? 'border-teal-300 bg-teal-100 text-teal-800'
+                        : 'border-rose-300 bg-rose-100 text-rose-700'
+                    }`}>
+                      {record.is_correct ? '正解' : '不正解'}
+                    </span>
+                    <span className={`rounded-full border-2 px-3 py-1 text-xs font-black sm:text-sm ${
+                      awardedPoints > 0
+                        ? 'border-amber-300 bg-amber-100 text-amber-800'
+                        : 'border-zinc-300 bg-zinc-100 text-zinc-700'
+                    }`}>
+                      +{awardedPoints}pt
+                    </span>
+                  </div>
+                </div>
+
                 <div className="flex items-start gap-3 sm:gap-4">
                    {record.is_correct ? (
                       <div className="mt-1 shrink-0 rounded-full border-2 border-zinc-400 bg-teal-400 shadow-sm">
@@ -220,11 +275,6 @@ export default function ResultClient({
                    <p className="flex-1 text-lg font-black leading-snug text-zinc-800 drop-shadow-sm sm:text-2xl">
                       <span className="opacity-50 mr-2">{index + 1}.</span>{q.question_text}
                    </p>
-                   {record.is_correct && (
-                     <span className="shrink-0 rounded-xl border-2 border-teal-300 bg-teal-50 px-2 py-1 text-sm font-black text-teal-600 sm:text-lg">
-                       +{POINTS_PER_CORRECT}pt
-                     </span>
-                   )}
                 </div>
 
                 <div className="mt-1 flex flex-col gap-3 border-t-4 border-zinc-300 pt-4 sm:mt-2 sm:gap-4 sm:border-l-4 sm:border-t-0 sm:border-zinc-400 sm:py-2 sm:pl-6 sm:ml-12">
@@ -238,7 +288,7 @@ export default function ResultClient({
                        </span>
                      </div>
                    )}
-                   <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                      <span className="text-teal-700 font-black bg-white border-2 border-zinc-400 shadow-sm px-3 py-1 rounded-xl w-fit">
                        正解:
                      </span>
@@ -248,13 +298,28 @@ export default function ResultClient({
                    </div>
                    
                    {q.explanation && (
-                     <div className="relative mt-3 rounded-2xl border-4 border-zinc-400 bg-white p-4 shadow-brutal-sm sm:mt-4 sm:p-5">
-                        {/* decorative tape */}
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 bg-teal-200/80 -rotate-2 mix-blend-multiply" />
-                        <p className="text-base font-bold leading-relaxed text-zinc-800 sm:text-xl">
-                          {q.explanation}
-                        </p>
-                     </div>
+                     <>
+                       <button
+                         type="button"
+                         className="sm:hidden mt-2 w-full rounded-xl border-2 border-zinc-400 bg-white px-3 py-2 text-sm font-black text-zinc-700 shadow-brutal-sm active-brutal-push"
+                         onClick={() =>
+                           setExpandedHistoryByIndex((prev) => ({
+                             ...prev,
+                             [index]: !prev[index],
+                           }))
+                         }
+                       >
+                         {expandedHistoryByIndex[index] ? '解説を閉じる' : '解説を見る'}
+                       </button>
+
+                       <div className={`${expandedHistoryByIndex[index] ? 'block' : 'hidden'} relative mt-2 rounded-2xl border-4 border-zinc-400 bg-white p-4 shadow-brutal-sm sm:mt-4 sm:block sm:p-5`}>
+                          {/* decorative tape */}
+                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 bg-teal-200/80 -rotate-2 mix-blend-multiply" />
+                          <p className="text-base font-bold leading-relaxed text-zinc-800 sm:text-xl">
+                            {q.explanation}
+                          </p>
+                       </div>
+                     </>
                    )}
                 </div>
               </div>

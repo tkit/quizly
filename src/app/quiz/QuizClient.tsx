@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { CheckCircle, PartyPopper, Sparkles, X, XCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle, PartyPopper, Sparkles, X, XCircle } from 'lucide-react';
 import { calculateSessionPoints } from '@/lib/points';
 import { fireCorrectEffect } from '@/lib/effects/confetti';
 import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
@@ -153,7 +153,8 @@ export default function QuizClient({
   };
 
   const currentQuestion = questions[currentIndex];
-  const progressValue = ((currentIndex) / questions.length) * 100;
+  const progressValue = ((currentIndex + 1) / questions.length) * 100;
+  const isCurrentCorrect = selectedOption === currentQuestion.correct_index;
 
   const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
@@ -268,25 +269,21 @@ export default function QuizClient({
 
   return (
     <div className="mx-auto flex h-full w-full max-w-3xl flex-col gap-4 p-1.5 sm:gap-6 sm:p-3">
-      {/* Thick Progress Header */}
-      <header className="flex items-center gap-3 rounded-full border-4 border-zinc-400 bg-white p-3 shadow-brutal-sm sm:gap-4 sm:p-4">
+      {/* Simplified Progress Header */}
+      <header className="flex items-center gap-2 rounded-[2rem] border-4 border-zinc-400 bg-white px-2 py-2.5 shadow-brutal-sm sm:gap-4 sm:px-4 sm:py-4">
         <button 
           onClick={() => router.back()} 
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-4 border-zinc-400 bg-zinc-100 text-zinc-600 shadow-brutal hover:bg-zinc-200 active-brutal-push focus:outline-none sm:h-12 sm:w-12"
         >
           <X className="w-6 h-6 stroke-[3]" />
         </button>
-        <div className="flex-1 pr-1 sm:pr-4">
-          <div className="mb-2 flex items-center justify-between px-1">
-            <span className="text-sm font-black text-zinc-700 sm:text-lg">{currentIndex + 1}問目 / 全{questions.length}問</span>
-          </div>
-          {/* Custom thick progress bar */}
+        <div className="flex-1 pr-1 sm:pr-2">
+          <span className="mb-2 block px-1 text-sm font-black text-zinc-700 sm:text-lg">{currentIndex + 1}問目 / 全{questions.length}問</span>
           <div className="relative h-5 w-full overflow-hidden rounded-full border-4 border-zinc-400 bg-zinc-200 sm:h-6">
              <div
-               className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ease-out ${tone.progress}`}
+               className={`absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-teal-300 to-teal-200 transition-all duration-500 ease-out ${tone.progress}`}
                style={{ width: `${progressValue}%` }}
              >
-                {/* Shine effect on progress bar */}
                 <div className="absolute top-1 left-2 right-2 h-1 bg-white/40 rounded-full" />
              </div>
           </div>
@@ -337,17 +334,17 @@ export default function QuizClient({
         })}
       </div>
 
-      {/* Massive Feedback Panel pinned to bottom */}
+      {/* Strong Feedback Panel pinned to bottom */}
       {isAnswered && (
         <div className="fixed inset-x-0 bottom-safe-4 z-50 flex justify-center px-3 sm:px-8 pointer-events-none">
           <div className={`quiz-feedback-enter pointer-events-auto flex max-h-[min(78dvh,720px)] w-full max-w-3xl flex-col gap-4 overflow-y-auto rounded-[2rem] border-4 border-zinc-400 p-4 shadow-brutal sm:gap-6 sm:rounded-[3rem] sm:p-8 pb-safe ${
-             selectedOption === currentQuestion.correct_index 
+             isCurrentCorrect 
               ? 'bg-teal-50' 
               : 'bg-red-50'
           }`}>
              <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                 <div className="flex items-center gap-3 sm:gap-4">
-                  {selectedOption === currentQuestion.correct_index ? (
+                  {isCurrentCorrect ? (
                      <div className="flex items-center gap-3 animate-bounce-soft sm:gap-4">
                         <CheckCircle className="h-11 w-11 fill-white text-teal-500 sm:h-16 sm:w-16" />
                         <span className="text-[clamp(1.8rem,9vw,3rem)] font-black text-teal-600 drop-shadow-[2px_2px_0_#a1a1aa]">正解</span>
@@ -360,19 +357,22 @@ export default function QuizClient({
                   )}
                 </div>
                 
-                <button 
-                  className={`mt-2 min-h-11 w-full rounded-full border-4 border-zinc-400 px-6 py-3 text-xl font-black shadow-brutal hover:scale-105 active-brutal-push focus:outline-none sm:mt-0 sm:w-auto sm:px-8 sm:py-5 sm:text-3xl ${
-                    selectedOption === currentQuestion.correct_index 
-                      ? 'bg-teal-300 text-zinc-900 hover:bg-teal-400' 
-                      : 'bg-teal-300 text-zinc-900 hover:bg-teal-400'
-                  }`}
+                <button
+                  className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-full border-4 border-zinc-400 bg-teal-300 px-6 py-3 text-xl font-black text-zinc-900 shadow-brutal hover:-translate-y-0.5 hover:bg-teal-400 hover:shadow-brutal-lg active-brutal-push focus:outline-none sm:mt-0 sm:w-auto sm:px-8 sm:py-5 sm:text-3xl"
                   onClick={handleNext}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? '記録を保存中...' : (currentIndex < questions.length - 1 ? '次へ進む' : '結果を見る')}
+                  {isSubmitting ? '記録を保存中...' : (currentIndex < questions.length - 1 ? '次へ' : '結果へ')}
+                  {!isSubmitting && <ArrowRight className="h-6 w-6 sm:h-7 sm:w-7" />}
                 </button>
              </div>
-             
+
+             <div className="rounded-2xl border-4 border-zinc-400 bg-white/90 p-3 shadow-brutal-sm sm:p-4">
+               <p className="text-base font-black text-zinc-800 sm:text-xl">
+                 正解: <span className="text-teal-700">{currentQuestion.options[currentQuestion.correct_index]}</span>
+               </p>
+             </div>
+
              {currentQuestion.explanation && (
                <div className="mt-1 rounded-3xl border-4 border-zinc-400 bg-white p-4 shadow-inner sm:mt-2 sm:p-6">
                   <p className="text-lg font-bold leading-relaxed text-zinc-800 sm:text-2xl">{currentQuestion.explanation}</p>

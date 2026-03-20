@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import DashboardClient from './DashboardClient';
+import MessageCard from '@/components/feedback/MessageCard';
+import PageShell from '@/components/layout/PageShell';
 
 export const revalidate = 0;
 
@@ -19,18 +21,30 @@ export default async function DashboardPage() {
   if (genresError) {
     console.error('Error fetching genres:', genresError);
     return (
-      <div className="flex min-h-screen-safe items-center justify-center p-4">
-        <p className="text-red-500">ジャンルの読み込みに失敗しました。</p>
-      </div>
+      <PageShell maxWidthClass="max-w-4xl" mainClassName="flex flex-1 items-center justify-center">
+        <MessageCard
+          title="ジャンルの読み込みに失敗しました。"
+          description="時間をおいて再度お試しください。"
+          actionLabel="トップへ戻る"
+          actionHref="/"
+          tone="error"
+        />
+      </PageShell>
     );
   }
 
   if (questionsError) {
     console.error('Error fetching questions:', questionsError);
     return (
-      <div className="flex min-h-screen-safe items-center justify-center p-4">
-        <p className="text-red-500">問題数の読み込みに失敗しました。</p>
-      </div>
+      <PageShell maxWidthClass="max-w-4xl" mainClassName="flex flex-1 items-center justify-center">
+        <MessageCard
+          title="問題数の読み込みに失敗しました。"
+          description="通信状況をご確認のうえ、再度お試しください。"
+          actionLabel="トップへ戻る"
+          actionHref="/"
+          tone="error"
+        />
+      </PageShell>
     );
   }
 
@@ -45,10 +59,8 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <div className="flex min-h-screen-safe flex-col items-center bg-zinc-50 px-4 py-5 sm:px-6 sm:py-8 lg:px-8 dark:bg-zinc-950">
-      <main className="w-full max-w-4xl flex flex-col gap-8">
-        <DashboardClient genres={genresWithQuestionCount} />
-      </main>
-    </div>
+    <PageShell maxWidthClass="max-w-4xl">
+      <DashboardClient genres={genresWithQuestionCount} />
+    </PageShell>
   );
 }

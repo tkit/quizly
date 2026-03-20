@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CircleAlert, CircleUserRound, Pencil } from 'lucide-react';
+import { ArrowRight, CircleAlert, CircleUserRound, Pencil } from 'lucide-react';
 import { updateUserAvatar } from './actions';
 import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
 import { supabase } from '@/lib/supabase';
@@ -202,6 +202,10 @@ export default function LoginClient({ users }: { users: User[] }) {
           </div>
 
           <div className="flex flex-col items-center gap-4 bg-slate-50 p-4 sm:gap-6 sm:p-6">
+            <div className="w-full rounded-2xl border-4 border-zinc-400 bg-white px-4 py-2 text-center shadow-brutal-sm">
+              <p className="text-sm font-black text-zinc-600 sm:text-base">4けたの数字を入力してください</p>
+            </div>
+
             {/* PIN Display */}
             <div className="flex min-h-[4.5rem] w-full items-center justify-center rounded-2xl border-4 border-zinc-400 bg-white p-3 shadow-inner sm:h-20 sm:p-4">
               <div className="flex gap-2 sm:gap-3">
@@ -252,11 +256,12 @@ export default function LoginClient({ users }: { users: User[] }) {
             </div>
 
             <button 
-              className="mt-1 min-h-11 w-full rounded-full border-4 border-zinc-400 bg-teal-400 py-3 text-xl font-black text-zinc-900 shadow-brutal transition-all hover:bg-teal-500 active-brutal-push disabled:opacity-50 disabled:hover:bg-teal-400 disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:active:shadow-brutal sm:mt-2 sm:py-4 sm:text-2xl"
+              className="mt-1 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border-4 border-zinc-400 bg-teal-400 py-3 text-xl font-black text-zinc-900 shadow-brutal transition-all hover:bg-teal-500 active-brutal-push disabled:opacity-50 disabled:hover:bg-teal-400 disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:active:shadow-brutal sm:mt-2 sm:py-4 sm:text-2xl"
               disabled={pinInput.length !== 4}
               onClick={handlePinSubmit}
             >
-              ログイン！
+              つぎへ
+              <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
           </div>
         </DialogContent>
@@ -272,8 +277,12 @@ export default function LoginClient({ users }: { users: User[] }) {
               アバターをえらぶ
             </DialogTitle>
           </DialogHeader>
-          
-          <div className="grid grid-cols-3 gap-2 rounded-[2rem] border-4 border-zinc-400 bg-white p-3 shadow-inner min-[420px]:grid-cols-4 sm:gap-3 sm:p-4">
+
+          <div className="mb-4 rounded-2xl border-4 border-zinc-400 bg-white px-4 py-2 text-center shadow-brutal-sm">
+            <p className="text-sm font-black text-zinc-600 sm:text-base">好きなアイコンを1つ選んでください</p>
+          </div>
+
+          <div className="bg-accent-soft grid grid-cols-3 gap-2 rounded-[2rem] border-4 border-zinc-400 p-3 shadow-inner min-[420px]:grid-cols-4 sm:gap-3 sm:p-4">
             {AVATARS.map((avatar) => (
               <button
                 key={avatar}
