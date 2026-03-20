@@ -188,7 +188,7 @@ export default function LoginClient({ users }: { users: User[] }) {
       <Dialog open={!!selectedUser} onOpenChange={(open) => {
         if (!open) setSelectedUser(null);
       }}>
-        <DialogContent className="max-h-[min(92dvh,760px)] overflow-y-auto rounded-[2.5rem] border-4 border-zinc-400 bg-slate-50 p-0 shadow-brutal-lg sm:max-w-sm">
+        <DialogContent className="!left-4 !right-4 !w-auto !max-w-none !translate-x-0 max-h-[calc(100dvh-1.5rem)] overflow-x-hidden overflow-y-auto rounded-[2.5rem] border-4 border-zinc-400 bg-slate-50 p-0 shadow-brutal-lg sm:!left-1/2 sm:!right-auto sm:!w-full sm:!max-w-sm sm:!translate-x-[-50%] sm:max-h-[min(92dvh,760px)]">
           {/* Fun header */}
           <div className="relative border-b-4 border-zinc-400 bg-teal-500 p-5 text-center sm:p-6">
             <div className="absolute top-2 left-2 w-4 h-4 rounded-full bg-white/50" />
@@ -222,11 +222,11 @@ export default function LoginClient({ users }: { users: User[] }) {
             )}
 
             {/* Chunky Keypad */}
-            <div className="grid w-full grid-cols-3 gap-2.5 sm:gap-3">
+            <div className="grid w-full grid-cols-3 gap-2 sm:gap-3">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                 <button
                   key={num}
-                  className="h-14 rounded-2xl border-4 border-zinc-400 bg-white text-2xl font-black text-teal-700 shadow-brutal hover:bg-slate-50 active-brutal-push focus:ring-2 focus:ring-teal-500 focus:outline-none sm:h-16 sm:text-3xl"
+                  className="h-12 rounded-2xl border-4 border-zinc-400 bg-white text-xl font-black text-teal-700 shadow-brutal hover:bg-slate-50 active-brutal-push focus:ring-2 focus:ring-teal-500 focus:outline-none sm:h-16 sm:text-3xl"
                   onClick={() => {
                     if (pinInput.length < 4) setPinInput(prev => prev + num);
                   }}
@@ -236,7 +236,7 @@ export default function LoginClient({ users }: { users: User[] }) {
               ))}
               <div />
               <button
-                className="h-14 rounded-2xl border-4 border-zinc-400 bg-white text-2xl font-black text-teal-700 shadow-brutal hover:bg-slate-50 active-brutal-push focus:ring-2 focus:ring-teal-500 focus:outline-none sm:h-16 sm:text-3xl"
+                className="h-12 rounded-2xl border-4 border-zinc-400 bg-white text-xl font-black text-teal-700 shadow-brutal hover:bg-slate-50 active-brutal-push focus:ring-2 focus:ring-teal-500 focus:outline-none sm:h-16 sm:text-3xl"
                 onClick={() => {
                   if (pinInput.length < 4) setPinInput(prev => prev + '0');
                 }}
@@ -244,7 +244,7 @@ export default function LoginClient({ users }: { users: User[] }) {
                 0
               </button>
               <button
-                className="h-14 rounded-2xl border-4 border-zinc-400 bg-slate-100 text-base font-bold text-teal-700 shadow-brutal hover:bg-teal-200 active-brutal-push focus:ring-2 focus:ring-teal-500 focus:outline-none sm:h-16 sm:text-lg"
+                className="h-12 rounded-2xl border-4 border-zinc-400 bg-slate-100 text-sm font-bold text-teal-700 shadow-brutal hover:bg-teal-200 active-brutal-push focus:ring-2 focus:ring-teal-500 focus:outline-none sm:h-16 sm:text-lg"
                 onClick={() => setPinInput(prev => prev.slice(0, -1))}
               >
                 けす
@@ -266,7 +266,7 @@ export default function LoginClient({ users }: { users: User[] }) {
       <Dialog open={!!editingAvatarUser} onOpenChange={(open) => {
         if (!open) setEditingAvatarUser(null);
       }}>
-        <DialogContent className="max-h-[min(92dvh,760px)] overflow-y-auto rounded-[2.5rem] border-4 border-zinc-400 bg-slate-50 p-4 shadow-brutal-lg sm:max-w-md sm:p-6">
+        <DialogContent className="!left-4 !right-4 !w-auto !max-w-none !translate-x-0 max-h-[calc(100dvh-1.5rem)] overflow-x-hidden overflow-y-auto rounded-[2.5rem] border-4 border-zinc-400 bg-slate-50 p-4 shadow-brutal-lg sm:!left-1/2 sm:!right-auto sm:!w-full sm:!max-w-md sm:!translate-x-[-50%] sm:max-h-[min(92dvh,760px)] sm:p-6">
           <DialogHeader>
             <DialogTitle className="mb-3 text-center text-[clamp(1.4rem,6vw,1.9rem)] font-black text-teal-600 drop-shadow-[2px_2px_0_rgba(24,24,27,1)] sm:mb-4">
               アバターをえらぶ
