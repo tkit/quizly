@@ -136,7 +136,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
         </div>
         <button
           onClick={handleLogout}
-          className="group flex min-h-11 min-w-11 items-center justify-center self-end rounded-2xl border-4 border-zinc-400 bg-red-100 p-2.5 text-red-600 shadow-brutal transition-colors hover:bg-red-200 active-brutal-push focus:ring-4 focus:ring-red-400 focus:outline-none sm:self-auto sm:p-3"
+          className="group flex min-h-11 min-w-11 items-center justify-center self-end rounded-2xl border-4 border-zinc-400 bg-amber-100 p-2.5 text-amber-700 shadow-brutal transition-colors hover:bg-amber-200 active-brutal-push focus:ring-4 focus:ring-amber-400 focus:outline-none sm:self-auto sm:p-3"
           title="ログアウト"
         >
           <LogOut className="h-6 w-6 group-hover:-translate-x-1 group-hover:scale-110 transition-transform" />
