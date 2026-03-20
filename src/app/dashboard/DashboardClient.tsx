@@ -160,7 +160,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
           <div>
             <h1 className="font-display text-2xl sm:text-3xl font-black text-zinc-800 tracking-wide">{userName}さんのトップページ</h1>
             <p className="text-md sm:text-lg font-bold text-pink-500 mt-1 inline-flex items-center gap-2">
-              きょうも がんばろう！
+              今日も学習を進めよう
               <Sparkles className={ICON_SIZE.sm} strokeWidth={ICON_STROKE.strong} />
             </p>
           </div>
@@ -177,7 +177,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
       <div className="flex justify-center -mt-4">
         <div className="inline-flex items-center gap-3 bg-gradient-to-r from-amber-100 to-yellow-200 px-8 py-3 rounded-full border-4 border-amber-400 shadow-brutal transform rotate-1 hover:-rotate-1 transition-transform">
           <Star className="w-7 h-7 text-amber-500 fill-amber-400" />
-          <span className="text-xl sm:text-2xl font-black text-amber-800">もっているポイント</span>
+          <span className="text-xl sm:text-2xl font-black text-amber-800">保有ポイント</span>
           <span className="text-3xl sm:text-4xl font-black text-amber-600 tabular-nums">{totalPoints.toLocaleString()}</span>
           <span className="text-xl sm:text-2xl font-black text-amber-800">pt</span>
         </div>
@@ -186,7 +186,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
       <section className="flex flex-col gap-6 w-full">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-display text-2xl font-black text-zinc-800 bg-white inline-block px-6 py-2 rounded-full border-4 border-zinc-400 shadow-brutal w-fit transform -rotate-1">
-            がくしゅうを おこなう！
+            学習を開始する
           </h2>
           {selectedParent && (
             <button
@@ -194,7 +194,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-4 border-zinc-400 bg-white shadow-brutal-sm font-black text-zinc-700 hover:bg-zinc-50 active-brutal-push"
             >
               <ChevronLeft className={ICON_SIZE.sm} />
-              きょうか えらびに もどる
+              教科選択に戻る
             </button>
           )}
         </div>
@@ -208,7 +208,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                   className={ICON_SIZE.md}
                   strokeWidth={ICON_STROKE.medium}
                 />
-                {selectedParent.name} のカテゴリを えらぼう！
+                {selectedParent.name} のカテゴリを選択
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
@@ -250,7 +250,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                 <div className="col-span-full p-12 text-center bg-white border-4 border-dashed border-zinc-400 rounded-[2rem] shadow-brutal">
                   <p className="text-2xl font-bold text-zinc-500 inline-flex items-center gap-2">
                     <CircleAlert className={ICON_SIZE.md} strokeWidth={ICON_STROKE.medium} />
-                    このきょうかのカテゴリは まだありません
+                    この教科のカテゴリはまだありません
                   </p>
                 </div>
               )}
@@ -287,7 +287,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
               <div className="col-span-full p-12 text-center bg-white border-4 border-dashed border-zinc-400 rounded-[2rem] shadow-brutal">
                 <p className="text-2xl font-bold text-zinc-500 inline-flex items-center gap-2">
                   <CircleAlert className={ICON_SIZE.md} strokeWidth={ICON_STROKE.medium} />
-                  きょうかが まだありません
+                  教科がまだありません
                 </p>
               </div>
             )}

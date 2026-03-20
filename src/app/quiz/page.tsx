@@ -41,7 +41,7 @@ export default async function QuizPage({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-6 text-center gap-6 bg-zinc-50 dark:bg-zinc-950">
         <div className="bg-white border-4 border-zinc-400 shadow-brutal rounded-[2rem] p-8 max-w-xl w-full">
-          <p className="text-2xl font-black text-zinc-800 mb-3">サブカテゴリを えらんでから ちょうせんしよう！</p>
+          <p className="text-2xl font-black text-zinc-800 mb-3">サブカテゴリを選択してから開始してください。</p>
           <p className="text-lg font-bold text-zinc-600">
             「{genre.name}」は教科（親カテゴリ）のため、クイズは開始できません。
           </p>
@@ -50,7 +50,7 @@ export default async function QuizPage({
           href="/dashboard"
           className="inline-flex items-center justify-center h-14 px-8 rounded-full border-4 border-zinc-400 bg-yellow-400 hover:bg-yellow-500 shadow-brutal font-black text-zinc-900"
         >
-          ダッシュボードにもどる
+          ダッシュボードに戻る
         </a>
       </div>
     );

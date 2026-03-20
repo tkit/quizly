@@ -105,18 +105,18 @@ CREATE POLICY "Allow all access to point_transactions"
 -- ==== 動作確認用初期データ（シードデータ） ====
 -- ジャンル（2階層: 教科 -> サブカテゴリ）
 INSERT INTO public.genres (id, name, parent_id, icon_key, description, color_hint) VALUES
-('math', '算数', NULL, 'calculator', 'けいさんや図形のもんだい', 'blue'),
+('math', '算数', NULL, 'calculator', '計算や図形の基礎を学ぶ', 'blue'),
 ('japanese', '国語', NULL, 'book_open', 'ことばや文の読み書き', 'pink'),
-('social', '社会', NULL, 'map', '地理や歴史のもんだい', 'orange'),
-('science', '理科', NULL, 'microscope', '生き物や自然のふしぎ', 'green'),
-('math-basic-calc', '計算マスター', 'math', 'calculator', 'たし算ひき算のきそ', 'blue'),
-('math-time', '時間と時計', 'math', 'clock', '時間の読み方や計算', 'blue'),
+('social', '社会', NULL, 'map', '地理や歴史の基礎を学ぶ', 'orange'),
+('science', '理科', NULL, 'microscope', '自然や科学のしくみを学ぶ', 'green'),
+('math-basic-calc', '計算マスター', 'math', 'calculator', '四則計算の基礎を身につける', 'blue'),
+('math-time', '時間と時計', 'math', 'clock', '時刻の読み取りと時間計算を学ぶ', 'blue'),
 ('jp-grammar-01', '文法マスター 第1回: 和語(1)', 'japanese', 'notebook', '和語の意味と使い方', 'pink'),
 ('jp-grammar-02', '文法マスター 第2回: 慣用句(1)', 'japanese', 'message', '慣用句の読み取り', 'pink');
 
 -- 問題（サブカテゴリのサンプル）
 INSERT INTO public.questions (genre_id, question_text, options, correct_index, explanation) VALUES
-('math-basic-calc', '15 + 27 はいくつでしょう？', '["32", "42", "52"]', 1, '1のくらいは 5+7=12。10のくらいに1くりあげて、1+2+1=4。だから42が正解だよ！'),
-('math-time', '1日は何時間でしょう？', '["12時間", "20時間", "24時間"]', 2, '朝から夜、そして次の日の朝までぐるっと1周すると24時間だよ！'),
-('jp-grammar-01', '「山道」を読むとき、正しいのはどれ？', '["やまみち", "さんどう", "やまどう"]', 0, '和語として読むと「やまみち」が正解だよ。'),
-('jp-grammar-02', '「あしをひっぱる」の意味として正しいのはどれ？', '["協力して助ける", "じゃまをする", "走るのが速い"]', 1, '慣用句で「あしをひっぱる」は、じゃまをするという意味だよ。');
+('math-basic-calc', '15 + 27 はいくつですか？', '["32", "42", "52"]', 1, '1の位は 5+7=12 です。2を残して1を十の位に繰り上げると、十の位は 1+2+1=4 なので、答えは42です。'),
+('math-time', '1日は何時間ですか？', '["12時間", "20時間", "24時間"]', 2, '1日は24時間です。'),
+('jp-grammar-01', '「山道」を読むとき、正しいのはどれ？', '["やまみち", "さんどう", "やまどう"]', 0, '和語として読む場合は「やまみち」が正解です。'),
+('jp-grammar-02', '「あしをひっぱる」の意味として正しいのはどれ？', '["協力して助ける", "じゃまをする", "走るのが速い"]', 1, '慣用句「あしをひっぱる」は、じゃまをするという意味です。');

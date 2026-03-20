@@ -20,7 +20,7 @@ export default async function Home() {
         <div className="bg-white p-6 rounded-2xl shadow-brutal border-4 border-red-500">
           <p className="text-red-600 font-bold text-lg inline-flex items-center gap-2">
             <CircleAlert className={ICON_SIZE.md} strokeWidth={ICON_STROKE.regular} />
-            エラー：ユーザーをよみこめませんでした
+            エラー：ユーザーを読み込めませんでした
           </p>
         </div>
       </div>
@@ -40,7 +40,7 @@ export default async function Home() {
           </h1>
           
           <div className="relative z-10 inline-block bg-white px-6 py-2 rounded-full border-4 border-zinc-400 shadow-brutal-sm transform -rotate-2">
-            <p className="text-xl sm:text-2xl font-bold text-zinc-800">だれが がくしゅう する？</p>
+            <p className="text-xl sm:text-2xl font-bold text-zinc-800">学習するユーザーを選択</p>
           </div>
         </div>
 

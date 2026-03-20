@@ -102,7 +102,7 @@ export default function QuizClient({
       <div className="flex flex-1 items-center justify-center h-full">
         <div className="flex flex-col items-center gap-4">
           <div className="w-16 h-16 border-8 border-blue-100 border-t-blue-300 rounded-full animate-spin"></div>
-          <p className="text-2xl font-black text-blue-400 animate-pulse">じゅんび中...</p>
+          <p className="text-2xl font-black text-blue-400 animate-pulse">準備中...</p>
         </div>
       </div>
     );
@@ -114,20 +114,20 @@ export default function QuizClient({
         <PartyPopper className={`${ICON_SIZE.hero} animate-bounce-soft text-amber-500`} strokeWidth={ICON_STROKE.regular} />
         <p className="text-3xl font-black text-zinc-800 bg-white px-8 py-4 rounded-3xl border-4 border-zinc-400 shadow-brutal w-full max-w-lg">
           {mode === 'review' 
-            ? 'ニガテな もんだいが ありません！天才！' 
-            : 'このジャンルには もんだいが ありません。'}
+            ? '苦手な問題はありません。すばらしい！' 
+            : 'このジャンルには問題がありません。'}
         </p>
         {mode === 'review' && (
           <div className="inline-flex items-center gap-2 text-amber-600 font-black text-xl">
             <Sparkles className={ICON_SIZE.sm} strokeWidth={ICON_STROKE.strong} />
-            おみごと！
+            よくできました
           </div>
         )}
         <button 
           className="bg-yellow-300 text-zinc-900 border-4 border-zinc-400 shadow-brutal hover:bg-yellow-400 hover:-translate-y-1 hover:shadow-brutal-lg active-brutal-push rounded-full text-2xl font-black px-12 py-4 mt-8 transition-all"
           onClick={() => router.push('/dashboard')}
         >
-          もどる
+          戻る
         </button>
       </div>
     );
