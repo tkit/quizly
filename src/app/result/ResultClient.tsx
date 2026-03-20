@@ -169,7 +169,7 @@ export default function ResultClient({
           </button>
           <button
             className={`h-16 px-8 rounded-full text-xl sm:text-2xl font-black border-4 border-zinc-400 shadow-brutal active-brutal-push focus:outline-none flex items-center justify-center gap-2 ${retryButtonTone}`}
-            onClick={() => router.push(`/setup?genre=${session.genre_id}`)}
+            onClick={() => router.push(`/quiz?genre=${session.genre_id}`)}
           >
             <RotateCcw className={ICON_SIZE.lg} strokeWidth={ICON_STROKE.bold} /> もういっかい！
           </button>

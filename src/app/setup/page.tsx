@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import SetupClient from './SetupClient';
+import { redirect } from 'next/navigation';
 
 export const revalidate = 0;
 
@@ -54,11 +54,5 @@ export default async function SetupPage({
     );
   }
 
-  return (
-    <div className="flex min-h-screen flex-col items-center p-8 bg-zinc-50 dark:bg-zinc-950">
-      <main className="w-full max-w-2xl flex flex-col gap-8 flex-1">
-        <SetupClient genre={genre} />
-      </main>
-    </div>
-  );
+  redirect(`/quiz?genre=${genre.id}`);
 }

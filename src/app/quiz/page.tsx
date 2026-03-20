@@ -11,9 +11,8 @@ export default async function QuizPage({
   const resolvedParams = await searchParams;
   const genreId = resolvedParams.genre;
   const mode = resolvedParams.mode || 'normal';
-  const countStr = resolvedParams.count || '5';
-  const parsedCount = parseInt(countStr, 10);
-  const count = isNaN(parsedCount) ? 5 : parsedCount;
+  const countStr = resolvedParams.count;
+  const parsedCount = countStr ? parseInt(countStr, 10) : null;
 
   if (!genreId) {
     return (
@@ -79,6 +78,11 @@ export default async function QuizPage({
       </div>
     );
   }
+
+  const count =
+    parsedCount && parsedCount > 0
+      ? Math.min(parsedCount, allQuestions.length)
+      : allQuestions.length;
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-zinc-50 dark:bg-zinc-950 px-4 py-8 sm:p-8">

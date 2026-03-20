@@ -14,6 +14,7 @@ interface Genre {
   description: string | null;
   color_hint: string | null;
   parent_id: string | null;
+  question_count: number;
 }
 
 export default function DashboardClient({ genres }: { genres: Genre[] }) {
@@ -217,7 +218,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                 return (
                   <button
                     key={genre.id}
-                    onClick={() => router.push(`/setup?genre=${genre.id}`)}
+                    onClick={() => router.push(`/quiz?genre=${genre.id}`)}
                     className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-blue-400 p-6 flex items-center gap-6 group overflow-hidden relative ${styles.baseColorClass}`}
                   >
                     <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full transform group-hover:scale-150 transition-transform duration-500" />
@@ -236,6 +237,9 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                         )}
                       </div>
                       <p className="text-md sm:text-lg font-bold opacity-80">{genre.description}</p>
+                      <p className="mt-2 inline-flex items-center rounded-full border-2 border-zinc-400 bg-white/80 px-3 py-1 text-sm sm:text-base font-black text-zinc-700">
+                        全{genre.question_count}問
+                      </p>
                     </div>
                     <div className="text-5xl font-black opacity-30 group-hover:opacity-100 group-hover:translate-x-2 transition-all z-10">→</div>
                   </button>

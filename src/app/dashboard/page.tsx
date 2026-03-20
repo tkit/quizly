@@ -4,14 +4,20 @@ import DashboardClient from './DashboardClient';
 export const revalidate = 0;
 
 export default async function DashboardPage() {
-  const { data: genres, error } = await supabase
-    .from('genres')
-    .select('*')
-    .order('parent_id', { ascending: true, nullsFirst: true })
-    .order('id', { ascending: true });
+  const [{ data: genres, error: genresError }, { data: questions, error: questionsError }] = await Promise.all([
+    supabase
+      .from('genres')
+      .select('*')
+      .order('parent_id', { ascending: true, nullsFirst: true })
+      .order('id', { ascending: true }),
+    supabase
+      .from('questions')
+      .select('genre_id')
+      .eq('is_active', true),
+  ]);
 
-  if (error) {
-    console.error('Error fetching genres:', error);
+  if (genresError) {
+    console.error('Error fetching genres:', genresError);
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <p className="text-red-500">ジャンルの読み込みに失敗しました。</p>
@@ -19,10 +25,29 @@ export default async function DashboardPage() {
     );
   }
 
+  if (questionsError) {
+    console.error('Error fetching questions:', questionsError);
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <p className="text-red-500">問題数の読み込みに失敗しました。</p>
+      </div>
+    );
+  }
+
+  const questionCountByGenreId = (questions ?? []).reduce<Record<string, number>>((acc, question) => {
+    acc[question.genre_id] = (acc[question.genre_id] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const genresWithQuestionCount = (genres ?? []).map((genre) => ({
+    ...genre,
+    question_count: questionCountByGenreId[genre.id] ?? 0,
+  }));
+
   return (
     <div className="flex min-h-screen flex-col items-center bg-zinc-50 dark:bg-zinc-950 px-4 py-8">
       <main className="w-full max-w-4xl flex flex-col gap-8">
-        <DashboardClient genres={genres || []} />
+        <DashboardClient genres={genresWithQuestionCount} />
       </main>
     </div>
   );
