@@ -18,7 +18,7 @@ CREATE TABLE public.genres (
   id text PRIMARY KEY,
   name text NOT NULL,
   parent_id text REFERENCES public.genres(id),
-  icon text,
+  icon_key text NOT NULL,
   description text,
   color_hint text
 );
@@ -93,15 +93,15 @@ CREATE POLICY "Allow all access to point_transactions"
 
 -- ==== 動作確認用初期データ（シードデータ） ====
 -- ジャンル（2階層: 教科 -> サブカテゴリ）
-INSERT INTO public.genres (id, name, parent_id, icon, description, color_hint) VALUES
-('math', '算数', NULL, '➕', 'けいさんや図形のもんだい', 'blue'),
-('japanese', '国語', NULL, '📖', 'ことばや文の読み書き', 'pink'),
-('social', '社会', NULL, '🗺️', '地理や歴史のもんだい', 'orange'),
-('science', '理科', NULL, '🔬', '生き物や自然のふしぎ', 'green'),
-('math-basic-calc', '計算マスター', 'math', '🧮', 'たし算ひき算のきそ', 'blue'),
-('math-time', '時間と時計', 'math', '⏰', '時間の読み方や計算', 'blue'),
-('jp-grammar-01', '文法マスター 第1回: 和語(1)', 'japanese', '📝', '和語の意味と使い方', 'pink'),
-('jp-grammar-02', '文法マスター 第2回: 慣用句(1)', 'japanese', '💬', '慣用句の読み取り', 'pink');
+INSERT INTO public.genres (id, name, parent_id, icon_key, description, color_hint) VALUES
+('math', '算数', NULL, 'calculator', 'けいさんや図形のもんだい', 'blue'),
+('japanese', '国語', NULL, 'book_open', 'ことばや文の読み書き', 'pink'),
+('social', '社会', NULL, 'map', '地理や歴史のもんだい', 'orange'),
+('science', '理科', NULL, 'microscope', '生き物や自然のふしぎ', 'green'),
+('math-basic-calc', '計算マスター', 'math', 'calculator', 'たし算ひき算のきそ', 'blue'),
+('math-time', '時間と時計', 'math', 'clock', '時間の読み方や計算', 'blue'),
+('jp-grammar-01', '文法マスター 第1回: 和語(1)', 'japanese', 'notebook', '和語の意味と使い方', 'pink'),
+('jp-grammar-02', '文法マスター 第2回: 慣用句(1)', 'japanese', 'message', '慣用句の読み取り', 'pink');
 
 -- 問題（サブカテゴリのサンプル）
 INSERT INTO public.questions (genre_id, question_text, options, correct_index, explanation) VALUES

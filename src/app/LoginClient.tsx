@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Pencil } from 'lucide-react';
+import { CircleAlert, CircleUserRound, Pencil } from 'lucide-react';
 import { updateUserAvatar } from './actions';
+import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
 
 interface User {
   id: string;
@@ -94,7 +95,11 @@ export default function LoginClient({ users }: { users: User[] }) {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-4xl sm:text-5xl">{user.icon_url || '👤'}</span>
+                    user.icon_url ? (
+                      <span className="text-4xl sm:text-5xl">{user.icon_url}</span>
+                    ) : (
+                      <CircleUserRound className={`${ICON_SIZE.xl} text-zinc-600`} strokeWidth={ICON_STROKE.regular} />
+                    )
                   )}
                 </div>
                 
@@ -120,7 +125,10 @@ export default function LoginClient({ users }: { users: User[] }) {
         ))}
         {users.length === 0 && (
           <div className="col-span-full text-center bg-white p-8 border-4 border-dashed border-zinc-300 rounded-3xl">
-            <p className="text-xl font-bold text-zinc-500">ユーザーが いません 😢</p>
+            <p className="text-xl font-bold text-zinc-500 inline-flex items-center gap-2">
+              <CircleAlert className={ICON_SIZE.md} strokeWidth={ICON_STROKE.regular} />
+              ユーザーが いません
+            </p>
           </div>
         )}
       </div>

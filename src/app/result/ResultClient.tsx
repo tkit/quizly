@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle, XCircle, Home, RotateCcw, Star } from 'lucide-react';
+import { BadgeCheck, CheckCircle, Home, Medal, NotebookPen, RotateCcw, Sparkles, Star, ThumbsUp, Trophy, XCircle } from 'lucide-react';
 import { POINTS_PER_CORRECT } from '@/lib/points';
 import { fireResultEffect } from '@/lib/effects/confetti';
+import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
 
 interface QuestionDetails {
   question_text: string;
@@ -28,7 +29,7 @@ interface Session {
   mode: string;
   genres: {
     name: string;
-    icon: string;
+    icon_key: string;
     color_hint: string;
   } | null;
 }
@@ -76,6 +77,7 @@ export default function ResultClient({
   const earnedPoints = session.earned_points || 0;
   const basePoints = session.correct_count * POINTS_PER_CORRECT;
   const bonusPoints = earnedPoints - basePoints;
+  const ResultIcon = isPerfect ? Trophy : isGood ? Medal : ThumbsUp;
 
   const displayPoints = useCountUp(earnedPoints, 1500);
   const hasTriggeredResultEffect = useRef(false);
@@ -113,8 +115,13 @@ export default function ResultClient({
         <div className="absolute top-4 left-4 w-12 h-12 bg-white/40 rounded-full blur-sm" />
         <div className="absolute bottom-12 right-12 w-24 h-24 bg-white/30 rounded-full blur-md" />
         
-        <div className="text-8xl sm:text-9xl mb-4 animate-bounce drop-shadow-[4px_4px_0_rgba(24,24,27,1)] relative z-10">
-          {isPerfect ? '🏆' : isGood ? '👏' : '👍'}
+        <div className="mb-4 animate-bounce drop-shadow-[4px_4px_0_rgba(24,24,27,1)] relative z-10 flex justify-center">
+          <ResultIcon
+            className={`${ICON_SIZE.hero} ${
+              isPerfect ? 'text-amber-700' : isGood ? 'text-blue-700' : 'text-zinc-700'
+            }`}
+            strokeWidth={ICON_STROKE.medium}
+          />
         </div>
         
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-4 text-zinc-900 drop-shadow-sm tracking-wide relative z-10">
@@ -141,7 +148,10 @@ export default function ResultClient({
               </div>
               {isPerfect && bonusPoints > 0 && (
                 <div className="bg-red-500 text-white px-4 py-1 rounded-full text-lg sm:text-xl font-black border-2 border-red-700 shadow-brutal-sm animate-bounce-soft transform rotate-2">
-                  🎯 パーフェクトボーナス ×1.5！ +{bonusPoints}pt
+                  <span className="inline-flex items-center gap-2">
+                    <BadgeCheck className={ICON_SIZE.sm} strokeWidth={ICON_STROKE.strong} />
+                    パーフェクトボーナス ×1.5！ +{bonusPoints}pt
+                  </span>
                 </div>
               )}
             </div>
@@ -153,13 +163,15 @@ export default function ResultClient({
             className="h-16 px-8 rounded-full text-xl sm:text-2xl font-black bg-white border-4 border-zinc-400 shadow-brutal hover:bg-zinc-100 active-brutal-push focus:outline-none flex items-center justify-center gap-2"
             onClick={() => router.push('/dashboard')}
           >
-            <Home className="w-8 h-8" strokeWidth={3} /> トップへ✨
+            <Home className={ICON_SIZE.lg} strokeWidth={ICON_STROKE.bold} />
+            トップへ
+            <Sparkles className={`${ICON_SIZE.md} text-amber-500`} strokeWidth={ICON_STROKE.strong} />
           </button>
           <button
             className={`h-16 px-8 rounded-full text-xl sm:text-2xl font-black border-4 border-zinc-400 shadow-brutal active-brutal-push focus:outline-none flex items-center justify-center gap-2 ${retryButtonTone}`}
             onClick={() => router.push(`/setup?genre=${session.genre_id}`)}
           >
-            <RotateCcw className="w-8 h-8" strokeWidth={3} /> もういっかい！
+            <RotateCcw className={ICON_SIZE.lg} strokeWidth={ICON_STROKE.bold} /> もういっかい！
           </button>
         </div>
       </div>
@@ -168,7 +180,8 @@ export default function ResultClient({
       <div className="bg-white p-6 sm:p-10 rounded-[3rem] border-4 border-zinc-400 shadow-brutal mt-8">
         <div className="bg-green-200 border-4 border-zinc-400 shadow-brutal-sm px-6 py-3 rounded-full w-fit -rotate-2 mb-8">
           <h2 className="text-2xl sm:text-3xl font-black text-green-900 flex items-center gap-3">
-            <span>📝</span> ふりかえり
+            <NotebookPen className={ICON_SIZE.lg} strokeWidth={ICON_STROKE.strong} />
+            ふりかえり
           </h2>
         </div>
         

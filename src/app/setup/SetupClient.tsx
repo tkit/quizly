@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Dices, Play, Target } from 'lucide-react';
+import { GenreIcon } from '@/components/GenreIcon';
+import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
 
 interface Genre {
   id: string;
   name: string;
-  icon: string | null;
+  icon_key: string;
   color_hint: string | null;
   parent_id: string | null;
 }
@@ -69,7 +71,7 @@ export default function SetupClient({ genre }: { genre: Genre }) {
           <ChevronLeft className="w-8 h-8 stroke-[3] text-zinc-700" />
         </button>
         <div className="flex items-center gap-3 bg-yellow-100 px-6 py-3 rounded-full border-4 border-zinc-400 shadow-brutal-sm ml-2">
-          <span className="text-3xl animate-bounce-soft">{genre.icon}</span>
+          <GenreIcon iconKey={genre.icon_key} className={`${ICON_SIZE.lg} animate-bounce-soft`} strokeWidth={ICON_STROKE.medium} />
           <h1 className="text-2xl sm:text-3xl font-black text-zinc-800 tracking-wide">{genre.name}のせってい</h1>
         </div>
       </header>
@@ -92,7 +94,9 @@ export default function SetupClient({ genre }: { genre: Genre }) {
               }`}
               onClick={() => setMode('normal')}
             >
-              <div className={`text-5xl sm:text-6xl p-4 rounded-3xl border-4 border-zinc-400 shadow-brutal-sm bg-white ${mode === 'normal' ? 'animate-wiggle' : ''}`}>🎲</div>
+              <div className={`p-4 rounded-3xl border-4 border-zinc-400 shadow-brutal-sm bg-white ${mode === 'normal' ? 'animate-wiggle' : ''}`}>
+                <Dices className={`${ICON_SIZE.mode} text-zinc-700`} strokeWidth={ICON_STROKE.regular} />
+              </div>
               <div className="text-center sm:text-left">
                 <h3 className="text-2xl sm:text-3xl font-black mb-1 tracking-wide">
                   すべてのもんだい
@@ -109,7 +113,9 @@ export default function SetupClient({ genre }: { genre: Genre }) {
               }`}
               onClick={() => setMode('review')}
             >
-              <div className={`text-5xl sm:text-6xl p-4 rounded-3xl border-4 border-zinc-400 shadow-brutal-sm bg-white ${mode === 'review' ? 'animate-bounce-soft' : ''}`}>💪</div>
+              <div className={`p-4 rounded-3xl border-4 border-zinc-400 shadow-brutal-sm bg-white ${mode === 'review' ? 'animate-bounce-soft' : ''}`}>
+                <Target className={`${ICON_SIZE.mode} text-zinc-700`} strokeWidth={ICON_STROKE.regular} />
+              </div>
               <div className="text-center sm:text-left">
                 <h3 className="text-2xl sm:text-3xl font-black mb-1 tracking-wide">
                   ニガテにちょうせん
@@ -148,10 +154,11 @@ export default function SetupClient({ genre }: { genre: Genre }) {
 
       <div className="mt-8 pb-8">
         <button 
-          className={`w-full h-24 sm:h-28 text-4xl sm:text-5xl font-black rounded-[2.5rem] border-4 border-zinc-400 shadow-brutal active-brutal-push transition-all focus:outline-none focus:ring-8 focus:ring-yellow-400/50 hover:-translate-y-2 hover:shadow-brutal-lg ${tone.cta}`}
+          className={`w-full h-24 sm:h-28 text-4xl sm:text-5xl font-black rounded-[2.5rem] border-4 border-zinc-400 shadow-brutal active-brutal-push transition-all focus:outline-none focus:ring-8 focus:ring-yellow-400/50 hover:-translate-y-2 hover:shadow-brutal-lg ${tone.cta} inline-flex items-center justify-center gap-3`}
           onClick={handleStart}
         >
-          スタート！🚀
+          <Play className={ICON_SIZE.xl} strokeWidth={ICON_STROKE.medium} />
+          スタート！
         </button>
       </div>
     </div>

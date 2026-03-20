@@ -26,7 +26,7 @@ export default async function ResultPage({
       *,
       genres (
         name,
-        icon,
+        icon_key,
         color_hint
       )
     `)

@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase';
+import { CircleAlert } from 'lucide-react';
 import LoginClient from './LoginClient';
+import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
 
 // revalidate every 0 seconds to always fetch the latest users
 export const revalidate = 0;
@@ -16,7 +18,10 @@ export default async function Home() {
     return (
       <div className="flex min-h-screen items-center justify-center p-4 bg-red-50">
         <div className="bg-white p-6 rounded-2xl shadow-brutal border-4 border-red-500">
-          <p className="text-red-600 font-bold text-lg">エラー：ユーザーをよみこめませんでした 😢</p>
+          <p className="text-red-600 font-bold text-lg inline-flex items-center gap-2">
+            <CircleAlert className={ICON_SIZE.md} strokeWidth={ICON_STROKE.regular} />
+            エラー：ユーザーをよみこめませんでした
+          </p>
         </div>
       </div>
     );

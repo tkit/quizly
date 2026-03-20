@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { X, CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, PartyPopper, Sparkles, X, XCircle } from 'lucide-react';
 import { calculateSessionPoints } from '@/lib/points';
 import { fireCorrectEffect } from '@/lib/effects/confetti';
+import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
 
 interface Question {
   id: string;
@@ -20,7 +21,7 @@ interface Question {
 interface Genre {
   id: string;
   name: string;
-  icon: string | null;
+  icon_key: string;
   color_hint: string | null;
   parent_id: string | null;
 }
@@ -110,12 +111,18 @@ export default function QuizClient({
   if (questions.length === 0) {
     return (
       <div className="flex flex-col flex-1 items-center justify-center gap-6 h-full text-center p-4">
-        <div className="text-8xl animate-bounce-soft">🎉</div>
+        <PartyPopper className={`${ICON_SIZE.hero} animate-bounce-soft text-amber-500`} strokeWidth={ICON_STROKE.regular} />
         <p className="text-3xl font-black text-zinc-800 bg-white px-8 py-4 rounded-3xl border-4 border-zinc-400 shadow-brutal w-full max-w-lg">
           {mode === 'review' 
-            ? 'ニガテな もんだいが ありません！天才！✨' 
+            ? 'ニガテな もんだいが ありません！天才！' 
             : 'このジャンルには もんだいが ありません。'}
         </p>
+        {mode === 'review' && (
+          <div className="inline-flex items-center gap-2 text-amber-600 font-black text-xl">
+            <Sparkles className={ICON_SIZE.sm} strokeWidth={ICON_STROKE.strong} />
+            おみごと！
+          </div>
+        )}
         <button 
           className="bg-yellow-400 text-zinc-900 border-4 border-zinc-400 shadow-brutal hover:bg-yellow-500 hover:-translate-y-1 hover:shadow-brutal-lg active-brutal-push rounded-full text-2xl font-black px-12 py-4 mt-8 transition-all"
           onClick={() => router.push('/dashboard')}

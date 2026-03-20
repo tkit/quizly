@@ -2,13 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Star, ChevronLeft, Check, CheckCheck, Circle } from 'lucide-react';
+import { CircleAlert, Circle, Construction, LogOut, Sparkles, Star, ChevronLeft, Check, CheckCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { GenreIcon } from '@/components/GenreIcon';
+import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
 
 interface Genre {
   id: string;
   name: string;
-  icon: string | null;
+  icon_key: string;
   description: string | null;
   color_hint: string | null;
   parent_id: string | null;
@@ -85,7 +87,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
     if (status === 'perfect_cleared') {
       return (
         <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-400 bg-green-200 text-green-800 inline-flex items-center justify-center" title="受講済み（全問正解達成）" aria-label="受講済み（全問正解達成）">
-          <CheckCheck className="w-6 h-6 stroke-[3]" />
+          <CheckCheck className={ICON_SIZE.md} strokeWidth={ICON_STROKE.bold} />
         </span>
       );
     }
@@ -93,14 +95,14 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
     if (status === 'studied_not_perfect') {
       return (
         <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-400 bg-zinc-200 text-zinc-700 inline-flex items-center justify-center" title="受講済み（不正解あり）" aria-label="受講済み（不正解あり）">
-          <Check className="w-6 h-6 stroke-[3]" />
+          <Check className={ICON_SIZE.md} strokeWidth={ICON_STROKE.bold} />
         </span>
       );
     }
 
     return (
       <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-400 bg-white/80 text-zinc-500 inline-flex items-center justify-center" title="未受講" aria-label="未受講">
-        <Circle className="w-6 h-6 stroke-[3]" />
+        <Circle className={ICON_SIZE.md} strokeWidth={ICON_STROKE.bold} />
       </span>
     );
   };
@@ -156,7 +158,10 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
           </div>
           <div>
             <h1 className="font-display text-2xl sm:text-3xl font-black text-zinc-800 tracking-wide">{userName}さんのトップページ</h1>
-            <p className="text-md sm:text-lg font-bold text-pink-500 mt-1">きょうも がんばろう！✨</p>
+            <p className="text-md sm:text-lg font-bold text-pink-500 mt-1 inline-flex items-center gap-2">
+              きょうも がんばろう！
+              <Sparkles className={ICON_SIZE.sm} strokeWidth={ICON_STROKE.strong} />
+            </p>
           </div>
         </div>
         <button
@@ -187,7 +192,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
               onClick={() => setSelectedParentId(null)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-4 border-zinc-400 bg-white shadow-brutal-sm font-black text-zinc-700 hover:bg-zinc-50 active-brutal-push"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className={ICON_SIZE.sm} />
               きょうか えらびに もどる
             </button>
           )}
@@ -196,8 +201,13 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
         {selectedParent ? (
           <div className="flex flex-col gap-4">
             <div className="bg-white p-4 rounded-2xl border-4 border-zinc-400 shadow-brutal-sm">
-              <p className="text-lg sm:text-xl font-black text-zinc-800">
-                {selectedParent.icon ?? '📚'} {selectedParent.name} のカテゴリを えらぼう！
+              <p className="text-lg sm:text-xl font-black text-zinc-800 inline-flex items-center gap-2">
+                <GenreIcon
+                  iconKey={selectedParent.icon_key}
+                  className={ICON_SIZE.md}
+                  strokeWidth={ICON_STROKE.medium}
+                />
+                {selectedParent.name} のカテゴリを えらぼう！
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
@@ -212,7 +222,11 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                   >
                     <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full transform group-hover:scale-150 transition-transform duration-500" />
                     <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${styles.iconBgClass}`}>
-                      {genre.icon || '📘'}
+                      <GenreIcon
+                        iconKey={genre.icon_key}
+                        className={ICON_SIZE.card}
+                        strokeWidth={ICON_STROKE.medium}
+                      />
                     </div>
                     <div className="flex-1 z-10">
                       <div className="flex items-start justify-between gap-3 mb-2">
@@ -230,7 +244,10 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
 
               {childGenres.length === 0 && (
                 <div className="col-span-full p-12 text-center bg-white border-4 border-dashed border-zinc-400 rounded-[2rem] shadow-brutal">
-                  <p className="text-2xl font-bold text-zinc-500">このきょうかのカテゴリは まだありません 😢</p>
+                  <p className="text-2xl font-bold text-zinc-500 inline-flex items-center gap-2">
+                    <CircleAlert className={ICON_SIZE.md} strokeWidth={ICON_STROKE.medium} />
+                    このきょうかのカテゴリは まだありません
+                  </p>
                 </div>
               )}
             </div>
@@ -247,7 +264,11 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                 >
                   <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full transform group-hover:scale-150 transition-transform duration-500" />
                   <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${styles.iconBgClass}`}>
-                    {genre.icon || '📚'}
+                    <GenreIcon
+                      iconKey={genre.icon_key}
+                      className={ICON_SIZE.card}
+                      strokeWidth={ICON_STROKE.medium}
+                    />
                   </div>
                   <div className="flex-1 z-10">
                     <h3 className="font-display text-2xl sm:text-3xl font-black mb-2 tracking-wide drop-shadow-sm">{genre.name}</h3>
@@ -260,7 +281,10 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
 
             {parentGenres.length === 0 && (
               <div className="col-span-full p-12 text-center bg-white border-4 border-dashed border-zinc-400 rounded-[2rem] shadow-brutal">
-                <p className="text-2xl font-bold text-zinc-500">きょうかが まだありません 😢</p>
+                <p className="text-2xl font-bold text-zinc-500 inline-flex items-center gap-2">
+                  <CircleAlert className={ICON_SIZE.md} strokeWidth={ICON_STROKE.medium} />
+                  きょうかが まだありません
+                </p>
               </div>
             )}
           </div>
@@ -272,7 +296,10 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
           <h2 className="font-display text-2xl font-black text-zinc-900 bg-white px-6 py-2 rounded-xl border-4 border-zinc-400 shadow-brutal-sm -rotate-2">
             これまでのきろく
           </h2>
-          <p className="text-xl font-bold text-zinc-800 mt-2">（※いまはまだ じゅんび中だよ！🚧）</p>
+          <p className="text-xl font-bold text-zinc-800 mt-2 inline-flex items-center gap-2">
+            （※いまはまだ じゅんび中だよ！）
+            <Construction className={ICON_SIZE.md} strokeWidth={ICON_STROKE.strong} />
+          </p>
         </div>
       </section>
     </div>
