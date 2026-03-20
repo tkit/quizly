@@ -1,7 +1,5 @@
-import { Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import DashboardClient from './DashboardClient';
-import { Card, CardContent } from '@/components/ui/card';
 
 export const revalidate = 0;
 
@@ -9,7 +7,8 @@ export default async function DashboardPage() {
   const { data: genres, error } = await supabase
     .from('genres')
     .select('*')
-    .order('id');
+    .order('parent_id', { ascending: true, nullsFirst: true })
+    .order('id', { ascending: true });
 
   if (error) {
     console.error('Error fetching genres:', error);

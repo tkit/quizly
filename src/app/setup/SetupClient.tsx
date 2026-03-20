@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { ChevronLeft } from 'lucide-react';
 
 interface Genre {
@@ -11,6 +9,7 @@ interface Genre {
   name: string;
   icon: string | null;
   color_hint: string | null;
+  parent_id: string | null;
 }
 
 export default function SetupClient({ genre }: { genre: Genre }) {

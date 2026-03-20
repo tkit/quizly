@@ -26,15 +26,21 @@
 | `created_at` | timestamp with time zone | DEFAULT now() | 作成日時 |
 
 ## 2. `genres` テーブル
-問題のジャンル（算数、歴史など）を管理します。
+問題のジャンルを管理します。2階層（親カテゴリ=教科、子カテゴリ=学習単元）で運用します。
 
 | カラム名 | データ型 | 制約 | 説明 |
 | :--- | :--- | :--- | :--- |
 | `id` | text | PRIMARY KEY | ジャンルの一意な識別子（例: 'math', 'history'） |
 | `name` | text | NOT NULL | ジャンルの表示名（例: 「さんすう」「れきし」） |
+| `parent_id` | text | FOREIGN KEY (genres.id), NULL可 | 親カテゴリID。親カテゴリ自身は `NULL` |
 | `icon` | text | | ジャンルに対応するアイコン（絵文字またはURL） |
 | `description` | text | | ジャンルの説明 |
 | `color_hint` | text | | UI表示色を分けるためのヒント（例: 'blue', 'orange'） |
+
+運用ルール:
+- `parent_id IS NULL` は親カテゴリ（教科）
+- `parent_id IS NOT NULL` は子カテゴリ（クイズ実行単位）
+- 今回は2階層固定（多段階は対象外）
 
 ## 3. `questions` テーブル
 実際の問題データを管理します。
@@ -43,7 +49,7 @@
 | カラム名 | データ型 | 制約 | 説明 |
 | :--- | :--- | :--- | :--- |
 | `id` | uuid | PRIMARY KEY, DEFAULT gen_random_uuid() | 問題の一意なID |
-| `genre_id` | text | FOREIGN KEY (genres.id) | この問題が属するジャンルのID |
+| `genre_id` | text | FOREIGN KEY (genres.id) | この問題が属する子カテゴリID（leaf） |
 | `question_text` | text | NOT NULL | 問題の本文 |
 | `options` | jsonb | NOT NULL | 選択肢の配列（例: `["徳川家康", "織田信長", "豊臣秀吉"]`） |
 | `correct_index` | integer | NOT NULL | 正解となる選択肢のインデックス（0始まり） |
@@ -59,7 +65,7 @@
 | :--- | :--- | :--- | :--- |
 | `id` | uuid | PRIMARY KEY, DEFAULT gen_random_uuid() | セッションの一意なID |
 | `user_id` | uuid | FOREIGN KEY (users.id) | 挑戦したユーザーのID |
-| `genre_id` | text | FOREIGN KEY (genres.id) | 挑戦したジャンルのID |
+| `genre_id` | text | FOREIGN KEY (genres.id) | 挑戦した子カテゴリID（leaf） |
 | `mode` | text | DEFAULT 'normal' | 'normal'（通常） または 'review'（復習） |
 | `total_questions` | integer | NOT NULL | 出題された全問題数 |
 | `correct_count`| integer | NOT NULL | 正解数 |

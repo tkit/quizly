@@ -17,6 +17,7 @@ CREATE POLICY "Allow all access to users" ON public.users FOR ALL USING (true);
 CREATE TABLE public.genres (
   id text PRIMARY KEY,
   name text NOT NULL,
+  parent_id text REFERENCES public.genres(id),
   icon text,
   description text,
   color_hint text
@@ -91,13 +92,20 @@ CREATE POLICY "Allow all access to point_transactions"
 
 
 -- ==== 動作確認用初期データ（シードデータ） ====
--- ジャンル
-INSERT INTO public.genres (id, name, icon, description, color_hint) VALUES
-('math', '算数', '➕', 'けいさんや図形のもんだい', 'blue'),
-('history', '歴史', '🏯', 'むかしの出来事や人物', 'orange'),
-('science', '理科', '🔬', '生き物や自然のふしぎ', 'green');
+-- ジャンル（2階層: 教科 -> サブカテゴリ）
+INSERT INTO public.genres (id, name, parent_id, icon, description, color_hint) VALUES
+('math', '算数', NULL, '➕', 'けいさんや図形のもんだい', 'blue'),
+('japanese', '国語', NULL, '📖', 'ことばや文の読み書き', 'pink'),
+('social', '社会', NULL, '🗺️', '地理や歴史のもんだい', 'orange'),
+('science', '理科', NULL, '🔬', '生き物や自然のふしぎ', 'green'),
+('math-basic-calc', '計算マスター', 'math', '🧮', 'たし算ひき算のきそ', 'blue'),
+('math-time', '時間と時計', 'math', '⏰', '時間の読み方や計算', 'blue'),
+('jp-grammar-01', '文法マスター 第1回: 和語(1)', 'japanese', '📝', '和語の意味と使い方', 'pink'),
+('jp-grammar-02', '文法マスター 第2回: 慣用句(1)', 'japanese', '💬', '慣用句の読み取り', 'pink');
 
--- 問題（算数のサンプル2問）
+-- 問題（サブカテゴリのサンプル）
 INSERT INTO public.questions (genre_id, question_text, options, correct_index, explanation) VALUES
-('math', '15 + 27 はいくつでしょう？', '["32", "42", "52"]', 1, '1のくらいは 5+7=12。10のくらいに1くりあげて、1+2+1=4。だから42が正解だよ！'),
-('math', '1日は何時間でしょう？', '["12時間", "20時間", "24時間"]', 2, '朝から夜、そして次の日の朝までぐるっと1周すると24時間だよ！');
+('math-basic-calc', '15 + 27 はいくつでしょう？', '["32", "42", "52"]', 1, '1のくらいは 5+7=12。10のくらいに1くりあげて、1+2+1=4。だから42が正解だよ！'),
+('math-time', '1日は何時間でしょう？', '["12時間", "20時間", "24時間"]', 2, '朝から夜、そして次の日の朝までぐるっと1周すると24時間だよ！'),
+('jp-grammar-01', '「山道」を読むとき、正しいのはどれ？', '["やまみち", "さんどう", "やまどう"]', 0, '和語として読むと「やまみち」が正解だよ。'),
+('jp-grammar-02', '「あしをひっぱる」の意味として正しいのはどれ？', '["協力して助ける", "じゃまをする", "走るのが速い"]', 1, '慣用句で「あしをひっぱる」は、じゃまをするという意味だよ。');
