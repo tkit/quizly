@@ -19,7 +19,7 @@ export default async function DashboardPage() {
   if (genresError) {
     console.error('Error fetching genres:', genresError);
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-screen-safe items-center justify-center p-4">
         <p className="text-red-500">ジャンルの読み込みに失敗しました。</p>
       </div>
     );
@@ -28,7 +28,7 @@ export default async function DashboardPage() {
   if (questionsError) {
     console.error('Error fetching questions:', questionsError);
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-screen-safe items-center justify-center p-4">
         <p className="text-red-500">問題数の読み込みに失敗しました。</p>
       </div>
     );
@@ -45,7 +45,7 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-zinc-50 dark:bg-zinc-950 px-4 py-8">
+    <div className="flex min-h-screen-safe flex-col items-center bg-zinc-50 px-4 py-5 sm:px-6 sm:py-8 lg:px-8 dark:bg-zinc-950">
       <main className="w-full max-w-4xl flex flex-col gap-8">
         <DashboardClient genres={genresWithQuestionCount} />
       </main>

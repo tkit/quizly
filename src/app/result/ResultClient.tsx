@@ -120,48 +120,48 @@ export default function ResultClient({
         };
 
   return (
-    <div className="flex flex-col gap-8 h-full max-w-3xl mx-auto w-full p-2 sm:p-4 pb-12">
+    <div className="mx-auto flex h-full w-full max-w-3xl flex-col gap-6 p-1.5 pb-safe-lg sm:gap-8 sm:p-3">
       {/* Massive Result Banner */}
-      <div className={`p-8 sm:p-12 rounded-[3.5rem] border-4 border-zinc-400 shadow-brutal-lg text-center relative overflow-hidden ${resultTone.panel}`}>
+      <div className={`relative overflow-hidden rounded-[2.2rem] border-4 border-zinc-400 p-5 text-center shadow-brutal-lg sm:rounded-[3.5rem] sm:p-12 ${resultTone.panel}`}>
         {/* Background decorations */}
-        <div className="absolute top-4 left-4 w-12 h-12 bg-white/50 rounded-full blur-sm" />
-        <div className="absolute bottom-12 right-12 w-24 h-24 bg-white/40 rounded-full blur-md" />
+        <div className="absolute left-4 top-4 h-10 w-10 rounded-full bg-white/50 blur-sm sm:h-12 sm:w-12" />
+        <div className="absolute bottom-10 right-10 h-16 w-16 rounded-full bg-white/40 blur-md sm:bottom-12 sm:right-12 sm:h-24 sm:w-24" />
         
-        <div className="mb-4 animate-bounce drop-shadow-[4px_4px_0_rgba(24,24,27,1)] relative z-10 flex justify-center">
+        <div className="relative z-10 mb-3 flex justify-center animate-bounce drop-shadow-[4px_4px_0_rgba(24,24,27,1)] sm:mb-4">
           <ResultIcon
             className={`${ICON_SIZE.hero} ${resultTone.icon}`}
             strokeWidth={ICON_STROKE.medium}
           />
         </div>
         
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-4 text-zinc-900 drop-shadow-sm tracking-wide relative z-10">
+        <h1 className="relative z-10 mb-4 text-[clamp(2rem,10vw,3.75rem)] font-black tracking-wide text-zinc-900 drop-shadow-sm">
           {isPerfect ? 'パーフェクト' : isGood ? 'すばらしい結果です' : 'おつかれさまでした'}
         </h1>
         
-        <div className="inline-block bg-white px-8 py-3 rounded-full border-4 border-zinc-400 shadow-brutal mt-2 relative z-10 transform rotate-1">
-          <p className="text-2xl sm:text-3xl font-black text-zinc-800">
-             {session.total_questions}問中 <span className={`text-5xl mx-2 ${resultTone.score}`}>{session.correct_count}</span> 問正解
+        <div className="relative z-10 mt-1 inline-block rotate-1 rounded-full border-4 border-zinc-400 bg-white px-4 py-2 shadow-brutal sm:mt-2 sm:px-8 sm:py-3">
+          <p className="text-[clamp(1.1rem,5vw,1.9rem)] font-black text-zinc-800">
+             {session.total_questions}問中 <span className={`mx-1 text-[clamp(2rem,10vw,3rem)] ${resultTone.score}`}>{session.correct_count}</span> 問正解
           </p>
         </div>
 
         {/* Points Display */}
         {earnedPoints > 0 && (
-          <div className="mt-8 relative z-10 animate-points-pop">
-            <div className={`inline-flex flex-col items-center gap-2 px-10 py-5 rounded-[2rem] border-4 shadow-brutal transform -rotate-1 ${
+          <div className="relative z-10 mt-6 animate-points-pop sm:mt-8">
+            <div className={`inline-flex max-w-full -rotate-1 flex-col items-center gap-2 rounded-[2rem] border-4 px-5 py-4 shadow-brutal sm:px-10 sm:py-5 ${
               isPerfect
                 ? 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300'
                 : 'bg-gradient-to-br from-teal-50 to-teal-100 border-teal-300'
             }`}>
-              <div className="flex items-center gap-2">
-                <Star className={`w-8 h-8 ${isPerfect ? 'text-amber-600 fill-amber-300' : 'text-teal-600 fill-teal-300'}`} />
-                <span className={`text-2xl sm:text-3xl font-black ${isPerfect ? 'text-amber-900' : 'text-teal-900'}`}>ポイント獲得</span>
-                <Star className={`w-8 h-8 ${isPerfect ? 'text-amber-600 fill-amber-300' : 'text-teal-600 fill-teal-300'}`} />
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Star className={`h-6 w-6 sm:h-8 sm:w-8 ${isPerfect ? 'text-amber-600 fill-amber-300' : 'text-teal-600 fill-teal-300'}`} />
+                <span className={`text-[clamp(1.25rem,5.2vw,1.9rem)] font-black ${isPerfect ? 'text-amber-900' : 'text-teal-900'}`}>ポイント獲得</span>
+                <Star className={`h-6 w-6 sm:h-8 sm:w-8 ${isPerfect ? 'text-amber-600 fill-amber-300' : 'text-teal-600 fill-teal-300'}`} />
               </div>
-              <div className={`text-5xl sm:text-7xl font-black tabular-nums tracking-tight ${isPerfect ? 'text-amber-800' : 'text-teal-800'}`}>
-                +{displayPoints}<span className="text-3xl sm:text-4xl ml-1">pt</span>
+              <div className={`text-[clamp(2.2rem,12vw,4.5rem)] font-black tabular-nums tracking-tight ${isPerfect ? 'text-amber-800' : 'text-teal-800'}`}>
+                +{displayPoints}<span className="ml-1 text-[clamp(1.4rem,7vw,2.25rem)]">pt</span>
               </div>
               {isPerfect && bonusPoints > 0 && (
-                <div className="bg-amber-50 text-amber-900 px-4 py-1 rounded-full text-lg sm:text-xl font-black border-2 border-amber-300 shadow-brutal-sm transform rotate-1">
+                <div className="rotate-1 rounded-full border-2 border-amber-300 bg-amber-50 px-3 py-1 text-sm font-black text-amber-900 shadow-brutal-sm sm:px-4 sm:text-xl">
                   <span className="inline-flex items-center gap-2">
                     <BadgeCheck className={ICON_SIZE.sm} strokeWidth={ICON_STROKE.strong} />
                     パーフェクトボーナス ×1.5！ +{bonusPoints}pt
@@ -172,9 +172,9 @@ export default function ResultClient({
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12 relative z-10">
+        <div className="relative z-10 mt-8 flex flex-col justify-center gap-3 sm:mt-12 sm:flex-row sm:gap-4">
           <button 
-            className="h-16 px-8 rounded-full text-xl sm:text-2xl font-black bg-zinc-50 text-zinc-700 border-4 border-zinc-400 shadow-brutal hover:bg-zinc-100 active-brutal-push focus:outline-none flex items-center justify-center gap-2"
+            className="flex min-h-11 items-center justify-center gap-2 rounded-full border-4 border-zinc-400 bg-zinc-50 px-6 py-3 text-lg font-black text-zinc-700 shadow-brutal hover:bg-zinc-100 active-brutal-push focus:outline-none sm:h-16 sm:px-8 sm:text-2xl"
             onClick={() => router.push('/dashboard')}
           >
             <Home className={ICON_SIZE.lg} strokeWidth={ICON_STROKE.bold} />
@@ -182,7 +182,7 @@ export default function ResultClient({
             <Sparkles className={`${ICON_SIZE.md} text-teal-600`} strokeWidth={ICON_STROKE.strong} />
           </button>
           <button
-            className={`h-16 px-8 rounded-full text-xl sm:text-2xl font-black border-4 border-zinc-400 shadow-brutal active-brutal-push focus:outline-none flex items-center justify-center gap-2 ${retryButtonTone}`}
+            className={`flex min-h-11 items-center justify-center gap-2 rounded-full border-4 border-zinc-400 px-6 py-3 text-lg font-black shadow-brutal active-brutal-push focus:outline-none sm:h-16 sm:px-8 sm:text-2xl ${retryButtonTone}`}
             onClick={() => router.push(`/quiz?genre=${session.genre_id}`)}
           >
             <RotateCcw className={ICON_SIZE.lg} strokeWidth={ICON_STROKE.bold} /> もう一度挑戦
@@ -191,9 +191,9 @@ export default function ResultClient({
       </div>
 
       {/* Chunky History Section */}
-      <div className="bg-white p-6 sm:p-10 rounded-[3rem] border-4 border-zinc-400 shadow-brutal mt-8">
-        <div className="bg-teal-100 border-4 border-zinc-400 shadow-brutal-sm px-6 py-3 rounded-full w-fit -rotate-2 mb-8">
-          <h2 className="text-2xl sm:text-3xl font-black text-teal-900 flex items-center gap-3">
+      <div className="mt-4 rounded-[2.2rem] border-4 border-zinc-400 bg-white p-4 shadow-brutal sm:mt-8 sm:rounded-[3rem] sm:p-10">
+        <div className="mb-6 w-fit -rotate-2 rounded-full border-4 border-zinc-400 bg-teal-100 px-4 py-2 shadow-brutal-sm sm:mb-8 sm:px-6 sm:py-3">
+          <h2 className="flex items-center gap-3 text-[clamp(1.2rem,5vw,1.9rem)] font-black text-teal-900">
             <NotebookPen className={ICON_SIZE.lg} strokeWidth={ICON_STROKE.strong} />
             学習の振り返り
           </h2>
@@ -204,36 +204,36 @@ export default function ResultClient({
             const q = Array.isArray(record.questions) ? record.questions[0] : record.questions;
             if (!q) return null;
             return (
-              <div key={index} className={`p-6 sm:p-8 rounded-[2rem] border-4 border-zinc-400 flex flex-col gap-4 shadow-brutal-sm ${
+              <div key={index} className={`flex flex-col gap-3 rounded-[1.6rem] border-4 border-zinc-400 p-4 shadow-brutal-sm sm:gap-4 sm:rounded-[2rem] sm:p-8 ${
                 record.is_correct ? 'bg-teal-50/50' : 'bg-rose-50'
               }`}>
-                <div className="flex gap-4 items-start">
+                <div className="flex items-start gap-3 sm:gap-4">
                    {record.is_correct ? (
-                      <div className="bg-teal-400 rounded-full shrink-0 border-2 border-zinc-400 shadow-sm mt-1">
-                        <CheckCircle className="w-8 h-8 text-white" />
+                      <div className="mt-1 shrink-0 rounded-full border-2 border-zinc-400 bg-teal-400 shadow-sm">
+                        <CheckCircle className="h-7 w-7 text-white sm:h-8 sm:w-8" />
                       </div>
                    ) : (
-                      <div className="bg-rose-500 rounded-full shrink-0 border-2 border-zinc-400 shadow-sm mt-1 animate-wiggle">
-                        <XCircle className="w-8 h-8 text-white" />
+                      <div className="mt-1 shrink-0 rounded-full border-2 border-zinc-400 bg-rose-500 shadow-sm animate-wiggle">
+                        <XCircle className="h-7 w-7 text-white sm:h-8 sm:w-8" />
                       </div>
                    )}
-                   <p className="font-black text-zinc-800 text-xl sm:text-2xl leading-snug flex-1 drop-shadow-sm">
+                   <p className="flex-1 text-lg font-black leading-snug text-zinc-800 drop-shadow-sm sm:text-2xl">
                       <span className="opacity-50 mr-2">{index + 1}.</span>{q.question_text}
                    </p>
                    {record.is_correct && (
-                     <span className="text-teal-600 font-black text-lg shrink-0 bg-teal-50 px-2 py-1 rounded-xl border-2 border-teal-300">
+                     <span className="shrink-0 rounded-xl border-2 border-teal-300 bg-teal-50 px-2 py-1 text-sm font-black text-teal-600 sm:text-lg">
                        +{POINTS_PER_CORRECT}pt
                      </span>
                    )}
                 </div>
 
-                <div className="ml-12 flex flex-col gap-4 border-l-4 border-zinc-400 pl-6 mt-2 py-2">
+                <div className="mt-1 flex flex-col gap-3 border-t-4 border-zinc-300 pt-4 sm:mt-2 sm:gap-4 sm:border-l-4 sm:border-t-0 sm:border-zinc-400 sm:py-2 sm:pl-6 sm:ml-12">
                    {!record.is_correct && (
                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                        <span className="text-rose-700 font-black bg-white border-2 border-zinc-400 shadow-sm px-3 py-1 rounded-xl w-fit">
                          あなたの回答:
                        </span>
-                       <span className="text-xl sm:text-2xl font-bold text-zinc-600 line-through decoration-rose-500 decoration-4">
+                       <span className="text-lg font-bold text-zinc-600 line-through decoration-rose-500 decoration-4 sm:text-2xl">
                          {q.options[record.selected_index]}
                        </span>
                      </div>
@@ -242,16 +242,16 @@ export default function ResultClient({
                      <span className="text-teal-700 font-black bg-white border-2 border-zinc-400 shadow-sm px-3 py-1 rounded-xl w-fit">
                        正解:
                      </span>
-                     <span className="text-xl sm:text-2xl font-black text-teal-700 bg-teal-100 px-3 py-1 rounded-xl border-2 border-teal-300">
+                     <span className="rounded-xl border-2 border-teal-300 bg-teal-100 px-3 py-1 text-lg font-black text-teal-700 sm:text-2xl">
                        {q.options[q.correct_index]}
                      </span>
                    </div>
                    
                    {q.explanation && (
-                     <div className="mt-4 p-5 bg-white rounded-2xl border-4 border-zinc-400 shadow-brutal-sm relative">
+                     <div className="relative mt-3 rounded-2xl border-4 border-zinc-400 bg-white p-4 shadow-brutal-sm sm:mt-4 sm:p-5">
                         {/* decorative tape */}
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-6 bg-teal-200/80 -rotate-2 mix-blend-multiply" />
-                        <p className="text-lg sm:text-xl font-bold text-zinc-800 leading-relaxed">
+                        <p className="text-base font-bold leading-relaxed text-zinc-800 sm:text-xl">
                           {q.explanation}
                         </p>
                      </div>

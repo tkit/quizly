@@ -104,7 +104,7 @@ export default function LoginClient({ users }: { users: User[] }) {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-3 w-full">
+      <div className="grid w-full grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-5 md:grid-cols-3">
         {isLoadingUsers && (
           <div className="col-span-full text-center bg-white p-8 border-4 border-dashed border-zinc-300 rounded-3xl">
             <p className="text-xl font-bold text-zinc-500">ユーザーを読み込み中...</p>
@@ -132,11 +132,11 @@ export default function LoginClient({ users }: { users: User[] }) {
               }}
               role="button"
               tabIndex={0}
-              className="w-full h-full text-left bg-white rounded-3xl border-4 border-zinc-400 shadow-brutal hover:-translate-y-1 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 focus:ring-teal-500 p-4 sm:p-6 cursor-pointer relative"
+              className="relative h-full w-full cursor-pointer rounded-3xl border-4 border-zinc-400 bg-white p-4 text-left shadow-brutal transition-all hover:-translate-y-1 hover:shadow-brutal-lg active-brutal-push focus:ring-4 focus:ring-teal-500 focus:outline-none sm:p-6"
             >
-              <div className="flex flex-col items-center gap-4 relative pointer-events-none">
+              <div className="relative flex flex-col items-center gap-3 pointer-events-none sm:gap-4">
                 {/* Avatar circle */}
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-4 border-zinc-400 shadow-brutal-sm group-hover:bg-teal-200 transition-colors pointer-events-auto">
+                <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-zinc-400 bg-slate-100 shadow-brutal-sm transition-colors pointer-events-auto group-hover:bg-teal-200 sm:h-24 sm:w-24">
                   {user.icon_url?.startsWith('/') ? (
                     <Image
                       src={user.icon_url}
@@ -155,14 +155,14 @@ export default function LoginClient({ users }: { users: User[] }) {
                 </div>
                 
                 {/* Name Badge */}
-                <span className="text-lg sm:text-xl font-bold text-zinc-800 bg-slate-100 px-4 py-1 rounded-full border-2 border-zinc-400">
+                <span className="rounded-full border-2 border-zinc-400 bg-slate-100 px-4 py-1 text-[clamp(1rem,4.8vw,1.25rem)] font-bold text-zinc-800">
                   {user.name}
                 </span>
 
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-slate-100 border-2 border-zinc-400 shadow-brutal-sm text-teal-700 hover:bg-slate-200 hover:text-teal-800 active-brutal-push p-0 pointer-events-auto"
+                  className="absolute -right-2 -top-2 h-11 w-11 rounded-full border-2 border-zinc-400 bg-slate-100 p-0 text-teal-700 shadow-brutal-sm pointer-events-auto hover:bg-slate-200 hover:text-teal-800 active-brutal-push"
                   onClick={(e) => {
                     e.stopPropagation();
                     setEditingAvatarUser(user);
@@ -188,25 +188,25 @@ export default function LoginClient({ users }: { users: User[] }) {
       <Dialog open={!!selectedUser} onOpenChange={(open) => {
         if (!open) setSelectedUser(null);
       }}>
-        <DialogContent className="sm:max-w-sm rounded-[2.5rem] p-0 overflow-hidden border-4 border-zinc-400 shadow-brutal-lg bg-slate-50 max-h-[90vh]">
+        <DialogContent className="max-h-[min(92dvh,760px)] overflow-y-auto rounded-[2.5rem] border-4 border-zinc-400 bg-slate-50 p-0 shadow-brutal-lg sm:max-w-sm">
           {/* Fun header */}
-          <div className="bg-teal-500 p-6 border-b-4 border-zinc-400 text-center relative">
+          <div className="relative border-b-4 border-zinc-400 bg-teal-500 p-5 text-center sm:p-6">
             <div className="absolute top-2 left-2 w-4 h-4 rounded-full bg-white/50" />
             <div className="absolute bottom-2 right-4 w-6 h-6 rounded-full bg-white/20" />
-            <h2 className="text-2xl font-black text-white drop-shadow-[2px_2px_0_rgba(24,24,27,1)]">
+            <h2 className="text-[clamp(1.3rem,6vw,1.55rem)] font-black text-white drop-shadow-[2px_2px_0_rgba(24,24,27,1)]">
               {selectedUser?.name}さんの
             </h2>
-            <h3 className="text-xl font-bold text-teal-200 drop-shadow-[1px_1px_0_rgba(24,24,27,1)]">
+            <h3 className="text-[clamp(1rem,4.5vw,1.25rem)] font-bold text-teal-200 drop-shadow-[1px_1px_0_rgba(24,24,27,1)]">
               あんしょうばんごう
             </h3>
           </div>
 
-          <div className="p-6 flex flex-col items-center gap-6 bg-slate-50">
+          <div className="flex flex-col items-center gap-4 bg-slate-50 p-4 sm:gap-6 sm:p-6">
             {/* PIN Display */}
-            <div className="w-full bg-white border-4 border-zinc-400 rounded-2xl p-4 flex justify-center items-center shadow-inner h-20">
-              <div className="flex gap-3">
+            <div className="flex min-h-[4.5rem] w-full items-center justify-center rounded-2xl border-4 border-zinc-400 bg-white p-3 shadow-inner sm:h-20 sm:p-4">
+              <div className="flex gap-2 sm:gap-3">
                 {[0, 1, 2, 3].map((index) => (
-                  <div key={index} className="w-6 h-6 rounded-full border-2 border-zinc-400 flex items-center justify-center bg-zinc-100">
+                  <div key={index} className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-zinc-400 bg-zinc-100">
                     {index < pinInput.length && (
                       <div className="w-4 h-4 bg-zinc-800 rounded-full animate-bounce-soft" />
                     )}
@@ -222,11 +222,11 @@ export default function LoginClient({ users }: { users: User[] }) {
             )}
 
             {/* Chunky Keypad */}
-            <div className="grid grid-cols-3 gap-3 w-full">
+            <div className="grid w-full grid-cols-3 gap-2.5 sm:gap-3">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                 <button
                   key={num}
-                  className="h-16 text-3xl font-black rounded-2xl bg-white border-4 border-zinc-400 shadow-brutal text-teal-700 hover:bg-slate-50 active-brutal-push focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="h-14 rounded-2xl border-4 border-zinc-400 bg-white text-2xl font-black text-teal-700 shadow-brutal hover:bg-slate-50 active-brutal-push focus:ring-2 focus:ring-teal-500 focus:outline-none sm:h-16 sm:text-3xl"
                   onClick={() => {
                     if (pinInput.length < 4) setPinInput(prev => prev + num);
                   }}
@@ -236,7 +236,7 @@ export default function LoginClient({ users }: { users: User[] }) {
               ))}
               <div />
               <button
-                className="h-16 text-3xl font-black rounded-2xl bg-white border-4 border-zinc-400 shadow-brutal text-teal-700 hover:bg-slate-50 active-brutal-push focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="h-14 rounded-2xl border-4 border-zinc-400 bg-white text-2xl font-black text-teal-700 shadow-brutal hover:bg-slate-50 active-brutal-push focus:ring-2 focus:ring-teal-500 focus:outline-none sm:h-16 sm:text-3xl"
                 onClick={() => {
                   if (pinInput.length < 4) setPinInput(prev => prev + '0');
                 }}
@@ -244,7 +244,7 @@ export default function LoginClient({ users }: { users: User[] }) {
                 0
               </button>
               <button
-                className="h-16 text-lg font-bold rounded-2xl bg-slate-100 border-4 border-zinc-400 shadow-brutal text-teal-700 hover:bg-teal-200 active-brutal-push focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="h-14 rounded-2xl border-4 border-zinc-400 bg-slate-100 text-base font-bold text-teal-700 shadow-brutal hover:bg-teal-200 active-brutal-push focus:ring-2 focus:ring-teal-500 focus:outline-none sm:h-16 sm:text-lg"
                 onClick={() => setPinInput(prev => prev.slice(0, -1))}
               >
                 けす
@@ -252,7 +252,7 @@ export default function LoginClient({ users }: { users: User[] }) {
             </div>
 
             <button 
-              className="w-full py-4 text-2xl font-black rounded-full bg-teal-400 border-4 border-zinc-400 shadow-brutal text-zinc-900 hover:bg-teal-500 active-brutal-push disabled:opacity-50 disabled:active:shadow-brutal disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:hover:bg-teal-400 transition-all mt-2"
+              className="mt-1 min-h-11 w-full rounded-full border-4 border-zinc-400 bg-teal-400 py-3 text-xl font-black text-zinc-900 shadow-brutal transition-all hover:bg-teal-500 active-brutal-push disabled:opacity-50 disabled:hover:bg-teal-400 disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:active:shadow-brutal sm:mt-2 sm:py-4 sm:text-2xl"
               disabled={pinInput.length !== 4}
               onClick={handlePinSubmit}
             >
@@ -266,20 +266,20 @@ export default function LoginClient({ users }: { users: User[] }) {
       <Dialog open={!!editingAvatarUser} onOpenChange={(open) => {
         if (!open) setEditingAvatarUser(null);
       }}>
-        <DialogContent className="sm:max-w-md rounded-[2.5rem] p-6 border-4 border-zinc-400 shadow-brutal-lg bg-slate-50">
+        <DialogContent className="max-h-[min(92dvh,760px)] overflow-y-auto rounded-[2.5rem] border-4 border-zinc-400 bg-slate-50 p-4 shadow-brutal-lg sm:max-w-md sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-center text-3xl font-black text-teal-600 drop-shadow-[2px_2px_0_rgba(24,24,27,1)] mb-4">
+            <DialogTitle className="mb-3 text-center text-[clamp(1.4rem,6vw,1.9rem)] font-black text-teal-600 drop-shadow-[2px_2px_0_rgba(24,24,27,1)] sm:mb-4">
               アバターをえらぶ
             </DialogTitle>
           </DialogHeader>
           
-          <div className="grid grid-cols-4 gap-3 bg-white p-4 rounded-[2rem] border-4 border-zinc-400 shadow-inner">
+          <div className="grid grid-cols-3 gap-2 rounded-[2rem] border-4 border-zinc-400 bg-white p-3 shadow-inner min-[420px]:grid-cols-4 sm:gap-3 sm:p-4">
             {AVATARS.map((avatar) => (
               <button
                 key={avatar}
                 disabled={isUpdatingAvatar}
                 onClick={() => handleAvatarSelect(avatar)}
-                className="aspect-square rounded-2xl overflow-hidden border-4 border-transparent hover:border-zinc-400 hover:shadow-brutal bg-slate-100 transition-all active-brutal-push disabled:opacity-50 group"
+                className="aspect-square min-h-11 overflow-hidden rounded-2xl border-4 border-transparent bg-slate-100 transition-all group hover:border-zinc-400 hover:shadow-brutal active-brutal-push disabled:opacity-50"
               >
                 <Image
                   src={avatar}
@@ -292,9 +292,9 @@ export default function LoginClient({ users }: { users: User[] }) {
             ))}
           </div>
 
-          <div className="flex justify-center mt-6">
+          <div className="mt-5 flex justify-center sm:mt-6">
             <button 
-              className="px-8 py-3 rounded-full font-bold bg-white border-4 border-zinc-400 shadow-brutal text-zinc-500 hover:bg-zinc-100 active-brutal-push disabled:opacity-50"
+              className="min-h-11 rounded-full border-4 border-zinc-400 bg-white px-8 py-2 font-bold text-zinc-500 shadow-brutal hover:bg-zinc-100 active-brutal-push disabled:opacity-50 sm:py-3"
               onClick={() => setEditingAvatarUser(null)}
               disabled={isUpdatingAvatar}
             >

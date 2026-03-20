@@ -13,7 +13,7 @@ export default async function ResultPage({
 
   if (!sessionId) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-red-500">
+      <div className="flex min-h-screen-safe items-center justify-center p-4 text-red-500">
         セッションIDが指定されていません。
       </div>
     );
@@ -36,7 +36,7 @@ export default async function ResultPage({
   if (sessionError || !session) {
     console.error('Error fetching session:', sessionError);
     return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-red-500">
+      <div className="flex min-h-screen-safe items-center justify-center p-4 text-red-500">
         結果の読み込みに失敗しました。
       </div>
     );
@@ -63,7 +63,7 @@ export default async function ResultPage({
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-zinc-50 dark:bg-zinc-950 px-4 py-8">
+    <div className="flex min-h-screen-safe flex-col items-center bg-zinc-50 px-4 py-5 sm:px-6 sm:py-8 lg:px-8 dark:bg-zinc-950">
       <main className="w-full max-w-3xl flex flex-col gap-8">
         <ResultClient session={session} history={history || []} />
       </main>

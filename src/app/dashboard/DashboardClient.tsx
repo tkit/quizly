@@ -88,7 +88,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
   const getStudyStatusIcon = (status: 'unattempted' | 'studied_not_perfect' | 'perfect_cleared') => {
     if (status === 'perfect_cleared') {
       return (
-        <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-400 bg-teal-200 text-teal-800 inline-flex items-center justify-center" title="受講済み（全問正解達成）" aria-label="受講済み（全問正解達成）">
+        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-zinc-400 bg-teal-200 text-teal-800 sm:h-10 sm:w-10" title="受講済み（全問正解達成）" aria-label="受講済み（全問正解達成）">
           <CheckCheck className={ICON_SIZE.md} strokeWidth={ICON_STROKE.bold} />
         </span>
       );
@@ -96,14 +96,14 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
 
     if (status === 'studied_not_perfect') {
       return (
-        <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-400 bg-zinc-200 text-zinc-700 inline-flex items-center justify-center" title="受講済み（不正解あり）" aria-label="受講済み（不正解あり）">
+        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-zinc-400 bg-zinc-200 text-zinc-700 sm:h-10 sm:w-10" title="受講済み（不正解あり）" aria-label="受講済み（不正解あり）">
           <Check className={ICON_SIZE.md} strokeWidth={ICON_STROKE.bold} />
         </span>
       );
     }
 
     return (
-      <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-400 bg-white/80 text-zinc-500 inline-flex items-center justify-center" title="未受講" aria-label="未受講">
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-zinc-400 bg-white/80 text-zinc-500 sm:h-10 sm:w-10" title="未受講" aria-label="未受講">
         <Circle className={ICON_SIZE.md} strokeWidth={ICON_STROKE.bold} />
       </span>
     );
@@ -120,15 +120,15 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-4xl mx-auto p-4 sm:p-8">
-      <header className="flex justify-between items-center bg-white p-4 sm:p-6 rounded-[2rem] border-4 border-zinc-400 shadow-brutal w-full">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-teal-300 rounded-full flex items-center justify-center text-3xl font-black text-zinc-900 border-4 border-zinc-400 shadow-brutal-sm animate-bounce-soft">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-1 sm:gap-8 sm:p-2">
+      <header className="flex w-full flex-col gap-4 rounded-[2rem] border-4 border-zinc-400 bg-white p-4 shadow-brutal sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-4 border-zinc-400 bg-teal-300 text-2xl font-black text-zinc-900 shadow-brutal-sm animate-bounce-soft sm:h-16 sm:w-16 sm:text-3xl">
             {userName.charAt(0)}
           </div>
-          <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-black text-zinc-800 tracking-wide">{userName}さんのトップページ</h1>
-            <p className="text-md sm:text-lg font-bold text-teal-600 mt-1 inline-flex items-center gap-2">
+          <div className="min-w-0">
+            <h1 className="font-display text-[clamp(1.25rem,5.5vw,1.9rem)] font-black tracking-wide text-zinc-800">{userName}さんのトップページ</h1>
+            <p className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-teal-600 sm:text-lg">
               今日も学習を進めよう
               <Sparkles className={ICON_SIZE.sm} strokeWidth={ICON_STROKE.strong} />
             </p>
@@ -136,31 +136,31 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
         </div>
         <button
           onClick={handleLogout}
-          className="p-3 bg-red-100 rounded-2xl border-4 border-zinc-400 shadow-brutal text-red-600 hover:bg-red-200 active-brutal-push focus:outline-none focus:ring-4 focus:ring-red-400 group transition-colors"
+          className="group flex min-h-11 min-w-11 items-center justify-center self-end rounded-2xl border-4 border-zinc-400 bg-red-100 p-2.5 text-red-600 shadow-brutal transition-colors hover:bg-red-200 active-brutal-push focus:ring-4 focus:ring-red-400 focus:outline-none sm:self-auto sm:p-3"
           title="ログアウト"
         >
           <LogOut className="h-6 w-6 group-hover:-translate-x-1 group-hover:scale-110 transition-transform" />
         </button>
       </header>
 
-      <div className="flex justify-center -mt-4">
-        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-teal-100 to-teal-200 px-8 py-3 rounded-full border-4 border-teal-400 shadow-brutal transform rotate-1 hover:-rotate-1 transition-transform">
-          <Star className="w-7 h-7 text-teal-600 fill-teal-400" />
-          <span className="text-xl sm:text-2xl font-black text-teal-900">保有ポイント</span>
-          <span className="text-3xl sm:text-4xl font-black text-teal-700 tabular-nums">{totalPoints.toLocaleString()}</span>
-          <span className="text-xl sm:text-2xl font-black text-teal-900">pt</span>
+      <div className="flex justify-center sm:-mt-2">
+        <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border-4 border-teal-400 bg-gradient-to-r from-teal-100 to-teal-200 px-5 py-2.5 text-center shadow-brutal transition-transform hover:-rotate-1 sm:rotate-1 sm:px-8 sm:py-3 sm:gap-3">
+          <Star className="h-6 w-6 text-teal-600 fill-teal-400 sm:h-7 sm:w-7" />
+          <span className="text-lg font-black text-teal-900 sm:text-2xl">保有ポイント</span>
+          <span className="text-2xl font-black tabular-nums text-teal-700 sm:text-4xl">{totalPoints.toLocaleString()}</span>
+          <span className="text-lg font-black text-teal-900 sm:text-2xl">pt</span>
         </div>
       </div>
 
       <section className="flex flex-col gap-6 w-full">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="font-display text-2xl font-black text-zinc-800 bg-white inline-block px-6 py-2 rounded-full border-4 border-zinc-400 shadow-brutal w-fit transform -rotate-1">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display inline-block w-fit -rotate-1 rounded-full border-4 border-zinc-400 bg-white px-4 py-2 text-xl font-black text-zinc-800 shadow-brutal sm:px-6 sm:text-2xl">
             学習を開始する
           </h2>
           {selectedParent && (
             <button
               onClick={() => setSelectedParentId(null)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-4 border-zinc-400 bg-white shadow-brutal-sm font-black text-zinc-700 hover:bg-zinc-50 active-brutal-push"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border-4 border-zinc-400 bg-white px-4 py-2 text-sm font-black text-zinc-700 shadow-brutal-sm hover:bg-zinc-50 active-brutal-push sm:text-base"
             >
               <ChevronLeft className={ICON_SIZE.sm} />
               教科選択に戻る
@@ -170,8 +170,8 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
 
         {selectedParent ? (
           <div className="flex flex-col gap-4">
-            <div className="bg-white p-4 rounded-2xl border-4 border-zinc-400 shadow-brutal-sm">
-              <p className="text-lg sm:text-xl font-black text-zinc-800 inline-flex items-center gap-2">
+            <div className="rounded-2xl border-4 border-zinc-400 bg-white p-4 shadow-brutal-sm">
+              <p className="inline-flex items-center gap-2 text-base font-black text-zinc-800 sm:text-xl">
                 <GenreIcon
                   iconKey={selectedParent.icon_key}
                   className={ICON_SIZE.md}
@@ -188,11 +188,11 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                   <button
                     key={genre.id}
                     onClick={() => router.push(`/quiz?genre=${genre.id}`)}
-                    className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 bg-white hover:bg-slate-50 text-zinc-900 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 ${tone.focusRingClass} p-5 sm:p-6 flex items-start gap-4 sm:gap-5 group overflow-hidden relative`}
+                    className={`group relative flex w-full items-start gap-3 overflow-hidden rounded-[2rem] border-4 border-zinc-400 bg-white p-4 text-left text-zinc-900 shadow-brutal transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-brutal-lg active-brutal-push focus:ring-4 focus:outline-none ${tone.focusRingClass} sm:gap-5 sm:p-6`}
                   >
                     <div className={`absolute left-0 top-0 h-full w-4 ${tone.stripClass}`} />
                     <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full transform group-hover:scale-150 transition-transform duration-500" />
-                    <div className={`shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${tone.iconBgClass}`}>
+                    <div className={`z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.2rem] border-4 border-zinc-400 text-4xl shadow-brutal-sm transition-all group-hover:rotate-6 group-hover:scale-110 sm:h-24 sm:w-24 sm:rounded-[1.5rem] sm:text-5xl ${tone.iconBgClass}`}>
                       <GenreIcon
                         iconKey={genre.icon_key}
                         className={ICON_SIZE.card}
@@ -201,34 +201,34 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
                     </div>
                     <div className="flex-1 min-w-0 z-10">
                       <h3
-                        className="font-display text-xl sm:text-2xl font-black tracking-wide drop-shadow-sm leading-tight overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
+                        className="font-display overflow-hidden text-lg font-black leading-tight tracking-wide drop-shadow-sm [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] sm:text-2xl"
                         title={genre.name}
                       >
                         {genre.name}
                       </h3>
                       <p
-                        className="mt-2 text-sm sm:text-base font-bold opacity-80 leading-snug overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
+                        className="mt-1.5 overflow-hidden text-sm font-bold leading-snug opacity-80 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] sm:mt-2 sm:text-base"
                         title={genre.description ?? ''}
                       >
                         {genre.description}
                       </p>
-                      <p className={`mt-3 inline-flex items-center rounded-full border-2 px-3 py-1 text-sm sm:text-base font-black ${tone.badgeClass}`}>
+                      <p className={`mt-2 inline-flex items-center rounded-full border-2 px-3 py-1 text-xs font-black sm:mt-3 sm:text-base ${tone.badgeClass}`}>
                         全{genre.question_count}問
                       </p>
                     </div>
-                    <div className="shrink-0 z-10 min-h-full flex flex-col items-end justify-between gap-3">
+                    <div className="z-10 hidden min-h-full shrink-0 flex-col items-end justify-between gap-3 sm:flex">
                       {isStudyStatusLoaded ? getStudyStatusIcon(studyStatus) : (
-                        <span className="shrink-0 w-10 h-10 rounded-full border-2 border-zinc-300 bg-zinc-100 animate-pulse" />
+                        <span className="h-10 w-10 shrink-0 animate-pulse rounded-full border-2 border-zinc-300 bg-zinc-100" />
                       )}
-                      <div className={`text-4xl sm:text-5xl font-black opacity-60 group-hover:opacity-100 group-hover:translate-x-2 transition-all ${tone.arrowClass}`}>→</div>
+                      <div className={`text-4xl font-black opacity-60 transition-all group-hover:translate-x-2 group-hover:opacity-100 sm:text-5xl ${tone.arrowClass}`}>→</div>
                     </div>
                   </button>
                 );
               })}
 
               {childGenres.length === 0 && (
-                <div className="col-span-full p-12 text-center bg-white border-4 border-dashed border-zinc-400 rounded-[2rem] shadow-brutal">
-                  <p className="text-2xl font-bold text-zinc-500 inline-flex items-center gap-2">
+                <div className="col-span-full rounded-[2rem] border-4 border-dashed border-zinc-400 bg-white p-8 text-center shadow-brutal sm:p-12">
+                  <p className="inline-flex items-center gap-2 text-lg font-bold text-zinc-500 sm:text-2xl">
                     <CircleAlert className={ICON_SIZE.md} strokeWidth={ICON_STROKE.medium} />
                     この教科のカテゴリはまだありません
                   </p>
@@ -237,36 +237,36 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          <div className="grid w-full grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
             {parentGenres.map((genre) => {
               const tone = resolveSubjectTone(genre.id, genre.color_hint);
               return (
                 <button
                   key={genre.id}
                   onClick={() => setSelectedParentId(genre.id)}
-                  className={`w-full text-left rounded-[2rem] border-4 border-zinc-400 bg-white hover:bg-slate-50 text-zinc-900 shadow-brutal hover:-translate-y-2 hover:shadow-brutal-lg transition-all active-brutal-push focus:outline-none focus:ring-4 ${tone.focusRingClass} p-6 flex items-center gap-6 group overflow-hidden relative`}
+                  className={`group relative flex w-full items-center gap-4 overflow-hidden rounded-[2rem] border-4 border-zinc-400 bg-white p-4 text-left text-zinc-900 shadow-brutal transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-brutal-lg active-brutal-push focus:ring-4 focus:outline-none ${tone.focusRingClass} sm:gap-6 sm:p-6`}
                 >
                   <div className={`absolute left-0 top-0 h-full w-4 ${tone.stripClass}`} />
                   <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full transform group-hover:scale-150 transition-transform duration-500" />
-                  <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center text-5xl border-4 border-zinc-400 shadow-brutal-sm z-10 group-hover:rotate-6 group-hover:scale-110 transition-all ${tone.iconBgClass}`}>
+                  <div className={`z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.2rem] border-4 border-zinc-400 text-4xl shadow-brutal-sm transition-all group-hover:rotate-6 group-hover:scale-110 sm:h-24 sm:w-24 sm:rounded-[1.5rem] sm:text-5xl ${tone.iconBgClass}`}>
                     <GenreIcon
                       iconKey={genre.icon_key}
                       className={ICON_SIZE.card}
                       strokeWidth={ICON_STROKE.medium}
                     />
                   </div>
-                  <div className="flex-1 z-10">
-                    <h3 className="font-display text-2xl sm:text-3xl font-black mb-2 tracking-wide drop-shadow-sm">{genre.name}</h3>
-                    <p className="text-md sm:text-lg font-bold opacity-80">{genre.description}</p>
+                  <div className="z-10 min-w-0 flex-1">
+                    <h3 className="font-display mb-1 text-xl font-black tracking-wide drop-shadow-sm sm:mb-2 sm:text-3xl">{genre.name}</h3>
+                    <p className="text-sm font-bold opacity-80 sm:text-lg">{genre.description}</p>
                   </div>
-                  <div className={`text-5xl font-black opacity-60 group-hover:opacity-100 group-hover:translate-x-2 transition-all z-10 ${tone.arrowClass}`}>→</div>
+                  <div className={`z-10 hidden text-5xl font-black opacity-60 transition-all group-hover:translate-x-2 group-hover:opacity-100 sm:block ${tone.arrowClass}`}>→</div>
                 </button>
               );
             })}
 
             {parentGenres.length === 0 && (
-              <div className="col-span-full p-12 text-center bg-white border-4 border-dashed border-zinc-400 rounded-[2rem] shadow-brutal">
-                <p className="text-2xl font-bold text-zinc-500 inline-flex items-center gap-2">
+              <div className="col-span-full rounded-[2rem] border-4 border-dashed border-zinc-400 bg-white p-8 text-center shadow-brutal sm:p-12">
+                <p className="inline-flex items-center gap-2 text-lg font-bold text-zinc-500 sm:text-2xl">
                   <CircleAlert className={ICON_SIZE.md} strokeWidth={ICON_STROKE.medium} />
                   教科がまだありません
                 </p>

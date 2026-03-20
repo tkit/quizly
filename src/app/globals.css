@@ -173,11 +173,31 @@
   body {
     @apply bg-background text-foreground font-sans;
     min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
   }
 }
 
 /* Utilities for Playful Neo-Brutalism */
 @layer utilities {
+  .min-h-screen-safe {
+    min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
+  }
+
+  .pb-safe {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
+  .pb-safe-lg {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  }
+
+  .bottom-safe-4 {
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
   .font-display {
     font-family: var(--font-display);
   }
