@@ -48,6 +48,7 @@ export default function QuizlyLogo({
       height={height}
       className={className}
       priority={priority}
+      fetchPriority={priority ? "high" : undefined}
     />
   );
 }

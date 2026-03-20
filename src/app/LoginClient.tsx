@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { CircleAlert, CircleUserRound, Pencil } from 'lucide-react';
 import { updateUserAvatar } from './actions';
 import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
+import { supabase } from '@/lib/supabase';
 
 interface User {
   id: string;
@@ -29,12 +30,44 @@ const AVATARS = [
 
 export default function LoginClient({ users }: { users: User[] }) {
   const router = useRouter();
+  const [usersState, setUsersState] = useState<User[]>(users);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+  const [usersErrorMsg, setUsersErrorMsg] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [pinInput, setPinInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   
   const [editingAvatarUser, setEditingAvatarUser] = useState<User | null>(null);
   const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchUsers = async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (error) {
+        setUsersErrorMsg('ユーザーを読み込めませんでした');
+      } else {
+        setUsersState(data ?? []);
+      }
+
+      setIsLoadingUsers(false);
+    };
+
+    fetchUsers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleUserClick = (user: User) => {
     setSelectedUser(user);
@@ -60,6 +93,11 @@ export default function LoginClient({ users }: { users: User[] }) {
     if (!editingAvatarUser) return;
     setIsUpdatingAvatar(true);
     await updateUserAvatar(editingAvatarUser.id, avatarUrl);
+    setUsersState((prev) =>
+      prev.map((user) =>
+        user.id === editingAvatarUser.id ? { ...user, icon_url: avatarUrl } : user
+      )
+    );
     setIsUpdatingAvatar(false);
     setEditingAvatarUser(null);
   };
@@ -67,7 +105,20 @@ export default function LoginClient({ users }: { users: User[] }) {
   return (
     <>
       <div className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-3 w-full">
-        {users.map((user) => (
+        {isLoadingUsers && (
+          <div className="col-span-full text-center bg-white p-8 border-4 border-dashed border-zinc-300 rounded-3xl">
+            <p className="text-xl font-bold text-zinc-500">ユーザーを読み込み中...</p>
+          </div>
+        )}
+        {!isLoadingUsers && usersErrorMsg && (
+          <div className="col-span-full text-center bg-red-50 p-8 border-4 border-red-300 rounded-3xl">
+            <p className="text-xl font-bold text-red-700 inline-flex items-center gap-2">
+              <CircleAlert className={ICON_SIZE.md} strokeWidth={ICON_STROKE.regular} />
+              {usersErrorMsg}
+            </p>
+          </div>
+        )}
+        {!isLoadingUsers && !usersErrorMsg && usersState.map((user) => (
           <div 
             key={user.id} 
             className="group relative"
@@ -123,7 +174,7 @@ export default function LoginClient({ users }: { users: User[] }) {
             </div>
           </div>
         ))}
-        {users.length === 0 && (
+        {!isLoadingUsers && !usersErrorMsg && usersState.length === 0 && (
           <div className="col-span-full text-center bg-white p-8 border-4 border-dashed border-zinc-300 rounded-3xl">
             <p className="text-xl font-bold text-zinc-500 inline-flex items-center gap-2">
               <CircleAlert className={ICON_SIZE.md} strokeWidth={ICON_STROKE.regular} />

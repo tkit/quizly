@@ -340,7 +340,7 @@ export default function QuizClient({
       {/* Massive Feedback Panel pinned to bottom */}
       {isAnswered && (
         <div className="fixed inset-x-0 bottom-0 z-50 p-4 sm:p-8 flex justify-center pointer-events-none">
-          <div className={`pointer-events-auto w-full max-w-3xl p-6 sm:p-8 rounded-[3rem] border-4 border-zinc-400 shadow-brutal flex flex-col gap-6 animate-in slide-in-from-bottom-12 duration-500 will-change-transform ${
+          <div className={`quiz-feedback-enter pointer-events-auto w-full max-w-3xl p-6 sm:p-8 rounded-[3rem] border-4 border-zinc-400 shadow-brutal flex flex-col gap-6 ${
              selectedOption === currentQuestion.correct_index 
               ? 'bg-teal-50' 
               : 'bg-red-50'
