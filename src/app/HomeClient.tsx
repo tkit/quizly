@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getBrowserSupabaseClient } from '@/lib/auth/browser';
 import { AUTH_MODE, DEV_SHORTCUT_ENABLED } from '@/lib/auth/constants';
+import QuizlyLogo from '@/components/QuizlyLogo';
+import { ArrowRight, KeyRound, Mail, Play, PlusCircle, ShieldCheck, UserPlus } from 'lucide-react';
 
 type ChildProfile = {
   id: string;
@@ -255,114 +257,162 @@ export default function HomeClient() {
   };
 
   if (isBootstrapping) {
-    return <p className="text-center text-lg font-bold text-zinc-600">読み込み中...</p>;
+    return (
+      <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 rounded-[2rem] border-4 border-zinc-400 bg-white p-8 text-center shadow-brutal">
+        <QuizlyLogo variant="horizontal" theme="light" className="h-auto w-full max-w-[240px] sm:max-w-[300px]" />
+        <p className="text-lg font-black text-zinc-700">読み込み中...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-6 rounded-3xl border-4 border-zinc-400 bg-white p-6 shadow-brutal">
-      <h1 className="text-center text-3xl font-black text-zinc-800">Quizly ログイン</h1>
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <div className="mx-auto w-full max-w-xl space-y-4 text-center">
+        <QuizlyLogo variant="horizontal" theme="light" className="mx-auto h-auto w-full max-w-[300px] sm:max-w-[390px] md:max-w-[460px]" />
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <section className="rounded-[2rem] border-4 border-zinc-400 bg-white p-5 shadow-brutal sm:p-6">
+          <h2 className="mb-4 inline-flex items-center gap-2 text-lg font-black text-zinc-800 sm:text-xl">
+            <ShieldCheck className="h-5 w-5 text-teal-700" />
+            保護者ログイン
+          </h2>
+
+          {!isParentAuthenticated ? (
+            <>
+              <div className="grid gap-3">
+                <button onClick={handleGoogleSignIn} className="min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-3 font-bold hover:bg-zinc-200">
+                  Google でログイン
+                </button>
+                <button onClick={handlePasskeySignIn} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-3 font-bold hover:bg-zinc-200">
+                  <KeyRound className="h-4 w-4" />
+                  Passkey でログイン
+                </button>
+                {DEV_SHORTCUT_ENABLED && AUTH_MODE === 'development' && (
+                  <button
+                    onClick={handleDevShortcut}
+                    className="min-h-11 rounded-xl border-2 border-amber-300 bg-amber-100 px-4 py-3 font-bold text-amber-800 hover:bg-amber-200"
+                  >
+                    開発ショートカットでログイン
+                  </button>
+                )}
+              </div>
+
+              <form className="mt-4 grid gap-2 rounded-2xl border-2 border-zinc-200 bg-zinc-50 p-3" onSubmit={handleMagicLink}>
+                <label className="inline-flex items-center gap-2 text-sm font-black text-zinc-700">
+                  <Mail className="h-4 w-4" />
+                  Magic Link (メール)
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isSendingMagicLink}
+                  className="min-h-11 rounded-xl border-2 border-zinc-300 bg-white px-3"
+                  placeholder="parent@example.com"
+                />
+                <button
+                  type="submit"
+                  disabled={isSendingMagicLink}
+                  className="min-h-11 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-bold text-teal-800 hover:bg-teal-200 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSendingMagicLink ? '送信中...' : 'Magic Link を送信'}
+                </button>
+              </form>
+            </>
+          ) : (
+            <div className="rounded-2xl border-2 border-teal-300 bg-teal-50 p-3 text-sm font-bold text-teal-700">
+              保護者ログイン済みです。右側で子どもを選択または追加してください。
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-[2rem] border-4 border-zinc-400 bg-white p-5 shadow-brutal sm:p-6">
+          <h2 className="mb-4 inline-flex items-center gap-2 text-lg font-black text-zinc-800 sm:text-xl">
+            <Play className="h-5 w-5 text-teal-700" />
+            子ども選択と学習開始
+          </h2>
+
+          {!isParentAuthenticated && (
+            <div className="rounded-2xl border-2 border-zinc-300 bg-zinc-50 p-3 text-sm font-bold text-zinc-700">
+              まず左側で保護者ログインしてください。ログイン後に子どもを選択して学習を開始できます。
+            </div>
+          )}
+
+          {isLoadingChildren && <p className="text-sm font-bold text-zinc-600">子プロフィールを読み込み中...</p>}
+          {isAutoSelectingChild && !isLoadingChildren && (
+            <p className="text-sm font-bold text-zinc-600">学習画面へ移動しています...</p>
+          )}
+
+          {isParentAuthenticated && hasResolvedChildren && !isLoadingChildren && children.length === 0 && (
+            <form className="grid gap-3" onSubmit={handleCreateChild}>
+              <label className="inline-flex items-center gap-2 text-sm font-black text-zinc-700">
+                <UserPlus className="h-4 w-4" />
+                子どもの表示名
+              </label>
+              <input
+                required
+                value={newChildName}
+                onChange={(e) => setNewChildName(e.target.value)}
+                className="min-h-11 rounded-xl border-2 border-zinc-300 px-3"
+                placeholder="たろう"
+              />
+              <button type="submit" className="min-h-11 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-bold text-teal-800 hover:bg-teal-200">
+                子プロフィールを作成
+              </button>
+            </form>
+          )}
+
+          {isParentAuthenticated && hasResolvedChildren && !isLoadingChildren && !isAutoSelectingChild && children.length > 0 && (
+            <>
+              <form className="grid gap-3" onSubmit={handleChildSubmit}>
+                <label className="text-sm font-bold text-zinc-700">学習する子ども</label>
+                <select value={selectedChildId} onChange={(e) => setSelectedChildId(e.target.value)} className="min-h-11 rounded-xl border-2 border-zinc-300 px-3">
+                  {children.map((child) => (
+                    <option key={child.id} value={child.id}>
+                      {child.display_name}
+                    </option>
+                  ))}
+                </select>
+                <button type="submit" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-bold text-teal-800 hover:bg-teal-200">
+                  学習をはじめる
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </form>
+
+              <form className="mt-4 grid gap-3 border-t-2 border-zinc-200 pt-4" onSubmit={handleCreateChild}>
+                <p className="inline-flex items-center gap-2 text-sm font-black text-zinc-700">
+                  <PlusCircle className="h-4 w-4" />
+                  子プロフィールを追加
+                </p>
+                <input
+                  required
+                  value={newChildName}
+                  onChange={(e) => setNewChildName(e.target.value)}
+                  className="min-h-11 rounded-xl border-2 border-zinc-300 px-3"
+                  placeholder="はなこ"
+                />
+                <button type="submit" className="min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-2 font-bold text-zinc-700 hover:bg-zinc-200">
+                  追加する
+                </button>
+              </form>
+            </>
+          )}
+        </section>
+      </div>
 
       {isParentAuthenticated && hasResolvedChildren && !isLoadingChildren && !hasChildren && (
-        <p className="rounded-xl border-2 border-teal-300 bg-teal-50 p-3 text-sm font-bold text-teal-700">
-          保護者ログイン後、まず子どもプロフィールを作成してください。子どもの学習開始にPINは不要です。
+        <p className="rounded-2xl border-2 border-teal-300 bg-teal-50 p-3 text-sm font-bold text-teal-700">
+          子どもプロフィールはまだありません。右側の入力から作成してください。
         </p>
       )}
 
-      {!isParentAuthenticated && (
-        <>
-          <div className="grid gap-3">
-            <button onClick={handleGoogleSignIn} className="min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-3 font-bold hover:bg-zinc-200">
-              Google でログイン
-            </button>
-            <button onClick={handlePasskeySignIn} className="min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-3 font-bold hover:bg-zinc-200">
-              Passkey でログイン
-            </button>
-            {DEV_SHORTCUT_ENABLED && AUTH_MODE === 'development' && (
-              <button
-                onClick={handleDevShortcut}
-                className="min-h-11 rounded-xl border-2 border-amber-300 bg-amber-100 px-4 py-3 font-bold text-amber-800 hover:bg-amber-200"
-              >
-                開発ショートカットでログイン
-              </button>
-            )}
-          </div>
-
-          <form className="grid gap-2" onSubmit={handleMagicLink}>
-            <label className="text-sm font-bold text-zinc-700">Magic Link (メール)</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isSendingMagicLink}
-              className="min-h-11 rounded-xl border-2 border-zinc-300 px-3"
-              placeholder="parent@example.com"
-            />
-            <button
-              type="submit"
-              disabled={isSendingMagicLink}
-              className="min-h-11 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-bold text-teal-800 hover:bg-teal-200 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSendingMagicLink ? '送信中...' : 'Magic Link を送信'}
-            </button>
-          </form>
-        </>
+      {message && (
+        <p className="rounded-2xl border-2 border-zinc-300 bg-zinc-50 p-3 text-sm font-bold text-zinc-700">
+          {message}
+        </p>
       )}
-
-      {isLoadingChildren && <p className="text-sm font-bold text-zinc-600">子プロフィールを読み込み中...</p>}
-      {isAutoSelectingChild && !isLoadingChildren && (
-        <p className="text-sm font-bold text-zinc-600">学習画面へ移動しています...</p>
-      )}
-
-      {isParentAuthenticated && hasResolvedChildren && !isLoadingChildren && children.length === 0 && (
-        <form className="grid gap-3" onSubmit={handleCreateChild}>
-          <label className="text-sm font-bold text-zinc-700">子どもの表示名</label>
-          <input
-            required
-            value={newChildName}
-            onChange={(e) => setNewChildName(e.target.value)}
-            className="min-h-11 rounded-xl border-2 border-zinc-300 px-3"
-            placeholder="たろう"
-          />
-          <button type="submit" className="min-h-11 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-bold text-teal-800 hover:bg-teal-200">
-            子プロフィールを作成
-          </button>
-        </form>
-      )}
-
-      {isParentAuthenticated && hasResolvedChildren && !isLoadingChildren && !isAutoSelectingChild && children.length > 0 && (
-        <>
-          <form className="grid gap-3" onSubmit={handleChildSubmit}>
-            <label className="text-sm font-bold text-zinc-700">学習する子ども</label>
-            <select value={selectedChildId} onChange={(e) => setSelectedChildId(e.target.value)} className="min-h-11 rounded-xl border-2 border-zinc-300 px-3">
-              {children.map((child) => (
-                <option key={child.id} value={child.id}>
-                  {child.display_name}
-                </option>
-              ))}
-            </select>
-            <button type="submit" className="min-h-11 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-bold text-teal-800 hover:bg-teal-200">
-              学習をはじめる
-            </button>
-          </form>
-
-          <form className="grid gap-3 border-t-2 border-zinc-200 pt-4" onSubmit={handleCreateChild}>
-            <p className="text-sm font-black text-zinc-700">子プロフィールを追加</p>
-            <input
-              required
-              value={newChildName}
-              onChange={(e) => setNewChildName(e.target.value)}
-              className="min-h-11 rounded-xl border-2 border-zinc-300 px-3"
-              placeholder="はなこ"
-            />
-            <button type="submit" className="min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-2 font-bold text-zinc-700 hover:bg-zinc-200">
-              追加する
-            </button>
-          </form>
-        </>
-      )}
-
-      {message && <p className="rounded-xl border-2 border-zinc-300 bg-zinc-50 p-3 text-sm font-bold text-zinc-700">{message}</p>}
     </div>
   );
 }
