@@ -18,12 +18,11 @@ export default async function DashboardPage() {
       .eq('is_active', true),
   ]);
 
-  if (genresError) {
-    console.error('Error fetching genres:', genresError);
+  if (genresError || questionsError) {
     return (
       <PageShell maxWidthClass="max-w-4xl" mainClassName="flex flex-1 items-center justify-center">
         <MessageCard
-          title="ジャンルの読み込みに失敗しました。"
+          title="ジャンル情報の読み込みに失敗しました。"
           description="時間をおいて再度お試しください。"
           actionLabel="トップへ戻る"
           actionHref="/"
@@ -33,27 +32,12 @@ export default async function DashboardPage() {
     );
   }
 
-  if (questionsError) {
-    console.error('Error fetching questions:', questionsError);
-    return (
-      <PageShell maxWidthClass="max-w-4xl" mainClassName="flex flex-1 items-center justify-center">
-        <MessageCard
-          title="問題数の読み込みに失敗しました。"
-          description="通信状況をご確認のうえ、再度お試しください。"
-          actionLabel="トップへ戻る"
-          actionHref="/"
-          tone="error"
-        />
-      </PageShell>
-    );
-  }
-
-  const questionCountByGenreId = (questions ?? []).reduce<Record<string, number>>((acc, question) => {
+  const questionCountByGenreId = (questions ?? []).reduce((acc: Record<string, number>, question: any) => {
     acc[question.genre_id] = (acc[question.genre_id] ?? 0) + 1;
     return acc;
   }, {});
 
-  const genresWithQuestionCount = (genres ?? []).map((genre) => ({
+  const genresWithQuestionCount = (genres ?? []).map((genre: any) => ({
     ...genre,
     question_count: questionCountByGenreId[genre.id] ?? 0,
   }));

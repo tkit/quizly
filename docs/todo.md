@@ -186,10 +186,125 @@
 
 ---
 
+## 13. ⬜ 開発環境と本番環境の分離（Supabase / Auth）
+
+**目的**: 認証プロバイダ設定・RLS・migration 適用を安全に運用し、開発操作が本番データに影響しない状態にする。
+
+### やること
+- [ ] Supabase プロジェクトを `dev` / `prod` で分離する（URL / anon key / project ref を分離）
+- [ ] `.env.local`（開発）と本番環境変数（Vercel等）で、接続先 Supabase を明示的に切り替える
+- [ ] Google OIDC / Magic Link / Passkey の設定を環境ごとに分離する（redirect URL を dev/prod で分ける）
+- [ ] 開発環境のみ `Anonymous`（開発ショートカット）を有効化し、本番は無効化する
+- [ ] migration 運用ルールを整理する（`dev` に先適用 -> 検証後 `prod` に適用）
+- [ ] migration 適用手順書を更新する（どの project ref に対して `db:migration:up` を実行するか明記）
+- [ ] dev/prod のシードデータ方針を分ける（開発用テストデータの本番混入防止）
+
+### 備考
+- 現在は暫定的に「開発/本番同一環境」で運用中。上記完了まで本番データ操作に注意。
+
+### 追加Runbook（本番ドメイン移行: `study-quizly.vercel.app` -> `quizly.fruits-drill.com`）
+1. **Cloudflare DNS 準備**
+- [ ] `quizly.fruits-drill.com` を Vercel 向けに追加（`CNAME`）
+- [ ] `auth.fruits-drill.com` を Supabase Custom Domain 向けに追加（Supabase 指定値）
+- [ ] DNS 伝播を確認（`dig quizly.fruits-drill.com`, `dig auth.fruits-drill.com`）
+
+2. **Vercel 側設定**
+- [ ] Project Domains に `quizly.fruits-drill.com` を追加
+- [ ] `https://quizly.fruits-drill.com` で証明書が有効なことを確認
+- [ ] 既存 `https://study-quizly.vercel.app/` は移行完了まで残す
+
+3. **Supabase Custom Domain 設定**
+- [ ] Supabase Dashboard で `auth.fruits-drill.com` を設定・有効化
+- [ ] 有効化後、Auth エンドポイントが `https://auth.fruits-drill.com/auth/v1/*` で応答することを確認
+- [ ] 注意: 有効化後は `*.supabase.co` 前提の OAuth 設定が無効になるため、先に Google 側を更新しておく
+
+4. **Google Cloud Console（OAuth）更新**
+- [ ] OAuth 同意画面が `External + Testing` であることを確認
+- [ ] テストユーザーに運用者メール（自分）を追加済みであることを確認
+- [ ] Authorized JavaScript origins に以下を登録
+  - [ ] `http://localhost:3000`
+  - [ ] `https://quizly.fruits-drill.com`
+  - [ ] `https://study-quizly.vercel.app`
+- [ ] Authorized redirect URIs に以下を登録
+  - [ ] `https://auth.fruits-drill.com/auth/v1/callback`
+  - [ ] `https://<project-ref>.supabase.co/auth/v1/callback`（移行中のみ）
+
+5. **Supabase Auth URL Configuration 更新**
+- [ ] `Site URL` を `https://quizly.fruits-drill.com` に更新
+- [ ] `Redirect URLs` に以下を登録
+  - [ ] `http://localhost:3000/auth/callback`
+  - [ ] `https://quizly.fruits-drill.com/auth/callback`
+  - [ ] `https://study-quizly.vercel.app/auth/callback`（移行中のみ）
+
+6. **アプリ環境変数更新（Vercel / local）**
+- [ ] `NEXT_PUBLIC_SUPABASE_URL` を `https://auth.fruits-drill.com` に更新
+- [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY` が対象 Supabase project の値であることを確認
+- [ ] `NEXT_PUBLIC_AUTH_MODE` と `NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT` が本番値になっていることを確認
+
+7. **疎通テスト（必須）**
+- [ ] localhost で Google ログイン成功（`http://localhost:3000`）
+- [ ] 本番ドメインで Google ログイン成功（`https://quizly.fruits-drill.com`）
+- [ ] ログイン後、子プロフィール選択/自動遷移/ダッシュボードが正常動作
+- [ ] 親ログアウト後に再ログイン可能
+
+8. **切替完了と後片付け**
+- [ ] 問題なければ Google OAuth から旧 `*.supabase.co` callback を削除
+- [ ] Supabase `Redirect URLs` から旧 `study-quizly.vercel.app` を削除（完全移行後）
+- [ ] README と運用手順書の本番URLを `quizly.fruits-drill.com` に更新
+- [ ] 監視期間（1週間）を設け、認証エラー有無を確認
+
+### 実行手順（Runbook）
+1. **Supabase プロジェクト作成**
+- [ ] `quizly-dev`（開発用）を新規作成
+- [ ] 既存を `quizly-prod` として扱う（命名を揃える）
+- [ ] 各プロジェクトの `project ref / URL / anon key` を安全な場所に記録
+
+2. **ローカル CLI 接続先の切り替え方式を決める**
+- [ ] `.env.supabase.local.dev` と `.env.supabase.local.prod` を作成
+- [ ] `SUPABASE_PROJECT_ID` と `SUPABASE_ACCESS_TOKEN` を環境別に管理
+- [ ] `npm run db:*` 実行前にどちらを読み込むかを明記（誤適用防止）
+
+3. **DB migration の適用フロー固定**
+- [ ] まず `dev` に `npm run db:migration:up` を適用
+- [ ] `npm run build` と主要導線（ログイン/クイズ/結果）を dev で確認
+- [ ] 問題なければ同じ migration を `prod` に適用
+- [ ] 適用履歴（日時・担当者・対象 project）を残す
+
+4. **Web アプリ環境変数の分離**
+- [ ] `.env.local` は `dev` Supabase を参照
+- [ ] 本番（Vercel など）は `prod` Supabase を参照
+- [ ] `NEXT_PUBLIC_AUTH_MODE` / `NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT` を dev/prod で分ける
+
+5. **Auth Provider 設定（環境別）**
+- [ ] Supabase `dev` の `Site URL` を `http://localhost:3000` に設定
+- [ ] Supabase `dev` の `Redirect URL` に `http://localhost:3000/auth/callback` を設定
+- [ ] Supabase `prod` の `Site URL` を `https://study-quizly.vercel.app/` に設定
+- [ ] Supabase `prod` の `Redirect URL` に `https://study-quizly.vercel.app/auth/callback` を設定
+- [ ] Google OIDC は dev/prod で OAuth クライアントを分ける（推奨）
+- [ ] Magic Link の redirect も dev/prod を分離
+- [ ] Passkey の RP/Origin を dev/prod で正しく設定
+
+6. **Anonymous（開発ショートカット）の安全化**
+- [ ] `dev`: Anonymous ON
+- [ ] `prod`: Anonymous OFF
+- [ ] アプリ側で `development` かつフラグON時のみショートカット表示を確認
+
+7. **シードデータ戦略の分離**
+- [ ] dev 用テストデータ（子1人/2人世帯）を用意
+- [ ] prod には検証用ダミーデータを投入しない
+- [ ] seed 実行対象の project を必ず明示
+
+8. **運用ガードレール**
+- [ ] `README` に「日次運用コマンド例（dev/prod）」を追記
+- [ ] 「本番適用前チェックリスト」を作成（RLS / Auth / build / smoke test）
+- [ ] 重大操作（本番 migration, Auth 設定変更）の実施ログを残す
+
+---
+
 ## 優先度の目安
 
 | 優先度 | 項目 |
 |:---:|:---|
 | 🔴 高 | 2. ポイント機能 / 3. サブカテゴリ / 5. 画像問題対応 |
-| 🟡 中 | 1. CI / 4. 本格ログイン / 6. きろくページ / 9. 問題管理 / 10. ロゴ・favicon・OGP |
+| 🟡 中 | 1. CI / 4. 本格ログイン / 6. きろくページ / 9. 問題管理 / 13. 環境分離 |
 | 🟢 低 | 7. 記述式回答 / 8. デザインテーマ / 11. PWA / 12. アクセシビリティ |

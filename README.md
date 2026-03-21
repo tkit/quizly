@@ -19,6 +19,7 @@
   - `/quiz`: クイズ解答画面
   - `/result`: 学習結果・振り返り画面
 - `docs/`: 仕様書および設計ドキュメント (`requirements.md`, `db_schema.md`, `ui_design.md`)
+- 認証・認可の仕様書（正本）: `docs/auth_spec.md`
 - `supabase/migrations/`: 公式 migration（正本）
 - `supabase/migrations/20260320000000_baseline_schema.sql`: baseline（初期状態）
 
@@ -39,7 +40,18 @@ Supabaseプロジェクトを作成し、URLとAnon Keyを取得して `.env.loc
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+NEXT_PUBLIC_AUTH_MODE=production
+NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT=false
 ```
+
+ローカル検証で認証ショートカットを使う場合:
+
+```bash
+NEXT_PUBLIC_AUTH_MODE=development
+NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT=true
+```
+
+OAuth / Magic Link の redirect には `http://localhost:3000/auth/callback` を追加してください。
 
 **Supabase CLI用 (`.env.supabase.local`)**
 
