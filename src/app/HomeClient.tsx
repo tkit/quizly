@@ -232,7 +232,7 @@ export default function HomeClient({
 
           {!isParentAuthenticated && (
             <div className="rounded-2xl border-2 border-zinc-300 bg-zinc-50 p-3 text-sm font-bold text-zinc-700">
-              まず左側で保護者ログインしてください。ログイン後に子どもを選択して学習を開始できます。
+              まず保護者ログインしてください。ログイン後に子どもを選択して学習を開始できます。
             </div>
           )}
 
