@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClientWithToken, getUserFromBearerHeader } from '@/lib/auth/server';
+import { NextResponse } from 'next/server';
+import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
 
-export async function GET(request: NextRequest) {
-  const { user, accessToken } = await getUserFromBearerHeader(request.headers.get('authorization'));
-  if (!user || !accessToken) {
+export async function GET() {
+  const { user } = await getAuthenticatedUser();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const supabase = createServerSupabaseClientWithToken(accessToken);
+  const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from('guardian_accounts')
     .select('parent_pin_hash')

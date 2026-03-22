@@ -1,54 +1,22 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getBrowserSupabaseClient } from '@/lib/auth/browser';
 
-type VerifyResponse = {
-  verified: boolean;
-  expiresAt: string | null;
-};
-
-export default function ParentClient() {
+export default function ParentClient({
+  initialHasParentPin,
+  initialUnlocked,
+}: {
+  initialHasParentPin: boolean;
+  initialUnlocked: boolean;
+}) {
   const router = useRouter();
-  const supabase = getBrowserSupabaseClient();
-
-  const [loading, setLoading] = useState(true);
-  const [unlocked, setUnlocked] = useState(false);
-  const [hasParentPin, setHasParentPin] = useState(false);
+  const [unlocked, setUnlocked] = useState(initialUnlocked);
+  const [hasParentPin, setHasParentPin] = useState(initialHasParentPin);
   const [pin, setPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [newPinConfirm, setNewPinConfirm] = useState('');
   const [message, setMessage] = useState('');
-
-  const getToken = async () => {
-    const { data } = await supabase.auth.getSession();
-    return data.session?.access_token ?? null;
-  };
-
-  const loadState = async () => {
-    const accessToken = await getToken();
-    if (!accessToken) {
-      router.replace('/');
-      return;
-    }
-
-    const [verifyRes, pinStatusRes] = await Promise.all([
-      fetch('/api/auth/parent/reauth/verify', { headers: { Authorization: `Bearer ${accessToken}` } }),
-      fetch('/api/auth/parent/pin/status', { headers: { Authorization: `Bearer ${accessToken}` } }),
-    ]);
-
-    const verifyBody = (await verifyRes.json().catch(() => null)) as VerifyResponse | null;
-    const pinStatusBody = (await pinStatusRes.json().catch(() => null)) as { hasParentPin?: boolean } | null;
-
-    setUnlocked(Boolean(verifyBody?.verified));
-    setHasParentPin(Boolean(pinStatusBody?.hasParentPin));
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    void loadState();
-  }, []);
 
   const handleSetPin = async (event: FormEvent) => {
     event.preventDefault();
@@ -63,17 +31,10 @@ export default function ParentClient() {
       return;
     }
 
-    const accessToken = await getToken();
-    if (!accessToken) {
-      router.replace('/');
-      return;
-    }
-
     const response = await fetch('/api/auth/parent/pin/set', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ pin: newPin }),
     });
@@ -99,17 +60,10 @@ export default function ParentClient() {
       return;
     }
 
-    const accessToken = await getToken();
-    if (!accessToken) {
-      router.replace('/');
-      return;
-    }
-
     const response = await fetch('/api/auth/parent/reauth/start', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ pin }),
     });
@@ -123,10 +77,6 @@ export default function ParentClient() {
     setPin('');
     setUnlocked(true);
   };
-
-  if (loading) {
-    return <p className="text-center text-lg font-bold text-zinc-700">読み込み中...</p>;
-  }
 
   if (!hasParentPin) {
     return (

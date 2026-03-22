@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClientWithToken, getUserFromBearerHeader } from '@/lib/auth/server';
+import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
 import { hashPin, isValidPin } from '@/lib/security/pin';
 
 type Body = {
@@ -7,8 +7,8 @@ type Body = {
 };
 
 export async function POST(request: NextRequest) {
-  const { user, accessToken } = await getUserFromBearerHeader(request.headers.get('authorization'));
-  if (!user || !accessToken) {
+  const { user } = await getAuthenticatedUser();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '4桁PINが必要です' }, { status: 400 });
   }
 
-  const supabase = createServerSupabaseClientWithToken(accessToken);
+  const supabase = await createServerSupabaseClient();
   const { error } = await supabase
     .from('guardian_accounts')
     .update({ parent_pin_hash: hashPin(body.pin) })

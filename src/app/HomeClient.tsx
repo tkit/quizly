@@ -3,52 +3,28 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getBrowserSupabaseClient } from '@/lib/auth/browser';
-import { preloadDashboardSnapshot } from '@/lib/auth/dashboardPreload';
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
+import type { ChildProfile } from '@/lib/auth/data';
 import { AUTH_MODE, DEV_SHORTCUT_ENABLED } from '@/lib/auth/constants';
 import QuizlyLogo from '@/components/QuizlyLogo';
 import { ArrowRight, KeyRound, Mail, Play, PlusCircle, ShieldCheck, UserPlus } from 'lucide-react';
 
-type ChildProfile = {
-  id: string;
-  display_name: string;
-  total_points: number;
-  avatar_url: string | null;
-};
-
-const SESSION_BOOTSTRAP_TIMEOUT_MS = 10000;
-
-async function withTimeoutOrNull<T>(promise: Promise<T>, timeoutMs: number): Promise<T | null> {
-  return new Promise<T | null>((resolve, reject) => {
-    const timeoutId = setTimeout(() => {
-      resolve(null);
-    }, timeoutMs);
-
-    promise
-      .then((result) => {
-        clearTimeout(timeoutId);
-        resolve(result);
-      })
-      .catch((error: unknown) => {
-        clearTimeout(timeoutId);
-        reject(error);
-      });
-  });
-}
-
-export default function HomeClient() {
+export default function HomeClient({
+  initialChildren,
+  isParentAuthenticated,
+}: {
+  initialChildren: ChildProfile[];
+  isParentAuthenticated: boolean;
+}) {
   const router = useRouter();
   const supabase = getBrowserSupabaseClient();
 
   const [isLoadingChildren, setIsLoadingChildren] = useState(false);
-  const [hasResolvedChildren, setHasResolvedChildren] = useState(false);
   const [isAutoSelectingChild, setIsAutoSelectingChild] = useState(false);
-  const [isParentAuthenticated, setIsParentAuthenticated] = useState(false);
-  const [children, setChildren] = useState<ChildProfile[]>([]);
+  const [children, setChildren] = useState<ChildProfile[]>(initialChildren);
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
-  const [selectedChildId, setSelectedChildId] = useState<string>('');
+  const [selectedChildId, setSelectedChildId] = useState(initialChildren[0]?.id ?? '');
   const [newChildName, setNewChildName] = useState('');
 
   const hasChildren = children.length > 0;
@@ -57,38 +33,11 @@ export default function HomeClient() {
     [children, selectedChildId],
   );
 
-  const ensureGuardianProfile = useCallback(async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-
-    const fallbackName = userData.user.user_metadata?.name ?? userData.user.email?.split('@')[0] ?? '保護者';
-    await supabase.from('guardian_accounts').upsert(
-      {
-        id: userData.user.id,
-        email: userData.user.email ?? null,
-        display_name: String(fallbackName),
-      },
-      { onConflict: 'id' },
-    );
-  }, [supabase]);
-
-  const getAccessToken = useCallback(async () => {
-    const { data } = await supabase.auth.getSession();
-    return data.session?.access_token ?? null;
-  }, [supabase]);
-
   const selectChild = useCallback(async (childId: string) => {
-    const accessToken = await getAccessToken();
-    if (!accessToken) {
-      setMessage('保護者ログインが必要です。');
-      return;
-    }
-
     const response = await fetch('/api/session/child/select', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ childId }),
     });
@@ -100,127 +49,17 @@ export default function HomeClient() {
     }
 
     setMessage('');
-    await preloadDashboardSnapshot({ accessToken, childId });
     router.replace('/dashboard');
-  }, [getAccessToken, router]);
-
-  const loadChildren = useCallback(async () => {
-    setIsLoadingChildren(true);
-    try {
-      const { data, error } = await supabase
-        .from('child_profiles')
-        .select('id, display_name, total_points, avatar_url')
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        setMessage(`子プロフィールの取得に失敗しました: ${error.message}`);
-        return;
-      }
-
-      const list = (data ?? []) as ChildProfile[];
-      setChildren(list);
-      if (!selectedChildId && list[0]) setSelectedChildId(list[0].id);
-
-      // 子が1人なら即開始（子側PINなし）
-      if (list.length === 1) {
-        setIsAutoSelectingChild(true);
-        void selectChild(list[0].id);
-      } else {
-        setIsAutoSelectingChild(false);
-      }
-    } finally {
-      setHasResolvedChildren(true);
-      setIsLoadingChildren(false);
-    }
-  }, [selectChild, selectedChildId, supabase]);
+  }, [router]);
 
   useEffect(() => {
-    let isMounted = true;
+    if (!isParentAuthenticated || children.length !== 1 || isAutoSelectingChild) {
+      return;
+    }
 
-    const syncSessionState = async (session: Session | null) => {
-      try {
-        if (!session) {
-          setIsParentAuthenticated(false);
-          setChildren([]);
-          setSelectedChildId('');
-          setHasResolvedChildren(true);
-          setIsAutoSelectingChild(false);
-          return;
-        }
-
-        setIsParentAuthenticated(true);
-        setMessage('');
-
-        const [loadChildrenResult, ensureResult] = await Promise.allSettled([
-          withTimeoutOrNull(loadChildren(), SESSION_BOOTSTRAP_TIMEOUT_MS),
-          withTimeoutOrNull(ensureGuardianProfile(), SESSION_BOOTSTRAP_TIMEOUT_MS),
-        ]);
-        if (!isMounted) return;
-
-        if (loadChildrenResult.status === 'rejected') {
-          throw loadChildrenResult.reason;
-        }
-
-        if (loadChildrenResult.value === null) {
-          setHasResolvedChildren(true);
-          setMessage('子プロフィールの読み込みに時間がかかっています。ページを再読み込みしてください。');
-          return;
-        }
-
-        if (ensureResult.status === 'rejected') {
-          console.error('ensureGuardianProfile failed:', ensureResult.reason);
-        } else if (ensureResult.value === null) {
-          setMessage('一部のログイン情報の同期に時間がかかっています。しばらくしてから再度お試しください。');
-        }
-      } catch (error) {
-        console.error('session sync failed:', error);
-        if (!isMounted) return;
-        setHasResolvedChildren(true);
-        setMessage('初期化に失敗しました。ページを再読み込みしてください。');
-      }
-    };
-
-    const bootstrap = async () => {
-      try {
-        const sessionResult = await withTimeoutOrNull<Awaited<ReturnType<typeof supabase.auth.getSession>>>(
-          supabase.auth.getSession(),
-          SESSION_BOOTSTRAP_TIMEOUT_MS,
-        );
-        if (!isMounted) return;
-
-        if (!sessionResult) {
-          setIsParentAuthenticated(false);
-          setHasResolvedChildren(true);
-          setMessage('ログイン状態の確認に時間がかかっています。ページを再読み込みしてください。');
-          return;
-        }
-
-        await syncSessionState(sessionResult.data.session);
-      } catch (error) {
-        console.error('bootstrap failed:', error);
-        if (!isMounted) return;
-        setHasResolvedChildren(true);
-        setMessage('初期化に失敗しました。ページを再読み込みしてください。');
-      } finally {
-        if (!isMounted) return;
-      }
-    };
-    void bootstrap();
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
-      if (!isMounted) return;
-      window.setTimeout(() => {
-        if (!isMounted) return;
-        setHasResolvedChildren(false);
-        void syncSessionState(session);
-      }, 0);
-    });
-
-    return () => {
-      isMounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, [ensureGuardianProfile, loadChildren, supabase]);
+    setIsAutoSelectingChild(true);
+    void selectChild(children[0].id);
+  }, [children, isAutoSelectingChild, isParentAuthenticated, selectChild]);
 
   const handleGoogleSignIn = async () => {
     setMessage('');
@@ -287,29 +126,25 @@ export default function HomeClient() {
       return;
     }
 
-    const accessToken = await getAccessToken();
-    if (!accessToken) {
-      setMessage('保護者ログインが必要です。');
-      return;
-    }
-
+    setIsLoadingChildren(true);
     const response = await fetch('/api/children/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ displayName: newChildName }),
     });
-
-    const body = (await response.json().catch(() => null)) as { error?: string } | null;
-    if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { error?: string; child?: ChildProfile } | null;
+    if (!response.ok || !body?.child) {
       setMessage(body?.error ?? '子プロフィール作成に失敗しました。');
+      setIsLoadingChildren(false);
       return;
     }
 
+    setChildren((prev) => [...prev, body.child!]);
+    setSelectedChildId((prev) => prev || body.child!.id);
     setNewChildName('');
-    await loadChildren();
+    setIsLoadingChildren(false);
   };
 
   const handleChildSubmit = async (event: FormEvent) => {
@@ -406,7 +241,7 @@ export default function HomeClient() {
             <p className="text-sm font-bold text-zinc-600">学習画面へ移動しています...</p>
           )}
 
-          {isParentAuthenticated && hasResolvedChildren && !isLoadingChildren && children.length === 0 && (
+          {isParentAuthenticated && !isLoadingChildren && children.length === 0 && (
             <form className="grid gap-3" onSubmit={handleCreateChild}>
               <label className="inline-flex items-center gap-2 text-sm font-black text-zinc-700">
                 <UserPlus className="h-4 w-4" />
@@ -425,7 +260,7 @@ export default function HomeClient() {
             </form>
           )}
 
-          {isParentAuthenticated && hasResolvedChildren && !isLoadingChildren && !isAutoSelectingChild && children.length > 0 && (
+          {isParentAuthenticated && !isLoadingChildren && !isAutoSelectingChild && children.length > 0 && (
             <>
               <form className="grid gap-3" onSubmit={handleChildSubmit}>
                 <label className="text-sm font-bold text-zinc-700">学習する子ども</label>
@@ -463,7 +298,7 @@ export default function HomeClient() {
         </section>
       </div>
 
-      {isParentAuthenticated && hasResolvedChildren && !isLoadingChildren && !hasChildren && (
+      {isParentAuthenticated && !isLoadingChildren && !hasChildren && (
         <p className="rounded-2xl border-2 border-teal-300 bg-teal-50 p-3 text-sm font-bold text-teal-700">
           子どもプロフィールはまだありません。右側の入力から作成してください。
         </p>

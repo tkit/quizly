@@ -1,7 +1,7 @@
-import { supabase } from '@/lib/supabase';
 import { redirect } from 'next/navigation';
 import MessageCard from '@/components/feedback/MessageCard';
 import PageShell from '@/components/layout/PageShell';
+import { createServerSupabaseClient } from '@/lib/auth/server';
 
 export const revalidate = 0;
 
@@ -10,6 +10,7 @@ export default async function SetupPage({
 }: {
   searchParams: Promise<{ genre?: string }>;
 }) {
+  const supabase = await createServerSupabaseClient();
   const resolvedParams = await searchParams;
   const genreId = resolvedParams.genre;
 

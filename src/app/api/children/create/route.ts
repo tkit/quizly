@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClientWithToken, getUserFromBearerHeader } from '@/lib/auth/server';
+import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
 
 type Body = {
   displayName?: string;
@@ -7,8 +7,8 @@ type Body = {
 };
 
 export async function POST(request: NextRequest) {
-  const { user, accessToken } = await getUserFromBearerHeader(request.headers.get('authorization'));
-  if (!user || !accessToken) {
+  const { user } = await getAuthenticatedUser();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'displayName is required' }, { status: 400 });
   }
 
-  const supabase = createServerSupabaseClientWithToken(accessToken);
+  const supabase = await createServerSupabaseClient();
 
   const { data: created, error: insertError } = await supabase
     .from('child_profiles')
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       auth_mode: 'none',
       pin_hash: null,
     })
-    .select('id, display_name, auth_mode, avatar_url')
+    .select('id, display_name, total_points, avatar_url')
     .single();
 
   if (insertError || !created) {

@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ACTIVE_CHILD_COOKIE, COOKIE_MAX_AGE_SECONDS } from '@/lib/auth/constants';
-import { createServerSupabaseClientWithToken, getUserFromBearerHeader } from '@/lib/auth/server';
+import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
 
 type Body = {
   childId?: string;
 };
 
 export async function POST(request: NextRequest) {
-  const { user, accessToken } = await getUserFromBearerHeader(request.headers.get('authorization'));
-  if (!user || !accessToken) {
+  const { user } = await getAuthenticatedUser();
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'childId is required' }, { status: 400 });
   }
 
-  const supabase = createServerSupabaseClientWithToken(accessToken);
+  const supabase = await createServerSupabaseClient();
   const { data: child, error } = await supabase
     .from('child_profiles')
     .select('id, display_name')

@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { getBrowserSupabaseClient } from '@/lib/auth/browser';
 import { ArrowRight, CheckCircle, PartyPopper, Sparkles, X, XCircle } from 'lucide-react';
 import { calculateSessionPoints } from '@/lib/points';
 import { fireCorrectEffect } from '@/lib/effects/confetti';
@@ -27,73 +27,24 @@ interface Genre {
 }
 
 export default function QuizClient({
+  childId,
   genre,
-  allQuestions,
   mode,
-  count,
+  questions,
 }: {
+  childId: string;
   genre: Genre;
-  allQuestions: Question[];
   mode: string;
-  count: number;
+  questions: Question[];
 }) {
   const router = useRouter();
-  const [childId, setChildId] = useState<string | null>(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const supabase = getBrowserSupabaseClient();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [historyRecords, setHistoryRecords] = useState<{question_id: string; is_correct: boolean; selected_index: number}[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const init = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-      if (!accessToken) {
-        router.push('/');
-        return;
-      }
-
-      const currentChildResponse = await fetch('/api/session/child/current', {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const currentChildBody = (await currentChildResponse.json().catch(() => null)) as { child?: { id: string } | null } | null;
-      const currentChild = currentChildBody?.child;
-
-      if (!currentChild) {
-        router.push('/');
-        return;
-      }
-
-      setChildId(currentChild.id);
-
-      let pool = [...allQuestions];
-      if (mode === 'review') {
-        const { data: history } = await supabase
-          .from('study_history')
-          .select('question_id, is_correct')
-          .eq('child_id', currentChild.id)
-          .eq('is_correct', false);
-
-        if (history && history.length > 0) {
-          const wrongQuestionIds = Array.from(new Set(history.map((h: any) => h.question_id)));
-          pool = pool.filter((q: Question) => wrongQuestionIds.includes(q.id));
-        } else {
-          pool = [];
-        }
-      }
-
-      const shuffled = pool.sort(() => 0.5 - Math.random());
-      setQuestions(shuffled.slice(0, count));
-      setIsLoading(false);
-    };
-
-    void init();
-  }, [allQuestions, count, mode, router]);
 
   const currentQuestion = questions[currentIndex];
 
@@ -130,7 +81,7 @@ export default function QuizClient({
   };
 
   const saveSessionAndRedirect = async () => {
-    if (!childId || isSubmitting) return;
+    if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
@@ -186,17 +137,6 @@ export default function QuizClient({
             : genre.color_hint === 'purple'
               ? { progress: 'bg-slate-300' }
               : { progress: 'bg-zinc-400' };
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-1 items-center justify-center h-full">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 border-8 border-slate-100 border-t-slate-300 rounded-full animate-spin"></div>
-          <p className="text-2xl font-black text-teal-500 animate-pulse">準備中...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (questions.length === 0) {
     return (
