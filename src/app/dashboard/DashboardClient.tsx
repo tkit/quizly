@@ -55,55 +55,61 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
   );
 
   const loadDashboard = async () => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token;
-    if (!accessToken) {
-      router.replace('/');
-      return;
-    }
-
-    const currentChildResponse = await fetch('/api/session/child/current', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    const currentChildBody = (await currentChildResponse.json().catch(() => null)) as { child?: ActiveChild | null } | null;
-    const child = currentChildBody?.child ?? null;
-
-    if (!child) {
-      router.replace('/');
-      return;
-    }
-
-    setActiveChild(child);
-
-    const { count: childCount } = await supabase
-      .from('child_profiles')
-      .select('id', { count: 'exact', head: true });
-    setCanSwitchChild((childCount ?? 0) > 1);
-
-    const { data: sessionsDataRaw } = await supabase
-      .from('study_sessions')
-      .select('genre_id, correct_count, total_questions')
-      .eq('child_id', child.id);
-    const sessionsData = (sessionsDataRaw ?? []) as SessionRow[];
-
-    const statusMap: Record<string, 'unattempted' | 'studied_not_perfect' | 'perfect_cleared'> = {};
-    for (const session of sessionsData) {
-      if (!session.genre_id) continue;
-      const isPerfect = session.total_questions > 0 && session.correct_count === session.total_questions;
-      const current = statusMap[session.genre_id] ?? 'unattempted';
-      if (isPerfect) {
-        statusMap[session.genre_id] = 'perfect_cleared';
-      } else if (current !== 'perfect_cleared') {
-        statusMap[session.genre_id] = 'studied_not_perfect';
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        router.replace('/');
+        return;
       }
-    }
 
-    setStudyStatusByGenreId(statusMap);
-    setLoading(false);
+      const currentChildResponse = await fetch('/api/session/child/current', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const currentChildBody = (await currentChildResponse.json().catch(() => null)) as { child?: ActiveChild | null } | null;
+      const child = currentChildBody?.child ?? null;
+
+      if (!child) {
+        router.replace('/');
+        return;
+      }
+
+      setActiveChild(child);
+
+      const { count: childCount } = await supabase
+        .from('child_profiles')
+        .select('id', { count: 'exact', head: true });
+      setCanSwitchChild((childCount ?? 0) > 1);
+
+      const { data: sessionsDataRaw } = await supabase
+        .from('study_sessions')
+        .select('genre_id, correct_count, total_questions')
+        .eq('child_id', child.id);
+      const sessionsData = (sessionsDataRaw ?? []) as SessionRow[];
+
+      const statusMap: Record<string, 'unattempted' | 'studied_not_perfect' | 'perfect_cleared'> = {};
+      for (const session of sessionsData) {
+        if (!session.genre_id) continue;
+        const isPerfect = session.total_questions > 0 && session.correct_count === session.total_questions;
+        const current = statusMap[session.genre_id] ?? 'unattempted';
+        if (isPerfect) {
+          statusMap[session.genre_id] = 'perfect_cleared';
+        } else if (current !== 'perfect_cleared') {
+          statusMap[session.genre_id] = 'studied_not_perfect';
+        }
+      }
+
+      setStudyStatusByGenreId(statusMap);
+    } catch (error) {
+      console.error('loadDashboard failed:', error);
+      router.replace('/');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

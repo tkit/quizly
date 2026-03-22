@@ -14,6 +14,26 @@ type ChildProfile = {
   avatar_url: string | null;
 };
 
+const SESSION_BOOTSTRAP_TIMEOUT_MS = 10000;
+
+async function withTimeoutOrNull<T>(promise: Promise<T>, timeoutMs: number): Promise<T | null> {
+  return new Promise<T | null>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      resolve(null);
+    }, timeoutMs);
+
+    promise
+      .then((result) => {
+        clearTimeout(timeoutId);
+        resolve(result);
+      })
+      .catch((error: unknown) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
 export default function HomeClient() {
   const router = useRouter();
   const supabase = getBrowserSupabaseClient();
@@ -113,48 +133,82 @@ export default function HomeClient() {
   };
 
   useEffect(() => {
-    const bootstrap = async () => {
+    let isMounted = true;
+
+    const syncSessionState = async (session: any) => {
       try {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
+        if (!session) {
           setIsParentAuthenticated(false);
+          setChildren([]);
+          setSelectedChildId('');
           setHasResolvedChildren(true);
+          setIsAutoSelectingChild(false);
           return;
         }
 
         setIsParentAuthenticated(true);
-        await ensureGuardianProfile();
-        await loadChildren();
+
+        const ensureResult = await withTimeoutOrNull(ensureGuardianProfile(), SESSION_BOOTSTRAP_TIMEOUT_MS);
+        if (!isMounted) return;
+        if (ensureResult === null) {
+          setHasResolvedChildren(true);
+          setMessage('ログイン情報の確認に時間がかかっています。ページを再読み込みしてください。');
+          return;
+        }
+
+        const loadChildrenResult = await withTimeoutOrNull(loadChildren(), SESSION_BOOTSTRAP_TIMEOUT_MS);
+        if (!isMounted) return;
+        if (loadChildrenResult === null) {
+          setHasResolvedChildren(true);
+          setMessage('子プロフィールの読み込みに時間がかかっています。ページを再読み込みしてください。');
+          return;
+        }
+      } catch (error) {
+        console.error('session sync failed:', error);
+        if (!isMounted) return;
+        setHasResolvedChildren(true);
+        setMessage('初期化に失敗しました。ページを再読み込みしてください。');
+      }
+    };
+
+    const bootstrap = async () => {
+      try {
+        const sessionResult = await withTimeoutOrNull<any>(supabase.auth.getSession(), SESSION_BOOTSTRAP_TIMEOUT_MS);
+        if (!isMounted) return;
+
+        if (!sessionResult) {
+          setIsParentAuthenticated(false);
+          setHasResolvedChildren(true);
+          setMessage('ログイン状態の確認に時間がかかっています。ページを再読み込みしてください。');
+          return;
+        }
+
+        await syncSessionState(sessionResult.data.session);
       } catch (error) {
         console.error('bootstrap failed:', error);
+        if (!isMounted) return;
+        setHasResolvedChildren(true);
         setMessage('初期化に失敗しました。ページを再読み込みしてください。');
       } finally {
+        if (!isMounted) return;
         setIsBootstrapping(false);
       }
     };
     void bootstrap();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event: any, session: any) => {
-      if (!session) {
-        setIsParentAuthenticated(false);
-        setChildren([]);
-        setSelectedChildId('');
-        setHasResolvedChildren(true);
-        setIsAutoSelectingChild(false);
-        return;
-      }
-      try {
-        setIsParentAuthenticated(true);
+    const { data: sub } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+      if (!isMounted) return;
+      window.setTimeout(() => {
+        if (!isMounted) return;
         setHasResolvedChildren(false);
-        await ensureGuardianProfile();
-        await loadChildren();
-      } catch (error) {
-        console.error('auth state change handling failed:', error);
-        setMessage('ログイン状態の更新に失敗しました。再読み込みしてください。');
-      }
+        void syncSessionState(session);
+      }, 0);
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const handleGoogleSignIn = async () => {
