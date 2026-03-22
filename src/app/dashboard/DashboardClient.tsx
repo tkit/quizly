@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, LogOut, Shield, Sparkles, Star, UserRound } from 'lucide-react';
 import { getBrowserSupabaseClient } from '@/lib/auth/browser';
@@ -77,13 +77,12 @@ function DashboardSkeleton({ genres }: { genres: Genre[] }) {
 export default function DashboardClient({ genres }: { genres: Genre[] }) {
   const router = useRouter();
   const supabase = getBrowserSupabaseClient();
-  const cachedSnapshot = readDashboardSnapshot();
 
-  const [activeChild, setActiveChild] = useState<DashboardActiveChild | null>(cachedSnapshot?.activeChild ?? null);
-  const [studyStatusByGenreId, setStudyStatusByGenreId] = useState<Record<string, StudyStatus>>(cachedSnapshot?.studyStatusByGenreId ?? {});
+  const [activeChild, setActiveChild] = useState<DashboardActiveChild | null>(null);
+  const [studyStatusByGenreId, setStudyStatusByGenreId] = useState<Record<string, StudyStatus>>({});
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
-  const [canSwitchChild, setCanSwitchChild] = useState(cachedSnapshot?.canSwitchChild ?? false);
-  const [loading, setLoading] = useState(!cachedSnapshot);
+  const [canSwitchChild, setCanSwitchChild] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const parentGenres = useMemo(
     () => genres.filter((genre) => genre.parent_id == null),
@@ -99,6 +98,18 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
     () => parentGenres.find((genre) => genre.id === selectedParentId) ?? null,
     [parentGenres, selectedParentId],
   );
+
+  useLayoutEffect(() => {
+    const cachedSnapshot = readDashboardSnapshot();
+    if (!cachedSnapshot) {
+      return;
+    }
+
+    setActiveChild(cachedSnapshot.activeChild);
+    setCanSwitchChild(cachedSnapshot.canSwitchChild);
+    setStudyStatusByGenreId(cachedSnapshot.studyStatusByGenreId);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
