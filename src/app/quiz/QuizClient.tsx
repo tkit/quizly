@@ -135,77 +135,38 @@ export default function QuizClient({
 
     try {
       const pointsResult = calculateSessionPoints(correctCount, questions.length);
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('study_sessions')
-        .insert({
-          child_id: childId,
-          genre_id: genre.id,
-          mode,
-          total_questions: questions.length,
-          correct_count: correctCount,
-          earned_points: pointsResult.totalPoints,
-          completed_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
+      const pointTransactions = [
+        pointsResult.basePoints > 0
+          ? {
+              points: pointsResult.basePoints,
+              reason: 'correct_answer',
+            }
+          : null,
+        pointsResult.bonusPoints > 0
+          ? {
+              points: pointsResult.bonusPoints,
+              reason: 'perfect_bonus',
+            }
+          : null,
+      ].filter((transaction): transaction is { points: number; reason: string } => transaction !== null);
 
-      if (sessionError || !sessionData) throw sessionError;
+      const { data: sessionId, error: completionError } = await supabase.rpc('complete_study_session', {
+        p_child_id: childId,
+        p_genre_id: genre.id,
+        p_mode: mode,
+        p_total_questions: questions.length,
+        p_correct_count: correctCount,
+        p_earned_points: pointsResult.totalPoints,
+        p_completed_at: new Date().toISOString(),
+        p_history_records: historyRecords,
+        p_point_transactions: pointTransactions,
+      });
 
-      const historyToInsert = historyRecords.map((record) => ({
-        session_id: sessionData.id,
-        child_id: childId,
-        question_id: record.question_id,
-        is_correct: record.is_correct,
-        selected_index: record.selected_index,
-      }));
-
-      const { error: historyError } = await supabase.from('study_history').insert(historyToInsert);
-      if (historyError) throw historyError;
-
-      if (pointsResult.totalPoints > 0) {
-        const pointTransactions: { child_id: string; session_id: string; points: number; reason: string }[] = [];
-
-        if (pointsResult.basePoints > 0) {
-          pointTransactions.push({
-            child_id: childId,
-            session_id: sessionData.id,
-            points: pointsResult.basePoints,
-            reason: 'correct_answer',
-          });
-        }
-
-        if (pointsResult.bonusPoints > 0) {
-          pointTransactions.push({
-            child_id: childId,
-            session_id: sessionData.id,
-            points: pointsResult.bonusPoints,
-            reason: 'perfect_bonus',
-          });
-        }
-
-        const { error: pointError } = await supabase.from('point_transactions').insert(pointTransactions);
-        if (pointError) {
-          console.error('Failed to save point transactions:', pointError);
-        }
-
-        const { data: childData } = await supabase
-          .from('child_profiles')
-          .select('total_points')
-          .eq('id', childId)
-          .single();
-
-        if (childData) {
-          const { error: updateError } = await supabase
-            .from('child_profiles')
-            .update({ total_points: (childData.total_points || 0) + pointsResult.totalPoints })
-            .eq('id', childId);
-          if (updateError) {
-            console.error('Failed to update child points:', updateError);
-          }
-        }
+      if (completionError || !sessionId) {
+        throw completionError ?? new Error('Failed to complete study session');
       }
 
-      router.push(`/result?session_id=${sessionData.id}`);
+      router.push(`/result?session_id=${sessionId}`);
     } catch (err) {
       console.error('Failed to save session:', err);
       alert('結果の保存に失敗しました。');

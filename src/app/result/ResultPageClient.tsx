@@ -54,51 +54,32 @@ export default function ResultPageClient() {
       }
 
       const { data: authSession } = await supabase.auth.getSession();
-      if (!authSession.session) {
+      const accessToken = authSession.session?.access_token;
+      if (!accessToken) {
         router.replace('/');
         return;
       }
 
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('study_sessions')
-        .select(
-          `
-          *,
-          genres (
-            name,
-            icon_key,
-            color_hint
-          )
-        `,
-        )
-        .eq('id', sessionId)
-        .single();
+      const response = await fetch(`/api/result/session?session_id=${encodeURIComponent(sessionId)}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
-      if (sessionError || !sessionData) {
+      const body = (await response.json().catch(() => null)) as {
+        error?: string;
+        session?: Session;
+        history?: HistoryItem[];
+      } | null;
+
+      if (!response.ok || !body?.session) {
         setError('結果の読み込みに失敗しました。');
         setLoading(false);
         return;
       }
 
-      const { data: historyData } = await supabase
-        .from('study_history')
-        .select(
-          `
-          is_correct,
-          selected_index,
-          questions (
-            question_text,
-            options,
-            correct_index,
-            explanation
-          )
-        `,
-        )
-        .eq('session_id', sessionId)
-        .order('answered_at', { ascending: true });
-
-      setSession(sessionData as Session);
-      setHistory((historyData ?? []) as HistoryItem[]);
+      setSession(body.session);
+      setHistory(body.history ?? []);
       setLoading(false);
     };
 

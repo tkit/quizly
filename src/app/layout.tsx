@@ -1,9 +1,24 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+function getMetadataBase() {
+  const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configuredUrl) {
+    return new URL(configuredUrl);
+  }
+
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    return new URL(`https://${vercelUrl}`);
+  }
+
+  return new URL('http://localhost:3000');
+}
+
 export const metadata: Metadata = {
   title: "Quizly",
   description: "たのしく学べるクイズアプリ",
+  metadataBase: getMetadataBase(),
   icons: {
     icon: [
       { url: "/favicon.ico" },

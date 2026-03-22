@@ -74,7 +74,13 @@ function DashboardSkeleton({ genres }: { genres: Genre[] }) {
   );
 }
 
-export default function DashboardClient({ genres }: { genres: Genre[] }) {
+export default function DashboardClient({
+  genres,
+  initialActiveChildId,
+}: {
+  genres: Genre[];
+  initialActiveChildId: string | null;
+}) {
   const router = useRouter();
   const supabase = getBrowserSupabaseClient();
 
@@ -124,7 +130,10 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
           return;
         }
 
-        const snapshot = await preloadDashboardSnapshot({ accessToken, supabase });
+        const snapshot = await preloadDashboardSnapshot({
+          accessToken,
+          childId: initialActiveChildId ?? undefined,
+        });
         if (!snapshot) {
           clearDashboardSnapshot();
           router.replace('/');
@@ -154,7 +163,7 @@ export default function DashboardClient({ genres }: { genres: Genre[] }) {
     return () => {
       isMounted = false;
     };
-  }, [router, supabase]);
+  }, [initialActiveChildId, router, supabase]);
 
   const handleSwitchChild = async () => {
     clearDashboardSnapshot();

@@ -53,7 +53,7 @@ export default function AuthCallbackPage() {
 
       const currentChildBody = (await currentChildResponse.json().catch(() => null)) as { child?: ActiveChild | null } | null;
       if (currentChildBody?.child) {
-        await preloadDashboardSnapshot({ accessToken, supabase, childId: currentChildBody.child.id });
+        await preloadDashboardSnapshot({ accessToken, childId: currentChildBody.child.id });
         router.replace('/dashboard');
         return;
       }
@@ -80,7 +80,7 @@ export default function AuthCallbackPage() {
         });
 
         if (selectResponse.ok) {
-          await preloadDashboardSnapshot({ accessToken, supabase, childId: childList[0].id });
+          await preloadDashboardSnapshot({ accessToken, childId: childList[0].id });
           router.replace('/dashboard');
           return;
         }

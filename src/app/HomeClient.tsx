@@ -40,7 +40,6 @@ export default function HomeClient() {
   const router = useRouter();
   const supabase = getBrowserSupabaseClient();
 
-  const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isLoadingChildren, setIsLoadingChildren] = useState(false);
   const [hasResolvedChildren, setHasResolvedChildren] = useState(false);
   const [isAutoSelectingChild, setIsAutoSelectingChild] = useState(false);
@@ -101,9 +100,9 @@ export default function HomeClient() {
     }
 
     setMessage('');
-    await preloadDashboardSnapshot({ accessToken, supabase, childId });
+    await preloadDashboardSnapshot({ accessToken, childId });
     router.replace('/dashboard');
-  }, [getAccessToken, router, supabase]);
+  }, [getAccessToken, router]);
 
   const loadChildren = useCallback(async () => {
     setIsLoadingChildren(true);
@@ -150,21 +149,28 @@ export default function HomeClient() {
         }
 
         setIsParentAuthenticated(true);
+        setMessage('');
 
-        const ensureResult = await withTimeoutOrNull(ensureGuardianProfile(), SESSION_BOOTSTRAP_TIMEOUT_MS);
+        const [loadChildrenResult, ensureResult] = await Promise.allSettled([
+          withTimeoutOrNull(loadChildren(), SESSION_BOOTSTRAP_TIMEOUT_MS),
+          withTimeoutOrNull(ensureGuardianProfile(), SESSION_BOOTSTRAP_TIMEOUT_MS),
+        ]);
         if (!isMounted) return;
-        if (ensureResult === null) {
-          setHasResolvedChildren(true);
-          setMessage('ログイン情報の確認に時間がかかっています。ページを再読み込みしてください。');
-          return;
+
+        if (loadChildrenResult.status === 'rejected') {
+          throw loadChildrenResult.reason;
         }
 
-        const loadChildrenResult = await withTimeoutOrNull(loadChildren(), SESSION_BOOTSTRAP_TIMEOUT_MS);
-        if (!isMounted) return;
-        if (loadChildrenResult === null) {
+        if (loadChildrenResult.value === null) {
           setHasResolvedChildren(true);
           setMessage('子プロフィールの読み込みに時間がかかっています。ページを再読み込みしてください。');
           return;
+        }
+
+        if (ensureResult.status === 'rejected') {
+          console.error('ensureGuardianProfile failed:', ensureResult.reason);
+        } else if (ensureResult.value === null) {
+          setMessage('一部のログイン情報の同期に時間がかかっています。しばらくしてから再度お試しください。');
         }
       } catch (error) {
         console.error('session sync failed:', error);
@@ -197,7 +203,6 @@ export default function HomeClient() {
         setMessage('初期化に失敗しました。ページを再読み込みしてください。');
       } finally {
         if (!isMounted) return;
-        setIsBootstrapping(false);
       }
     };
     void bootstrap();
@@ -316,19 +321,15 @@ export default function HomeClient() {
     await selectChild(selectedChild.id);
   };
 
-  if (isBootstrapping) {
-    return (
-      <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 rounded-[2rem] border-4 border-zinc-400 bg-white p-8 text-center shadow-brutal">
-        <QuizlyLogo variant="horizontal" theme="light" className="h-auto w-full max-w-[240px] sm:max-w-[300px]" />
-        <p className="text-lg font-black text-zinc-700">読み込み中...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <div className="mx-auto w-full max-w-xl space-y-4 text-center">
-        <QuizlyLogo variant="horizontal" theme="light" className="mx-auto h-auto w-full max-w-[300px] sm:max-w-[390px] md:max-w-[460px]" />
+        <QuizlyLogo
+          variant="horizontal"
+          theme="light"
+          className="mx-auto h-auto w-full max-w-[300px] sm:max-w-[390px] md:max-w-[460px]"
+          priority
+        />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
