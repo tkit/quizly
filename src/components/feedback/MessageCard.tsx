@@ -39,9 +39,9 @@ export default function MessageCard({
       icon: <CircleHelp className={ICON_SIZE.md} strokeWidth={ICON_STROKE.medium} />,
     },
     success: {
-      titleClass: 'text-teal-700',
-      panelClass: 'bg-teal-50',
-      buttonClass: 'bg-teal-300 hover:bg-teal-400',
+      titleClass: 'text-green-700',
+      panelClass: 'bg-green-50',
+      buttonClass: 'bg-green-200 hover:bg-green-300',
       icon: <CircleCheckBig className={ICON_SIZE.md} strokeWidth={ICON_STROKE.medium} />,
     },
   } as const;

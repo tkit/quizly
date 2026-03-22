@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, LogOut, Shield, Sparkles, Star, UserRound } from 'lucide-react';
 import { getBrowserSupabaseClient } from '@/lib/auth/browser';
 import { GenreIcon } from '@/components/GenreIcon';
+import QuizlyLogo from '@/components/QuizlyLogo';
 import { resolveSubjectTone } from '@/lib/ui/subjectTone';
 import type { DashboardActiveChild, StudyStatus } from '@/lib/auth/data';
 
@@ -61,19 +62,35 @@ export default function DashboardClient({
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-1 sm:gap-8 sm:p-2">
+      <div className="flex justify-center">
+        <QuizlyLogo
+          variant="horizontal"
+          theme="light"
+          className="h-auto w-full max-w-[148px] sm:max-w-[168px]"
+        />
+      </div>
+
       <header className="flex w-full flex-col gap-4 rounded-[2rem] border-4 border-zinc-400 bg-white p-4 shadow-brutal sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-4 border-zinc-400 bg-teal-300 text-zinc-900 shadow-brutal-sm sm:h-14 sm:w-14">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-4 border-zinc-400 bg-slate-200 text-zinc-900 shadow-brutal-sm sm:h-14 sm:w-14">
             <UserRound className="h-6 w-6" />
           </div>
           <div className="min-w-0">
             <h1 className="font-display text-[clamp(1.25rem,5.5vw,1.9rem)] font-black tracking-wide text-zinc-800">
               {activeChild.display_name} さん
             </h1>
-            <p className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-teal-600 sm:text-base">
+            <p className="mt-1 inline-flex items-center gap-2 text-sm font-bold text-slate-600 sm:text-base">
               今日も学習を進めよう
               <Sparkles className="h-4 w-4" />
             </p>
+            <div className="mt-2">
+              <div className="inline-flex max-w-full items-center gap-1.5 rounded-full border-2 border-zinc-300 bg-white px-3 py-1 shadow-brutal-sm sm:gap-2 sm:px-3.5">
+                <Star className="h-4 w-4 shrink-0 text-amber-600 fill-amber-300" />
+                <span className="text-xs font-black text-zinc-700 sm:text-sm">保有ポイント</span>
+                <span className="text-base font-black tabular-nums text-zinc-900 sm:text-lg">{activeChild.total_points.toLocaleString()}</span>
+                <span className="text-xs font-black text-zinc-700 sm:text-sm">pt</span>
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex gap-2 self-end sm:self-auto">
@@ -103,15 +120,6 @@ export default function DashboardClient({
           </button>
         </div>
       </header>
-
-      <div className="flex justify-center sm:-mt-2">
-        <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border-4 border-teal-400 bg-gradient-to-r from-teal-100 to-teal-200 px-5 py-2.5 text-center shadow-brutal transition-transform hover:-rotate-1 sm:rotate-1 sm:px-8 sm:py-3 sm:gap-3">
-          <Star className="h-6 w-6 text-teal-600 fill-teal-400 sm:h-7 sm:w-7" />
-          <span className="text-lg font-black text-teal-900 sm:text-2xl">保有ポイント</span>
-          <span className="text-2xl font-black tabular-nums text-teal-700 sm:text-4xl">{activeChild.total_points.toLocaleString()}</span>
-          <span className="text-lg font-black text-teal-900 sm:text-2xl">pt</span>
-        </div>
-      </div>
 
       <section className="flex flex-col gap-6 w-full">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -145,7 +153,7 @@ export default function DashboardClient({
                 <button
                   key={genre.id}
                   onClick={() => router.push(`/quiz?genre=${genre.id}`)}
-                  className={`group relative flex w-full items-start gap-3 overflow-hidden rounded-[2rem] border-4 border-zinc-400 bg-white p-4 pr-3 text-left text-zinc-900 shadow-brutal transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-brutal-lg ${tone.focusRingClass} sm:pr-4`}
+                  className={`group relative flex w-full items-start gap-3 overflow-hidden rounded-[2rem] border-4 border-zinc-400 p-4 pr-3 text-left text-zinc-900 shadow-brutal transition-all hover:-translate-y-1 hover:shadow-brutal-lg ${tone.focusRingClass} ${tone.cardClass} sm:pr-4`}
                 >
                   <div className={`absolute left-0 top-0 h-full w-4 ${tone.stripClass}`} />
                   <div className={`z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.2rem] border-4 border-zinc-400 text-4xl shadow-brutal-sm ${tone.iconBgClass}`}>
@@ -180,7 +188,7 @@ export default function DashboardClient({
                 <button
                   key={genre.id}
                   onClick={() => setSelectedParentId(genre.id)}
-                  className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-[2rem] border-4 border-zinc-400 bg-white p-4 text-left text-zinc-900 shadow-brutal transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-brutal-lg ${tone.focusRingClass} sm:gap-6 sm:p-6`}
+                  className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-[2rem] border-4 border-zinc-400 p-4 text-left text-zinc-900 shadow-brutal transition-all hover:-translate-y-1 hover:shadow-brutal-lg ${tone.focusRingClass} ${tone.cardClass} sm:gap-6 sm:p-6`}
                 >
                   <div className={`absolute left-0 top-0 h-full w-4 ${tone.stripClass}`} />
                   <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/20 transition-transform duration-500 group-hover:scale-150" />

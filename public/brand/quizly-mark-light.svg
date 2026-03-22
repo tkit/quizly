@@ -1,7 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" role="img" aria-labelledby="title desc">
   <title id="title">Quizly Mark Light</title>
-  <desc id="desc">Calm Q mark for Quizly.</desc>
-  <circle cx="256" cy="256" r="216" fill="#E2E8F0" stroke="#475569" stroke-width="24" />
-  <circle cx="256" cy="256" r="122" fill="none" stroke="#0F766E" stroke-width="38" stroke-linecap="round" />
-  <rect x="312" y="334" width="126" height="42" rx="21" transform="rotate(42 312 334)" fill="#0F766E" stroke="#475569" stroke-width="14" />
+  <desc id="desc">Mark version of logo proposal A.</desc>
+
+  <circle cx="256" cy="256" r="216" fill="#E2E8F0" stroke="#475569" stroke-width="24"/>
+
+  <circle cx="256" cy="256" r="122" fill="none" stroke="#F43F5E" stroke-width="38" stroke-linecap="round" stroke-dasharray="175 591.55" stroke-dashoffset="0"/>
+  <circle cx="256" cy="256" r="122" fill="none" stroke="#3B82F6" stroke-width="38" stroke-linecap="round" stroke-dasharray="175 591.55" stroke-dashoffset="-191.64"/>
+  <circle cx="256" cy="256" r="122" fill="none" stroke="#F97316" stroke-width="38" stroke-linecap="round" stroke-dasharray="175 591.55" stroke-dashoffset="-383.28"/>
+  <circle cx="256" cy="256" r="122" fill="none" stroke="#22C55E" stroke-width="38" stroke-linecap="round" stroke-dasharray="175 591.55" stroke-dashoffset="-574.92"/>
+
+  <rect x="312" y="334" width="126" height="42" rx="21" transform="rotate(42 312 334)" fill="#475569" stroke="#475569" stroke-width="14"/>
 </svg>

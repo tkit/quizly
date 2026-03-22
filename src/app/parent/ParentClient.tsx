@@ -22,11 +22,16 @@ import type { ParentManagementSnapshot, ParentSessionHistoryItem, ParentSessionS
 
 type SectionKey = 'children' | 'history' | 'analytics' | 'settings';
 
-const sectionMeta: Array<{ key: SectionKey; label: string; icon: typeof UserRound }> = [
-  { key: 'children', label: '子ども管理', icon: UserRound },
-  { key: 'history', label: '学習履歴', icon: NotebookText },
-  { key: 'analytics', label: '学習分析', icon: LineChart },
-  { key: 'settings', label: 'アカウント設定', icon: Shield },
+const sectionMeta: Array<{
+  key: SectionKey;
+  label: string;
+  icon: typeof UserRound;
+  activeClass: string;
+}> = [
+  { key: 'children', label: '子ども管理', icon: UserRound, activeClass: 'border-rose-400 bg-rose-100 text-rose-900' },
+  { key: 'history', label: '学習履歴', icon: NotebookText, activeClass: 'border-blue-400 bg-blue-100 text-blue-900' },
+  { key: 'analytics', label: '学習分析', icon: LineChart, activeClass: 'border-orange-400 bg-orange-100 text-orange-900' },
+  { key: 'settings', label: 'アカウント設定', icon: Shield, activeClass: 'border-green-400 bg-green-100 text-green-900' },
 ];
 
 function formatDateTime(value: string | null) {
@@ -472,7 +477,7 @@ export default function ParentClient({
             maxLength={4}
             placeholder="確認用PIN"
           />
-          <button type="submit" className="min-h-11 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-black text-teal-800 hover:bg-teal-200">
+          <button type="submit" className="min-h-11 rounded-xl border-2 border-slate-400 bg-slate-100 px-4 py-2 font-black text-slate-800 hover:bg-slate-200">
             PINを設定
           </button>
         </form>
@@ -495,7 +500,7 @@ export default function ParentClient({
             maxLength={4}
             placeholder="4桁PIN"
           />
-          <button type="submit" className="min-h-11 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-black text-teal-800 hover:bg-teal-200">
+          <button type="submit" className="min-h-11 rounded-xl border-2 border-slate-400 bg-slate-100 px-4 py-2 font-black text-slate-800 hover:bg-slate-200">
             解除する
           </button>
         </form>
@@ -513,13 +518,13 @@ export default function ParentClient({
         </p>
         <div className="mt-4 flex gap-2">
           {isOpeningParentMode ? (
-            <div className="inline-flex min-h-11 items-center rounded-xl border-2 border-teal-300 bg-teal-50 px-4 py-2 text-sm font-black text-teal-800">
+            <div className="inline-flex min-h-11 items-center rounded-xl border-2 border-slate-300 bg-slate-50 px-4 py-2 text-sm font-black text-slate-800">
               読み込み中...
             </div>
           ) : (
             <button
               onClick={() => router.refresh()}
-              className="min-h-11 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-black text-teal-800 hover:bg-teal-200"
+              className="min-h-11 rounded-xl border-2 border-slate-400 bg-slate-100 px-4 py-2 font-black text-slate-800 hover:bg-slate-200"
             >
               再読み込み
             </button>
@@ -531,7 +536,7 @@ export default function ParentClient({
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-1 sm:gap-8 sm:p-2">
-      <header className="rounded-[2rem] border-4 border-zinc-400 bg-white p-5 shadow-brutal sm:p-6">
+      <header className="subject-stripe-bottom rounded-[2rem] border-4 border-zinc-400 bg-white p-5 shadow-brutal sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
@@ -564,7 +569,7 @@ export default function ParentClient({
           </div>
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-wrap gap-2 rounded-2xl border-2 border-zinc-200 bg-slate-50 p-2">
           {sectionMeta.map((section) => {
             const Icon = section.icon;
             const isActive = activeSection === section.key;
@@ -575,7 +580,7 @@ export default function ParentClient({
                 onClick={() => setActiveSection(section.key)}
                 className={`inline-flex min-h-11 items-center gap-2 rounded-full border-4 px-4 py-2 text-sm font-black shadow-brutal-sm transition-colors ${
                   isActive
-                    ? 'border-teal-400 bg-teal-100 text-teal-900'
+                    ? section.activeClass
                     : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
                 }`}
               >
@@ -759,7 +764,7 @@ export default function ParentClient({
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           {session.genre_name && (
-                            <span className="rounded-full border-2 border-teal-300 bg-teal-50 px-3 py-1 text-xs font-black text-teal-800">
+                            <span className="rounded-full border-2 border-blue-300 bg-blue-50 px-3 py-1 text-xs font-black text-blue-800">
                               {session.genre_name}
                             </span>
                           )}
@@ -791,7 +796,7 @@ export default function ParentClient({
                               <div
                                 key={item.question_id}
                                 className={`rounded-[1.2rem] border-2 p-4 ${
-                                  item.is_correct ? 'border-teal-300 bg-teal-50' : 'border-rose-300 bg-rose-50'
+                                  item.is_correct ? 'border-blue-300 bg-blue-50' : 'border-rose-300 bg-rose-50'
                                 }`}
                               >
                                 <p className="text-base font-black text-zinc-900">
@@ -851,8 +856,8 @@ export default function ParentClient({
                   <p className="text-sm font-black text-slate-700">直近7日</p>
                   <p className="mt-2 text-3xl font-black text-zinc-900">{selectedChildAnalytics.last7DaysCount}回</p>
                 </div>
-                <div className="rounded-[1.5rem] border-4 border-zinc-400 bg-teal-50 p-4 shadow-brutal-sm">
-                  <p className="text-sm font-black text-teal-700">直近30日</p>
+                <div className="rounded-[1.5rem] border-4 border-zinc-400 bg-blue-50 p-4 shadow-brutal-sm">
+                  <p className="text-sm font-black text-blue-700">直近30日</p>
                   <p className="mt-2 text-3xl font-black text-zinc-900">{selectedChildAnalytics.last30DaysCount}回</p>
                 </div>
               </div>
@@ -860,7 +865,7 @@ export default function ParentClient({
               <div className="grid gap-5 xl:grid-cols-[1.25fr_0.95fr]">
                 <div className="rounded-[1.6rem] border-4 border-zinc-400 bg-white p-4 shadow-brutal-sm">
                   <h3 className="inline-flex items-center gap-2 text-lg font-black text-zinc-900">
-                    <BookOpenCheck className="h-5 w-5 text-teal-700" />
+                    <BookOpenCheck className="h-5 w-5 text-blue-700" />
                     ジャンル別の取り組み
                   </h3>
                   <div className="mt-4 flex flex-col gap-3">
@@ -876,7 +881,7 @@ export default function ParentClient({
                             <span className="text-sm font-black text-zinc-600">{genre.attempts}回</span>
                           </div>
                           <div className="mt-2 h-3 overflow-hidden rounded-full bg-zinc-200">
-                            <div className="h-full rounded-full bg-teal-500" style={{ width: `${genre.accuracy}%` }} />
+                            <div className="h-full rounded-full bg-blue-500" style={{ width: `${genre.accuracy}%` }} />
                           </div>
                           <p className="mt-2 text-sm font-bold text-zinc-600">正答率 {genre.accuracy}%</p>
                         </div>
@@ -897,7 +902,7 @@ export default function ParentClient({
                             <div className="min-h-6 text-xs font-black text-zinc-600">{item.count}回</div>
                             <div className="flex h-32 items-end">
                               <div
-                                className="w-8 rounded-t-xl border-2 border-zinc-400 bg-teal-300 shadow-brutal-sm"
+                                className="w-8 rounded-t-xl border-2 border-zinc-400 bg-blue-300 shadow-brutal-sm"
                                 style={{ height }}
                                 aria-label={`${item.label}の学習回数は${item.count}回`}
                               />
@@ -978,7 +983,7 @@ export default function ParentClient({
                 maxLength={4}
                 placeholder="確認用PIN"
               />
-              <button type="submit" className="min-h-11 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-black text-teal-800 hover:bg-teal-200">
+              <button type="submit" className="min-h-11 rounded-xl border-2 border-slate-400 bg-slate-100 px-4 py-2 font-black text-slate-800 hover:bg-slate-200">
                 PINを更新する
               </button>
             </form>

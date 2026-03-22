@@ -7,6 +7,7 @@ import { ArrowRight, CheckCircle, PartyPopper, X, XCircle } from 'lucide-react';
 import { calculateSessionPoints } from '@/lib/points';
 import { fireCorrectEffect } from '@/lib/effects/confetti';
 import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
+import { resolveSubjectTone } from '@/lib/ui/subjectTone';
 
 interface Question {
   id: string;
@@ -123,28 +124,17 @@ export default function QuizClient({
     }
   };
 
-  const tone =
-    genre.color_hint === 'blue'
-      ? { progress: 'bg-slate-300' }
-      : genre.color_hint === 'orange'
-        ? { progress: 'bg-teal-200' }
-        : genre.color_hint === 'green'
-          ? { progress: 'bg-teal-300' }
-          : genre.color_hint === 'pink'
-            ? { progress: 'bg-teal-300' }
-            : genre.color_hint === 'purple'
-              ? { progress: 'bg-slate-300' }
-              : { progress: 'bg-zinc-400' };
+  const tone = resolveSubjectTone(genre.parent_id ?? genre.id, genre.color_hint);
 
   if (questions.length === 0) {
     return (
       <div className="flex h-full flex-1 flex-col items-center justify-center gap-5 p-4 text-center sm:gap-6">
-        <PartyPopper className={`${ICON_SIZE.hero} animate-bounce-soft text-teal-600`} strokeWidth={ICON_STROKE.regular} />
+        <PartyPopper className={`${ICON_SIZE.hero} animate-bounce-soft ${tone.accentTextClass}`} strokeWidth={ICON_STROKE.regular} />
         <p className="w-full max-w-lg rounded-3xl border-4 border-zinc-400 bg-white px-5 py-4 text-[clamp(1.25rem,5.5vw,1.8rem)] font-black text-zinc-800 shadow-brutal sm:px-8">
           このジャンルには問題がありません。
         </p>
         <button
-          className="mt-4 min-h-11 rounded-full border-4 border-zinc-400 bg-teal-300 px-8 py-3 text-xl font-black text-zinc-900 shadow-brutal transition-all hover:-translate-y-1 hover:bg-teal-400 hover:shadow-brutal-lg active-brutal-push"
+          className="mt-4 min-h-11 rounded-full border-4 border-zinc-400 bg-zinc-100 px-8 py-3 text-xl font-black text-zinc-900 shadow-brutal transition-all hover:-translate-y-1 hover:bg-zinc-200 hover:shadow-brutal-lg active-brutal-push"
           onClick={() => router.push('/dashboard')}
         >
           戻る
@@ -166,7 +156,7 @@ export default function QuizClient({
           <span>{correctCount} 問正解</span>
         </div>
         <div className="h-3 overflow-hidden rounded-full border-2 border-zinc-300 bg-zinc-100">
-          <div className={`h-full ${tone.progress}`} style={{ width: `${progressValue}%` }} />
+          <div className={`h-full ${tone.progressClass}`} style={{ width: `${progressValue}%` }} />
         </div>
       </div>
 
@@ -181,7 +171,7 @@ export default function QuizClient({
           let classes = 'border-zinc-400 bg-white hover:bg-zinc-50';
 
           if (isAnswered) {
-            if (isCorrect) classes = 'border-teal-500 bg-teal-100';
+            if (isCorrect) classes = tone.correctClass;
             else if (isSelected) classes = 'border-rose-500 bg-rose-100';
             else classes = 'border-zinc-300 bg-zinc-100';
           }
@@ -194,7 +184,7 @@ export default function QuizClient({
               className={`w-full rounded-2xl border-4 p-4 text-left text-lg font-black shadow-brutal-sm transition-all ${classes}`}
             >
               <span className="inline-flex items-center gap-2">
-                {isAnswered && isCorrect && <CheckCircle className="h-5 w-5 text-teal-700" />}
+                {isAnswered && isCorrect && <CheckCircle className={`h-5 w-5 ${tone.accentTextClass}`} />}
                 {isAnswered && isSelected && !isCorrect && <XCircle className="h-5 w-5 text-rose-700" />}
                 {option}
               </span>
@@ -206,7 +196,7 @@ export default function QuizClient({
       {isAnswered && (
         <div
           className={`rounded-2xl border-4 p-4 font-black ${
-            isCurrentCorrect ? 'border-teal-500 bg-teal-100 text-teal-800' : 'border-rose-500 bg-rose-100 text-rose-800'
+            isCurrentCorrect ? tone.correctClass : 'border-rose-500 bg-rose-100 text-rose-800'
           }`}
         >
           {isCurrentCorrect ? (
@@ -227,7 +217,7 @@ export default function QuizClient({
       <button
         disabled={!isAnswered || isSubmitting}
         onClick={handleNext}
-        className="mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-4 border-zinc-400 bg-teal-300 px-6 py-3 text-lg font-black text-zinc-900 shadow-brutal transition-all hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-4 border-zinc-400 bg-zinc-100 px-6 py-3 text-lg font-black text-zinc-900 shadow-brutal transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {currentIndex < questions.length - 1 ? 'つぎへ' : isSubmitting ? '保存中...' : '結果を見る'}
         <ArrowRight className="h-5 w-5" />

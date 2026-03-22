@@ -50,7 +50,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body
-        className="font-sans antialiased selection:bg-teal-100 selection:text-slate-900 bg-slate-50"
+        className="bg-slate-50 font-sans antialiased selection:bg-slate-200 selection:text-slate-900"
         style={{ backgroundImage: "none" }}
       >
         {children}

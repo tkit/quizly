@@ -168,9 +168,9 @@ export default function HomeClient({
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <section className="rounded-[2rem] border-4 border-zinc-400 bg-white p-5 shadow-brutal sm:p-6">
+        <section className="subject-stripe-left rounded-[2rem] border-4 border-zinc-400 bg-white p-5 shadow-brutal sm:p-6">
           <h2 className="mb-4 inline-flex items-center gap-2 text-lg font-black text-zinc-800 sm:text-xl">
-            <ShieldCheck className="h-5 w-5 text-teal-700" />
+            <ShieldCheck className="h-5 w-5 text-slate-700" />
             保護者ログイン
           </h2>
 
@@ -211,22 +211,22 @@ export default function HomeClient({
                 <button
                   type="submit"
                   disabled={isSendingMagicLink}
-                  className="min-h-11 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-bold text-teal-800 hover:bg-teal-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="min-h-11 rounded-xl border-2 border-zinc-300 bg-slate-100 px-4 py-2 font-bold text-zinc-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSendingMagicLink ? '送信中...' : 'Magic Link を送信'}
                 </button>
               </form>
             </>
           ) : (
-            <div className="rounded-2xl border-2 border-teal-300 bg-teal-50 p-3 text-sm font-bold text-teal-700">
+            <div className="rounded-2xl border-2 border-zinc-300 bg-slate-50 p-3 text-sm font-bold text-slate-700">
               保護者ログイン済みです。右側で子どもを選択または追加してください。
             </div>
           )}
         </section>
 
-        <section className="rounded-[2rem] border-4 border-zinc-400 bg-white p-5 shadow-brutal sm:p-6">
+        <section className="subject-stripe-left rounded-[2rem] border-4 border-zinc-400 bg-white p-5 shadow-brutal sm:p-6">
           <h2 className="mb-4 inline-flex items-center gap-2 text-lg font-black text-zinc-800 sm:text-xl">
-            <Play className="h-5 w-5 text-teal-700" />
+            <Play className="h-5 w-5 text-slate-700" />
             子ども選択と学習開始
           </h2>
 
@@ -254,7 +254,7 @@ export default function HomeClient({
                 className="min-h-11 rounded-xl border-2 border-zinc-300 px-3"
                 placeholder="たろう"
               />
-              <button type="submit" className="min-h-11 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-bold text-teal-800 hover:bg-teal-200">
+              <button type="submit" className="min-h-11 rounded-xl border-2 border-zinc-300 bg-slate-100 px-4 py-2 font-bold text-zinc-800 hover:bg-slate-200">
                 子プロフィールを作成
               </button>
             </form>
@@ -271,7 +271,7 @@ export default function HomeClient({
                     </option>
                   ))}
                 </select>
-                <button type="submit" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border-2 border-teal-400 bg-teal-100 px-4 py-2 font-bold text-teal-800 hover:bg-teal-200">
+                <button type="submit" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border-2 border-zinc-300 bg-slate-100 px-4 py-2 font-bold text-zinc-800 hover:bg-slate-200">
                   学習をはじめる
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -299,7 +299,7 @@ export default function HomeClient({
       </div>
 
       {isParentAuthenticated && !isLoadingChildren && !hasChildren && (
-        <p className="rounded-2xl border-2 border-teal-300 bg-teal-50 p-3 text-sm font-bold text-teal-700">
+        <p className="rounded-2xl border-2 border-zinc-300 bg-slate-50 p-3 text-sm font-bold text-slate-700">
           子どもプロフィールはまだありません。右側の入力から作成してください。
         </p>
       )}
