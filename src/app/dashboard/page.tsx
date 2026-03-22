@@ -34,6 +34,7 @@ export default async function DashboardPage() {
   }
 
   const supabase = await createServerSupabaseClient();
+  await supabase.from('parent_reauth_challenges').delete().eq('guardian_id', user.id);
   const snapshot = await getDashboardSnapshot(supabase, initialActiveChildId);
 
   if (!snapshot) {

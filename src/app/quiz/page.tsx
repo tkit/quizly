@@ -24,8 +24,8 @@ type QuestionRow = {
   image_url: string | null;
 };
 
-function buildStableQuestionOrderKey(childId: string, genreId: string, mode: string, questionId: string) {
-  const source = `${childId}:${genreId}:${mode}:${questionId}`;
+function buildStableQuestionOrderKey(childId: string, genreId: string, questionId: string) {
+  const source = `${childId}:${genreId}:${questionId}`;
   let hash = 0;
 
   for (let index = 0; index < source.length; index += 1) {
@@ -40,7 +40,7 @@ export const revalidate = 0;
 export default async function QuizPage({
   searchParams,
 }: {
-  searchParams: Promise<{ genre?: string; mode?: string; count?: string }>;
+  searchParams: Promise<{ genre?: string; count?: string }>;
 }) {
   const { user } = await getAuthenticatedUser();
   const cookieStore = await cookies();
@@ -53,7 +53,6 @@ export default async function QuizPage({
   const supabase = await createServerSupabaseClient();
   const resolvedParams = await searchParams;
   const genreId = resolvedParams.genre;
-  const mode = resolvedParams.mode || 'normal';
   const countStr = resolvedParams.count;
   const parsedCount = countStr ? parseInt(countStr, 10) : null;
 
@@ -108,45 +107,13 @@ export default async function QuizPage({
     );
   }
 
-  let allQuestions: QuestionRow[] | null = null;
-  let questionsError: Error | null = null;
+  const { data, error: questionsError } = await supabase
+    .from('questions')
+    .select('*')
+    .eq('genre_id', genreId)
+    .eq('is_active', true);
 
-  if (mode === 'review') {
-    const { data: history, error: historyError } = await supabase
-      .from('study_history')
-      .select('question_id')
-      .eq('child_id', activeChildId)
-      .eq('is_correct', false);
-
-    if (historyError) {
-      questionsError = historyError;
-    } else {
-      const wrongQuestionIds = Array.from(new Set((history ?? []).map((item: { question_id: string }) => item.question_id)));
-
-      if (wrongQuestionIds.length === 0) {
-        allQuestions = [];
-      } else {
-        const { data, error } = await supabase
-          .from('questions')
-          .select('*')
-          .eq('genre_id', genreId)
-          .eq('is_active', true)
-          .in('id', wrongQuestionIds);
-
-        allQuestions = (data ?? []) as QuestionRow[];
-        questionsError = error;
-      }
-    }
-  } else {
-    const { data, error } = await supabase
-      .from('questions')
-      .select('*')
-      .eq('genre_id', genreId)
-      .eq('is_active', true);
-
-    allQuestions = (data ?? []) as QuestionRow[];
-    questionsError = error;
-  }
+  const allQuestions = (data ?? []) as QuestionRow[];
 
   if (questionsError || !allQuestions) {
     return (
@@ -170,8 +137,8 @@ export default async function QuizPage({
   const questions = [...allQuestions]
     .sort(
       (left, right) =>
-        buildStableQuestionOrderKey(activeChildId, genreId, mode, left.id) -
-        buildStableQuestionOrderKey(activeChildId, genreId, mode, right.id),
+        buildStableQuestionOrderKey(activeChildId, genreId, left.id) -
+        buildStableQuestionOrderKey(activeChildId, genreId, right.id),
     )
     .slice(0, count);
 
@@ -180,7 +147,6 @@ export default async function QuizPage({
       <QuizClient
         childId={activeChildId}
         genre={resolvedGenre}
-        mode={mode}
         questions={questions}
       />
     </PageShell>

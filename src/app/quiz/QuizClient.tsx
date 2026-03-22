@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getBrowserSupabaseClient } from '@/lib/auth/browser';
-import { ArrowRight, CheckCircle, PartyPopper, Sparkles, X, XCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle, PartyPopper, X, XCircle } from 'lucide-react';
 import { calculateSessionPoints } from '@/lib/points';
 import { fireCorrectEffect } from '@/lib/effects/confetti';
 import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
@@ -29,12 +29,10 @@ interface Genre {
 export default function QuizClient({
   childId,
   genre,
-  mode,
   questions,
 }: {
   childId: string;
   genre: Genre;
-  mode: string;
   questions: Question[];
 }) {
   const router = useRouter();
@@ -104,7 +102,7 @@ export default function QuizClient({
       const { data: sessionId, error: completionError } = await supabase.rpc('complete_study_session', {
         p_child_id: childId,
         p_genre_id: genre.id,
-        p_mode: mode,
+        p_mode: 'normal',
         p_total_questions: questions.length,
         p_correct_count: correctCount,
         p_earned_points: pointsResult.totalPoints,
@@ -143,14 +141,8 @@ export default function QuizClient({
       <div className="flex h-full flex-1 flex-col items-center justify-center gap-5 p-4 text-center sm:gap-6">
         <PartyPopper className={`${ICON_SIZE.hero} animate-bounce-soft text-teal-600`} strokeWidth={ICON_STROKE.regular} />
         <p className="w-full max-w-lg rounded-3xl border-4 border-zinc-400 bg-white px-5 py-4 text-[clamp(1.25rem,5.5vw,1.8rem)] font-black text-zinc-800 shadow-brutal sm:px-8">
-          {mode === 'review' ? '苦手な問題はありません。すばらしい！' : 'このジャンルには問題がありません。'}
+          このジャンルには問題がありません。
         </p>
-        {mode === 'review' && (
-          <div className="inline-flex items-center gap-2 text-lg font-black text-teal-700 sm:text-xl">
-            <Sparkles className={ICON_SIZE.sm} strokeWidth={ICON_STROKE.strong} />
-            よくできました
-          </div>
-        )}
         <button
           className="mt-4 min-h-11 rounded-full border-4 border-zinc-400 bg-teal-300 px-8 py-3 text-xl font-black text-zinc-900 shadow-brutal transition-all hover:-translate-y-1 hover:bg-teal-400 hover:shadow-brutal-lg active-brutal-push"
           onClick={() => router.push('/dashboard')}

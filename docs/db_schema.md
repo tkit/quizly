@@ -69,7 +69,7 @@
 | `id` | uuid | PRIMARY KEY, DEFAULT gen_random_uuid() | セッションの一意なID |
 | `user_id` | uuid | FOREIGN KEY (users.id) | 挑戦したユーザーのID |
 | `genre_id` | text | FOREIGN KEY (genres.id) | 挑戦した子カテゴリID（leaf） |
-| `mode` | text | DEFAULT 'normal' | 'normal'（通常） または 'review'（復習） |
+| `mode` | text | DEFAULT 'normal' | 現行実装では `'normal'` 固定。将来の出題モード拡張用に保持 |
 | `total_questions` | integer | NOT NULL | 出題された全問題数 |
 | `correct_count`| integer | NOT NULL | 正解数 |
 | `earned_points` | integer | DEFAULT 0 | このセッションで獲得したポイント |
@@ -78,7 +78,7 @@
 
 ## 5. `study_history` テーブル
 セッション内で、具体的にどの問題をどう答えたか（1問単位の正誤）の履歴を記録します。
-このテーブルを使って「過去に間違えた問題だけを抽出（復習モード）」を実現します。
+現在は学習結果の振り返りや分析のために利用します。
 
 | カラム名 | データ型 | 制約 | 説明 |
 | :--- | :--- | :--- | :--- |
@@ -106,14 +106,5 @@
 
 ---
 
-## 復習（再チャレンジ）機能の取得ロジック案
-復習モードで問題を取得する際の大まかな SQL（参考）:
-```sql
-SELECT q.*
-FROM questions q
-JOIN study_history sh ON q.id = sh.question_id
-WHERE sh.user_id = '指定ユーザーのID'
-  AND sh.is_correct = false
-  AND q.genre_id = '指定ジャンル'
-  -- ※同じ問題を複数回解いて最後は正解している場合を除外するなどのフィルタリングが必要
-```
+## 備考
+- `study_history` は保護者向けの履歴詳細、ジャンル別分析、将来の学習支援ロジックの集計元として使う
