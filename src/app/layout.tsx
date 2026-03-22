@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import "./globals.css";
 
 function getMetadataBase() {
@@ -19,6 +20,13 @@ export const metadata: Metadata = {
   title: "Quizly",
   description: "たのしく学べるクイズアプリ",
   metadataBase: getMetadataBase(),
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Quizly",
+    startupImage: ["/icons/icon-512.png"],
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -42,6 +50,13 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#f8fafc",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -53,6 +68,7 @@ export default function RootLayout({
         className="bg-slate-50 font-sans antialiased selection:bg-slate-200 selection:text-slate-900"
         style={{ backgroundImage: "none" }}
       >
+        <ServiceWorkerRegister />
         {children}
       </body>
     </html>

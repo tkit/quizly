@@ -193,15 +193,15 @@
 
 ---
 
-## 12. ⬜ PWA（Progressive Web App）対応
+## 12. ✅ PWA（Progressive Web App）対応
 
 **目的**: iPad のホーム画面に追加してネイティブアプリのように使えるようにする。
 
 ### やること
-- [ ] `manifest.json` の作成
-- [ ] Service Worker によるオフライン対応の基盤
-- [ ] アプリアイコンの作成・設定
-- [ ] スプラッシュスクリーンの設定
+- [x] `manifest.json` の作成
+- [x] Service Worker によるオフライン対応の基盤
+- [x] アプリアイコンの作成・設定
+- [x] スプラッシュスクリーンの設定
 
 ---
 
