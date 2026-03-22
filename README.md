@@ -60,9 +60,9 @@ SUPABASE_PROJECT_ID=<project-ref>
 SUPABASE_ACCESS_TOKEN=<personal-access-token>
 ```
 
-### 3. Database Setup (Migration運用)
+### 3. Database Setup (Schema Migration運用)
 
-このリポジトリでは、DB変更はすべて `supabase/migrations` で管理します。  
+このリポジトリでは、**スキーマ変更のみ** `supabase/migrations` で管理します。  
 SQL Editor での直接変更は避けてください。
 
 #### 3-1. プロジェクトをリンク
@@ -106,7 +106,7 @@ npm run db:status
 
 `db:*` スクリプトは `.env.supabase.local` を自動読込します。
 
-#### 3-5. 新しい migration を追加
+#### 3-5. 新しい schema migration を追加
 
 ```bash
 npm run db:migration:new -- add_some_change
@@ -120,12 +120,54 @@ npm run db:migration:new -- add_some_change
 npm run db:diff:linked
 ```
 
-### 4. Database Rules
+### 4. Content Sync (問題コンテンツ運用)
 
-- DB変更は必ず migration ファイル経由で行う
+問題データ（`genres/questions` の内容）は schema migration と分離し、Supabase Storage を正本として同期します。
+この運用では **Supabase Storage上の現行JSON = 実際に配信される問題** とします。
+
+必要な環境変数（公開しないこと）:
+
+```bash
+SUPABASE_SECRET_KEY=<service-role-key>
+CONTENT_BUCKET=quiz-content
+CONTENT_OBJECT_KEY=japanese/grammar/content.json
+```
+
+`SUPABASE_SECRET_KEY` はアプリ用の `.env.local` には置かず、`.env.content.local` に設定してください（例: `.env.content.local.example` をコピー）。
+
+コマンド:
+
+```bash
+# Storage上のJSON構造を検証
+npm run content:validate
+
+# 差分だけ確認（反映しない）
+npm run content:sync:dry
+
+# DBへ反映（upsert + deactivate）
+npm run content:sync
+```
+
+同期ポリシー:
+- `jp-grammar-01..20` ジャンルを upsert
+- 問題は `genre_id + question_text` をキーに insert / update
+- JSONから消えた問題は削除せず `is_active=false`（履歴保全）
+
+更新フロー（シンプル運用）:
+1. Storage の `CONTENT_OBJECT_KEY` で指定したファイル（例: `japanese/grammar/content.json`）を上書き
+2. `npm run content:validate`
+3. `npm run content:sync:dry`
+4. `npm run content:sync`
+
+### 5. Database Rules
+
+- スキーマ変更は必ず migration ファイル経由で行う
 - 既存 migration は append-only（追記のみ、原則書き換え禁止）
+- 問題コンテンツ更新に migration は使わず `content:sync` を使う
+- `contents/` と問題投入用SQLはGit管理対象にしない
+- `20260322224000` / `20260322233000` は過去資産として凍結し、今後の更新手段にしない
 
-### 5. Run Development Server
+### 6. Run Development Server
 
 ```bash
 npm install

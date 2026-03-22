@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env*.example
 
 # vercel
 .vercel
@@ -42,3 +43,10 @@ supabase/.temp/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local content sources
+contents/
+
+# content sync legacy sql (do not manage content data in git)
+supabase/migrations/*_seed_japanese_grammar_*.sql
+supabase/migrations/*_refresh_japanese_grammar_*.sql
