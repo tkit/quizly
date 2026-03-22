@@ -1,8 +1,10 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getBrowserSupabaseClient } from '@/lib/auth/browser';
+import { preloadDashboardSnapshot } from '@/lib/auth/dashboardPreload';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { AUTH_MODE, DEV_SHORTCUT_ENABLED } from '@/lib/auth/constants';
 import QuizlyLogo from '@/components/QuizlyLogo';
 import { ArrowRight, KeyRound, Mail, Play, PlusCircle, ShieldCheck, UserPlus } from 'lucide-react';
@@ -56,7 +58,7 @@ export default function HomeClient() {
     [children, selectedChildId],
   );
 
-  const ensureGuardianProfile = async () => {
+  const ensureGuardianProfile = useCallback(async () => {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
 
@@ -69,14 +71,14 @@ export default function HomeClient() {
       },
       { onConflict: 'id' },
     );
-  };
+  }, [supabase]);
 
-  const getAccessToken = async () => {
+  const getAccessToken = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
     return data.session?.access_token ?? null;
-  };
+  }, [supabase]);
 
-  const selectChild = async (childId: string) => {
+  const selectChild = useCallback(async (childId: string) => {
     const accessToken = await getAccessToken();
     if (!accessToken) {
       setMessage('保護者ログインが必要です。');
@@ -99,10 +101,11 @@ export default function HomeClient() {
     }
 
     setMessage('');
-    router.push('/dashboard');
-  };
+    await preloadDashboardSnapshot({ accessToken, supabase, childId });
+    router.replace('/dashboard');
+  }, [getAccessToken, router, supabase]);
 
-  const loadChildren = async () => {
+  const loadChildren = useCallback(async () => {
     setIsLoadingChildren(true);
     try {
       const { data, error } = await supabase
@@ -130,12 +133,12 @@ export default function HomeClient() {
       setHasResolvedChildren(true);
       setIsLoadingChildren(false);
     }
-  };
+  }, [selectChild, selectedChildId, supabase]);
 
   useEffect(() => {
     let isMounted = true;
 
-    const syncSessionState = async (session: any) => {
+    const syncSessionState = async (session: Session | null) => {
       try {
         if (!session) {
           setIsParentAuthenticated(false);
@@ -173,7 +176,10 @@ export default function HomeClient() {
 
     const bootstrap = async () => {
       try {
-        const sessionResult = await withTimeoutOrNull<any>(supabase.auth.getSession(), SESSION_BOOTSTRAP_TIMEOUT_MS);
+        const sessionResult = await withTimeoutOrNull<Awaited<ReturnType<typeof supabase.auth.getSession>>>(
+          supabase.auth.getSession(),
+          SESSION_BOOTSTRAP_TIMEOUT_MS,
+        );
         if (!isMounted) return;
 
         if (!sessionResult) {
@@ -196,7 +202,7 @@ export default function HomeClient() {
     };
     void bootstrap();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       if (!isMounted) return;
       window.setTimeout(() => {
         if (!isMounted) return;
@@ -209,7 +215,7 @@ export default function HomeClient() {
       isMounted = false;
       sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [ensureGuardianProfile, loadChildren, supabase]);
 
   const handleGoogleSignIn = async () => {
     setMessage('');
