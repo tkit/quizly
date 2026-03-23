@@ -221,9 +221,12 @@ export default function QuizClient({
               className={`w-full rounded-2xl border-4 p-4 text-left text-lg font-black shadow-brutal-sm transition-all ${classes}`}
             >
               <span className="inline-flex items-center gap-2">
-                {isAnswered && isCorrect && <CheckCircle className={`h-5 w-5 ${tone.accentTextClass}`} />}
+                {isAnswered && isCorrect && <CheckCircle className={`h-5 w-5 ${tone.successSignalClass}`} />}
                 {isAnswered && isSelected && !isCorrect && <XCircle className="h-5 w-5 text-rose-700" />}
                 {option}
+                {isAnswered && isCorrect && (
+                  <span className={`rounded-full border px-2 py-0.5 text-xs font-black ${tone.successChipClass}`}>正解</span>
+                )}
               </span>
             </button>
           );
@@ -238,8 +241,8 @@ export default function QuizClient({
         >
           {isCurrentCorrect ? (
             <div className="inline-flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              せいかい！
+              <CheckCircle className={`h-5 w-5 ${tone.successSignalClass}`} />
+              <span className={`rounded-full border px-2.5 py-0.5 text-sm font-black ${tone.successChipClass}`}>せいかい！</span>
             </div>
           ) : (
             <div className="inline-flex items-center gap-2">

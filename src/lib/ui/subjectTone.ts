@@ -13,6 +13,8 @@ export type SubjectToneClasses = {
   accentTextClass: string;
   accentSoftClass: string;
   correctClass: string;
+  successSignalClass: string;
+  successChipClass: string;
 };
 
 const SUBJECT_TONE_BY_ID: Record<SubjectToneId, SubjectToneClasses> = {
@@ -29,6 +31,8 @@ const SUBJECT_TONE_BY_ID: Record<SubjectToneId, SubjectToneClasses> = {
     accentTextClass: 'text-rose-700',
     accentSoftClass: 'bg-rose-100',
     correctClass: 'border-rose-500 bg-rose-100 text-rose-800',
+    successSignalClass: 'text-emerald-800',
+    successChipClass: 'border-zinc-300 bg-white/85 text-emerald-900',
   },
   math: {
     iconBgClass: 'bg-blue-200 group-hover:bg-blue-300',
@@ -43,6 +47,8 @@ const SUBJECT_TONE_BY_ID: Record<SubjectToneId, SubjectToneClasses> = {
     accentTextClass: 'text-blue-700',
     accentSoftClass: 'bg-blue-100',
     correctClass: 'border-blue-500 bg-blue-100 text-blue-800',
+    successSignalClass: 'text-emerald-800',
+    successChipClass: 'border-zinc-300 bg-white/85 text-emerald-900',
   },
   social: {
     iconBgClass: 'bg-green-200 group-hover:bg-green-300',
@@ -57,6 +63,8 @@ const SUBJECT_TONE_BY_ID: Record<SubjectToneId, SubjectToneClasses> = {
     accentTextClass: 'text-green-700',
     accentSoftClass: 'bg-green-100',
     correctClass: 'border-green-500 bg-green-100 text-green-800',
+    successSignalClass: 'text-emerald-800',
+    successChipClass: 'border-zinc-300 bg-white/85 text-emerald-900',
   },
   science: {
     iconBgClass: 'bg-orange-200 group-hover:bg-orange-300',
@@ -71,6 +79,8 @@ const SUBJECT_TONE_BY_ID: Record<SubjectToneId, SubjectToneClasses> = {
     accentTextClass: 'text-orange-700',
     accentSoftClass: 'bg-orange-100',
     correctClass: 'border-orange-500 bg-orange-100 text-orange-800',
+    successSignalClass: 'text-emerald-800',
+    successChipClass: 'border-zinc-300 bg-white/85 text-emerald-900',
   },
 };
 
@@ -94,6 +104,8 @@ const DEFAULT_TONE: SubjectToneClasses = {
   accentTextClass: 'text-slate-700',
   accentSoftClass: 'bg-slate-100',
   correctClass: 'border-slate-500 bg-slate-100 text-slate-800',
+  successSignalClass: 'text-emerald-800',
+  successChipClass: 'border-zinc-300 bg-white/85 text-emerald-900',
 };
 
 export function resolveSubjectTone(subjectId: string | null | undefined, colorHint: string | null): SubjectToneClasses {
