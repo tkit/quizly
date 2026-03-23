@@ -13,7 +13,7 @@ export default async function ParentPage() {
   const supabase = await createServerSupabaseClient();
   await ensureGuardianProfile(supabase, user);
   const initialState = await getParentGateState(supabase, user.id);
-  const initialSnapshot = initialState.unlocked ? await getParentManagementSnapshot(supabase) : null;
+  const initialSnapshot = initialState.unlocked ? await getParentManagementSnapshot(supabase, user.id) : null;
 
   return (
     <PageShell maxWidthClass="max-w-6xl" mainClassName="flex flex-col items-center gap-8 pt-6 sm:pt-10">

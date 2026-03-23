@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
-import { isParentUnlocked } from '@/lib/auth/data';
+import { invalidateParentManagementSnapshotCache, isParentUnlocked } from '@/lib/auth/data';
 import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
 
 type Body = {
@@ -29,6 +29,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  await invalidateParentManagementSnapshotCache(user.id);
   const response = NextResponse.json({ ok: true });
   response.cookies.set({
     name: ACTIVE_CHILD_COOKIE,

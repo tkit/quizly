@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidateParentManagementSnapshotCache } from '@/lib/auth/data';
 import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
 
 type Body = {
@@ -37,5 +38,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: insertError?.message ?? 'Failed to create child profile' }, { status: 500 });
   }
 
+  await invalidateParentManagementSnapshotCache(user.id);
   return NextResponse.json({ child: created });
 }

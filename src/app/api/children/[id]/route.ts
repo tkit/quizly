@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
-import { isParentUnlocked } from '@/lib/auth/data';
+import { invalidateParentManagementSnapshotCache, isParentUnlocked } from '@/lib/auth/data';
 import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
 
 type Body = {
@@ -37,6 +37,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: error?.message ?? 'Child not found' }, { status: 404 });
   }
 
+  await invalidateParentManagementSnapshotCache(user.id);
   return NextResponse.json({ child });
 }
 
@@ -58,6 +59,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  await invalidateParentManagementSnapshotCache(user.id);
   const response = NextResponse.json({ ok: true });
   if (request.cookies.get(ACTIVE_CHILD_COOKIE)?.value === id) {
     response.cookies.set({

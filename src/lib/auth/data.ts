@@ -1,5 +1,6 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { isParentReauthUnlocked } from '@/lib/auth/parentReauth';
+import { deleteRedisKey, getRedisString, isUpstashConfigured, setRedisString } from '@/lib/cache/upstash';
 
 export type ChildProfile = {
   id: string;
@@ -110,6 +111,12 @@ type ParentHistoryRow = {
   questions: ParentHistoryQuestionRow | ParentHistoryQuestionRow[] | null;
 };
 
+const PARENT_MANAGEMENT_SNAPSHOT_TTL_SECONDS = 5 * 60;
+
+function buildParentManagementSnapshotCacheKey(guardianId: string) {
+  return `quizly:parent_snapshot:v1:${guardianId}`;
+}
+
 export async function ensureGuardianProfile(supabase: SupabaseClient, user: User) {
   const fallbackName = user.user_metadata?.name ?? user.email?.split('@')[0] ?? '保護者';
 
@@ -184,7 +191,22 @@ export async function isParentUnlocked(supabase: SupabaseClient, guardianId: str
   return isParentReauthUnlocked(supabase, guardianId);
 }
 
-export async function getParentManagementSnapshot(supabase: SupabaseClient): Promise<ParentManagementSnapshot> {
+export async function invalidateParentManagementSnapshotCache(guardianId: string) {
+  if (!isUpstashConfigured()) {
+    return;
+  }
+
+  const cacheKey = buildParentManagementSnapshotCacheKey(guardianId);
+
+  try {
+    await deleteRedisKey(cacheKey);
+    console.info(`[parent-snapshot-cache] invalidated guardian=${guardianId}`);
+  } catch (error) {
+    console.warn(`[parent-snapshot-cache] failed to invalidate guardian=${guardianId}`, error);
+  }
+}
+
+async function loadParentManagementSnapshotFromDatabase(supabase: SupabaseClient): Promise<ParentManagementSnapshot> {
   const [{ data: childrenData, error: childrenError }, { data: sessionsData, error: sessionsError }, { data: historyData, error: historyError }, { data: allGenresData, error: allGenresError }] =
     await Promise.all([
       supabase
@@ -319,6 +341,38 @@ export async function getParentManagementSnapshot(supabase: SupabaseClient): Pro
     parentGenres: allGenres.filter((genre) => genre.parent_id == null),
     leafGenres: allGenres.filter((genre) => genre.parent_id != null),
   };
+}
+
+export async function getParentManagementSnapshot(supabase: SupabaseClient, guardianId: string): Promise<ParentManagementSnapshot> {
+  const startedAt = Date.now();
+  const cacheKey = buildParentManagementSnapshotCacheKey(guardianId);
+
+  if (isUpstashConfigured()) {
+    try {
+      const cached = await getRedisString(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached) as ParentManagementSnapshot;
+        console.info(`[parent-snapshot-cache] hit guardian=${guardianId} elapsed_ms=${Date.now() - startedAt}`);
+        return parsed;
+      }
+      console.info(`[parent-snapshot-cache] miss guardian=${guardianId}`);
+    } catch (error) {
+      console.warn(`[parent-snapshot-cache] failed to read guardian=${guardianId}`, error);
+    }
+  }
+
+  const snapshot = await loadParentManagementSnapshotFromDatabase(supabase);
+  console.info(`[parent-snapshot-cache] rebuilt guardian=${guardianId} elapsed_ms=${Date.now() - startedAt}`);
+
+  if (isUpstashConfigured()) {
+    try {
+      await setRedisString(cacheKey, JSON.stringify(snapshot), PARENT_MANAGEMENT_SNAPSHOT_TTL_SECONDS);
+    } catch (error) {
+      console.warn(`[parent-snapshot-cache] failed to write guardian=${guardianId}`, error);
+    }
+  }
+
+  return snapshot;
 }
 
 export async function getParentGateState(supabase: SupabaseClient, guardianId: string) {

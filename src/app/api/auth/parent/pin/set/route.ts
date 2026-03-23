@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidateParentManagementSnapshotCache } from '@/lib/auth/data';
 import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
 import { hashPin, isValidPin } from '@/lib/security/pin';
 
@@ -27,5 +28,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  await invalidateParentManagementSnapshotCache(user.id);
   return NextResponse.json({ ok: true });
 }
