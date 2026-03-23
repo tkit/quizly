@@ -15,6 +15,16 @@ export type DashboardActiveChild = {
   total_points: number;
 };
 
+export type DashboardGenreWithQuestionCount = {
+  id: string;
+  name: string;
+  icon_key: string;
+  description: string | null;
+  color_hint: string | null;
+  parent_id: string | null;
+  question_count: number;
+};
+
 export type ParentManagedChild = {
   id: string;
   display_name: string;
@@ -111,10 +121,29 @@ type ParentHistoryRow = {
   questions: ParentHistoryQuestionRow | ParentHistoryQuestionRow[] | null;
 };
 
+type DashboardQuestionCountRow = {
+  genre_id: string;
+  question_count: number | string;
+};
+
+type DashboardGenreRow = {
+  id: string;
+  name: string;
+  icon_key: string;
+  description: string | null;
+  color_hint: string | null;
+  parent_id: string | null;
+};
+
 const PARENT_MANAGEMENT_SNAPSHOT_TTL_SECONDS = 5 * 60;
+const DASHBOARD_CATALOG_TTL_SECONDS = 10 * 60;
 
 function buildParentManagementSnapshotCacheKey(guardianId: string) {
   return `quizly:parent_snapshot:v1:${guardianId}`;
+}
+
+function buildDashboardCatalogCacheKey() {
+  return 'quizly:dashboard:catalog:v1';
 }
 
 export async function ensureGuardianProfile(supabase: SupabaseClient, user: User) {
@@ -185,6 +214,80 @@ export async function getDashboardSnapshot(supabase: SupabaseClient, activeChild
     canSwitchChild: (childCount ?? 0) > 1,
     studyStatusByGenreId: buildStudyStatusMap((sessionsDataRaw ?? []) as SessionRow[]),
   };
+}
+
+async function loadDashboardGenreCatalogFromDatabase(supabase: SupabaseClient): Promise<DashboardGenreWithQuestionCount[]> {
+  const [{ data: genres, error: genresError }, { data: questionCounts, error: questionCountsError }] = await Promise.all([
+    supabase
+      .from('genres')
+      .select('*')
+      .order('parent_id', { ascending: true, nullsFirst: true })
+      .order('id', { ascending: true }),
+    supabase.rpc('get_active_question_counts'),
+  ]);
+
+  if (genresError) {
+    throw genresError;
+  }
+
+  if (questionCountsError) {
+    throw questionCountsError;
+  }
+
+  const questionCountByGenreId = ((questionCounts ?? []) as DashboardQuestionCountRow[]).reduce((acc: Record<string, number>, row) => {
+    acc[row.genre_id] = Number(row.question_count ?? 0);
+    return acc;
+  }, {});
+
+  return ((genres ?? []) as DashboardGenreRow[]).map((genre) => ({
+    ...genre,
+    question_count: questionCountByGenreId[genre.id] ?? 0,
+  }));
+}
+
+export async function getDashboardGenreCatalog(supabase: SupabaseClient): Promise<DashboardGenreWithQuestionCount[]> {
+  const startedAt = Date.now();
+  const cacheKey = buildDashboardCatalogCacheKey();
+
+  if (isUpstashConfigured()) {
+    try {
+      const cached = await getRedisString(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached) as DashboardGenreWithQuestionCount[];
+        console.info(`[dashboard-catalog-cache] hit elapsed_ms=${Date.now() - startedAt}`);
+        return parsed;
+      }
+      console.info('[dashboard-catalog-cache] miss');
+    } catch (error) {
+      console.warn('[dashboard-catalog-cache] failed to read cache', error);
+    }
+  }
+
+  const catalog = await loadDashboardGenreCatalogFromDatabase(supabase);
+  console.info(`[dashboard-catalog-cache] rebuilt elapsed_ms=${Date.now() - startedAt}`);
+
+  if (isUpstashConfigured()) {
+    try {
+      await setRedisString(cacheKey, JSON.stringify(catalog), DASHBOARD_CATALOG_TTL_SECONDS);
+    } catch (error) {
+      console.warn('[dashboard-catalog-cache] failed to write cache', error);
+    }
+  }
+
+  return catalog;
+}
+
+export async function invalidateDashboardCatalogCache() {
+  if (!isUpstashConfigured()) {
+    return;
+  }
+
+  try {
+    await deleteRedisKey(buildDashboardCatalogCacheKey());
+    console.info('[dashboard-catalog-cache] invalidated');
+  } catch (error) {
+    console.warn('[dashboard-catalog-cache] failed to invalidate', error);
+  }
 }
 
 export async function isParentUnlocked(supabase: SupabaseClient, guardianId: string) {

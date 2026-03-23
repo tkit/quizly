@@ -5,23 +5,9 @@ import MessageCard from '@/components/feedback/MessageCard';
 import PageShell from '@/components/layout/PageShell';
 import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
 import { clearParentReauthSession } from '@/lib/auth/parentReauth';
-import { getDashboardSnapshot } from '@/lib/auth/data';
+import { getDashboardGenreCatalog, getDashboardSnapshot } from '@/lib/auth/data';
 import { getAuthenticatedUser } from '@/lib/auth/server';
 import { createServerSupabaseClient } from '@/lib/auth/server';
-
-type QuestionCountRow = {
-  genre_id: string;
-  question_count: number | string;
-};
-
-type GenreRow = {
-  id: string;
-  name: string;
-  icon_key: string;
-  description: string | null;
-  color_hint: string | null;
-  parent_id: string | null;
-};
 
 export const revalidate = 0;
 
@@ -42,16 +28,10 @@ export default async function DashboardPage() {
     redirect('/');
   }
 
-  const [{ data: genres, error: genresError }, { data: questionCounts, error: questionCountsError }] = await Promise.all([
-    supabase
-      .from('genres')
-      .select('*')
-      .order('parent_id', { ascending: true, nullsFirst: true })
-      .order('id', { ascending: true }),
-    supabase.rpc('get_active_question_counts'),
-  ]);
-
-  if (genresError || questionCountsError) {
+  let genresWithQuestionCount;
+  try {
+    genresWithQuestionCount = await getDashboardGenreCatalog(supabase);
+  } catch {
     return (
       <PageShell maxWidthClass="max-w-4xl" mainClassName="flex flex-1 items-center justify-center">
         <MessageCard
@@ -64,16 +44,6 @@ export default async function DashboardPage() {
       </PageShell>
     );
   }
-
-  const questionCountByGenreId = ((questionCounts ?? []) as QuestionCountRow[]).reduce((acc: Record<string, number>, questionCount) => {
-    acc[questionCount.genre_id] = Number(questionCount.question_count ?? 0);
-    return acc;
-  }, {});
-
-  const genresWithQuestionCount = ((genres ?? []) as GenreRow[]).map((genre) => ({
-    ...genre,
-    question_count: questionCountByGenreId[genre.id] ?? 0,
-  }));
 
   return (
     <PageShell maxWidthClass="max-w-4xl">

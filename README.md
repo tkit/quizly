@@ -131,9 +131,12 @@ npm run db:diff:linked
 SUPABASE_SECRET_KEY=<service-role-key>
 CONTENT_BUCKET=quiz-content
 CONTENT_OBJECT_KEY=japanese/grammar/content.json
+UPSTASH_REDIS_REST_URL=https://<id>.upstash.io
+UPSTASH_REDIS_REST_TOKEN=<upstash-rest-token>
 ```
 
 `SUPABASE_SECRET_KEY` はアプリ用の `.env.local` には置かず、`.env.content.local` に設定してください（例: `.env.content.local.example` をコピー）。
+`UPSTASH_REDIS_REST_*` を設定すると、`content:sync` 完了時にダッシュボードキャッシュ（genres/問題数）を自動で無効化します。
 
 コマンド:
 

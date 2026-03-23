@@ -72,6 +72,9 @@ const supabaseUrl = requiredEnv('NEXT_PUBLIC_SUPABASE_URL');
 const serviceRoleKey = requiredEnv('SUPABASE_SECRET_KEY');
 const contentBucket = requiredEnv('CONTENT_BUCKET');
 const contentObjectKey = requiredEnv('CONTENT_OBJECT_KEY');
+const upstashUrl = process.env.UPSTASH_REDIS_REST_URL ?? null;
+const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? null;
+const DASHBOARD_CATALOG_CACHE_KEY = 'quizly:dashboard:catalog:v1';
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
   auth: {
@@ -79,6 +82,42 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
     autoRefreshToken: false,
   },
 });
+
+async function runRedisCommand(command) {
+  if (!upstashUrl || !upstashToken) {
+    return null;
+  }
+
+  const response = await fetch(upstashUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${upstashToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(command),
+  });
+
+  if (!response.ok) {
+    throw new Error(`[content-sync] Upstash command failed: ${response.status}`);
+  }
+
+  const json = await response.json();
+  if (json?.error) {
+    throw new Error(`[content-sync] Upstash command error: ${json.error}`);
+  }
+
+  return json?.result ?? null;
+}
+
+async function invalidateDashboardCatalogCache() {
+  if (!upstashUrl || !upstashToken) {
+    console.log('[content-sync] Dashboard cache invalidation skipped (Upstash env vars are not set)');
+    return;
+  }
+
+  await runRedisCommand(['DEL', DASHBOARD_CATALOG_CACHE_KEY]);
+  console.log('[content-sync] Dashboard catalog cache invalidated');
+}
 
 function toGenreId(mode) {
   return `jp-grammar-${String(mode).padStart(2, '0')}`;
@@ -482,6 +521,7 @@ async function main() {
   }
 
   await applySyncPlan(plan);
+  await invalidateDashboardCatalogCache();
   console.log('[content-sync] Sync completed');
 }
 
