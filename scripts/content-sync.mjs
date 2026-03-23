@@ -365,7 +365,10 @@ async function applySyncPlan(plan) {
   }
 
   for (const updateRow of plan.updates) {
-    const { id, genre_id: _genreId, question_text: _questionText, diff: _diff, ...payload } = updateRow;
+    const { id, ...payload } = updateRow;
+    delete payload.genre_id;
+    delete payload.question_text;
+    delete payload.diff;
     const { data, error } = await supabase
       .from('questions')
       .update(payload)

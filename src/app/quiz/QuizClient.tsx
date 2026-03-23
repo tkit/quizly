@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getBrowserSupabaseClient } from '@/lib/auth/browser';
 import { ArrowRight, CheckCircle, PartyPopper, X, XCircle } from 'lucide-react';
@@ -39,7 +39,7 @@ export default function QuizClient({
   const router = useRouter();
   const supabase = getBrowserSupabaseClient();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [selectedOptionDisplayIndex, setSelectedOptionDisplayIndex] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [historyRecords, setHistoryRecords] = useState<{question_id: string; is_correct: boolean; selected_index: number}[]>([]);
@@ -47,12 +47,44 @@ export default function QuizClient({
 
   const currentQuestion = questions[currentIndex];
 
-  const handleOptionClick = (index: number) => {
+  const displayToOriginalOptionIndex = useMemo(() => {
+    const indices = currentQuestion.options.map((_, index) => index);
+
+    const buildSeed = () => {
+      const source = `${childId}:${currentQuestion.id}`;
+      let hash = 0;
+      for (let i = 0; i < source.length; i += 1) {
+        hash = (hash * 31 + source.charCodeAt(i)) >>> 0;
+      }
+      return hash >>> 0;
+    };
+
+    // Seeded Fisher-Yates shuffle (stable per child+question)
+    let seed = buildSeed();
+    const nextRand = () => {
+      seed = (seed + 0x6d2b79f5) >>> 0;
+      let t = seed;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+
+    for (let i = indices.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(nextRand() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+
+    return indices;
+  }, [childId, currentQuestion.id, currentQuestion.options]);
+
+  const handleOptionClick = (displayIndex: number) => {
     if (isAnswered) return;
-    setSelectedOption(index);
+    setSelectedOptionDisplayIndex(displayIndex);
     setIsAnswered(true);
 
-    const isCorrect = index === currentQuestion.correct_index;
+    const selectedOriginalIndex = displayToOriginalOptionIndex[displayIndex];
+
+    const isCorrect = selectedOriginalIndex === currentQuestion.correct_index;
     if (isCorrect) {
       setCorrectCount((prev) => prev + 1);
       void fireCorrectEffect();
@@ -63,7 +95,7 @@ export default function QuizClient({
       {
         question_id: currentQuestion.id,
         is_correct: isCorrect,
-        selected_index: index,
+        selected_index: selectedOriginalIndex,
       },
     ]);
   };
@@ -71,7 +103,7 @@ export default function QuizClient({
   const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
-      setSelectedOption(null);
+      setSelectedOptionDisplayIndex(null);
       setIsAnswered(false);
       return;
     }
@@ -144,7 +176,11 @@ export default function QuizClient({
   }
 
   const progressValue = ((currentIndex + 1) / questions.length) * 100;
-  const isCurrentCorrect = selectedOption === currentQuestion.correct_index;
+  const selectedOriginalIndex =
+    selectedOptionDisplayIndex == null
+      ? null
+      : displayToOriginalOptionIndex[selectedOptionDisplayIndex];
+  const isCurrentCorrect = selectedOriginalIndex === currentQuestion.correct_index;
 
   return (
     <div className="flex h-full flex-1 flex-col gap-4">
@@ -165,9 +201,10 @@ export default function QuizClient({
       </div>
 
       <div className="grid gap-3">
-        {currentQuestion.options.map((option, index) => {
-          const isSelected = selectedOption === index;
-          const isCorrect = currentQuestion.correct_index === index;
+        {displayToOriginalOptionIndex.map((originalIndex, displayIndex) => {
+          const option = currentQuestion.options[originalIndex];
+          const isSelected = selectedOptionDisplayIndex === displayIndex;
+          const isCorrect = currentQuestion.correct_index === originalIndex;
           let classes = 'border-zinc-400 bg-white hover:bg-zinc-50';
 
           if (isAnswered) {
@@ -178,8 +215,8 @@ export default function QuizClient({
 
           return (
             <button
-              key={index}
-              onClick={() => handleOptionClick(index)}
+              key={displayIndex}
+              onClick={() => handleOptionClick(displayIndex)}
               disabled={isAnswered}
               className={`w-full rounded-2xl border-4 p-4 text-left text-lg font-black shadow-brutal-sm transition-all ${classes}`}
             >
