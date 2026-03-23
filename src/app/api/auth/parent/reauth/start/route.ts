@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
+import {
+  clearParentPinAttemptState,
+  createParentReauthSession,
+  getParentPinCooldownSeconds,
+  registerParentPinFailure,
+} from '@/lib/auth/parentReauth';
 import { hashPin, isValidPin } from '@/lib/security/pin';
 
 type Body = {
@@ -18,6 +24,15 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createServerSupabaseClient();
+  const cooldownSeconds = await getParentPinCooldownSeconds(user.id);
+
+  if (cooldownSeconds > 0) {
+    return NextResponse.json(
+      { error: `PIN入力の失敗が続いたため、しばらく待ってから再試行してください（約${cooldownSeconds}秒）` },
+      { status: 429 },
+    );
+  }
+
   const { data: guardian, error: guardianError } = await supabase
     .from('guardian_accounts')
     .select('parent_pin_hash')
@@ -33,18 +48,19 @@ export async function POST(request: NextRequest) {
   }
 
   if (hashPin(body.pin) !== guardian.parent_pin_hash) {
+    const result = await registerParentPinFailure(user.id, request.headers.get('x-forwarded-for'));
+    if (result.locked) {
+      return NextResponse.json(
+        { error: `PIN入力の失敗が続いたため、${result.retryAfterSeconds}秒後に再試行してください` },
+        { status: 429 },
+      );
+    }
+
     return NextResponse.json({ error: 'PINが一致しません' }, { status: 403 });
   }
 
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-  const { error } = await supabase.from('parent_reauth_challenges').insert({
-    guardian_id: user.id,
-    expires_at: expiresAt,
-  });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  await clearParentPinAttemptState(user.id, request.headers.get('x-forwarded-for'));
+  const expiresAt = await createParentReauthSession(supabase, user.id);
 
   return NextResponse.json({ ok: true, expiresAt });
 }

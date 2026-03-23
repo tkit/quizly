@@ -337,9 +337,9 @@
 **目的**: DB 負荷と待ち時間を下げつつ、短期状態（親PIN再認証など）を安全に扱えるようにする。
 
 ### 15-1. 親PIN再認証フローの短期状態を Redis 化（高優先）
-- [ ] `parent_reauth_challenges` の有効期限付き状態を Redis TTL キーで管理する設計を追加（またはDBと併用）
-- [ ] PIN 失敗回数のレート制限（例: guardian 単位 + IP 単位）を Redis で実装
-- [ ] 連続失敗時の一時ロック（cooldown）を Redis キーで実装
+- [x] `parent_reauth_challenges` の有効期限付き状態を Redis TTL キーで管理する設計を追加（またはDBと併用）
+- [x] PIN 失敗回数のレート制限（例: guardian 単位 + IP 単位）を Redis で実装
+- [x] 連続失敗時の一時ロック（cooldown）を Redis キーで実装
 
 ### 15-2. 保護者管理スナップショットの短TTLキャッシュ（高優先）
 - [ ] `getParentManagementSnapshot` の結果を `guardian_id` 単位でキャッシュ（15〜60秒）
@@ -363,10 +363,10 @@
 - [ ] 二重送信時の扱い（同一結果返却 / エラー返却）を仕様化
 
 ### 実装メモ
-- [ ] `@upstash/redis` を導入し、`src/lib/cache`（共通ラッパ）を作成
-- [ ] 環境変数（`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`）を `.env.local.example` に追記
+- [x] Upstash REST API を利用する `src/lib/cache`（共通ラッパ）を作成
+- [x] 環境変数（`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`）を `.env.local.example` に追記
 - [ ] キー命名規約（prefix, version, tenant/guardian/child 境界）を `docs/` に明記
-- [ ] フォールバック方針（Redis 障害時は DB 直読みに退避）を実装
+- [x] フォールバック方針（Redis 障害時は DB 直読みに退避）を実装
 
 ---
 

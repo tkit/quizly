@@ -4,6 +4,7 @@ import DashboardClient from './DashboardClient';
 import MessageCard from '@/components/feedback/MessageCard';
 import PageShell from '@/components/layout/PageShell';
 import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
+import { clearParentReauthSession } from '@/lib/auth/parentReauth';
 import { getDashboardSnapshot } from '@/lib/auth/data';
 import { getAuthenticatedUser } from '@/lib/auth/server';
 import { createServerSupabaseClient } from '@/lib/auth/server';
@@ -34,7 +35,7 @@ export default async function DashboardPage() {
   }
 
   const supabase = await createServerSupabaseClient();
-  await supabase.from('parent_reauth_challenges').delete().eq('guardian_id', user.id);
+  await clearParentReauthSession(supabase, user.id);
   const snapshot = await getDashboardSnapshot(supabase, initialActiveChildId);
 
   if (!snapshot) {

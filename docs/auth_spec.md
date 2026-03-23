@@ -1,6 +1,6 @@
 # 認証・認可仕様（Guardian-Child Model）
 
-最終更新: 2026-03-21  
+最終更新: 2026-03-24  
 本仕様は Quizly の認証・認可に関する正本です。実装・設計判断は本書を優先します。
 
 ## 1. 目的
@@ -42,9 +42,19 @@
   - 4桁数字固定。
   - ハッシュ化して `guardian_accounts.parent_pin_hash` に保存。
 - 親ロック解除:
-  - `/api/auth/parent/reauth/start` でPIN検証成功時、`parent_reauth_challenges` に期限付き記録を作成。
+  - `/api/auth/parent/reauth/start` でPIN検証成功時、再認証セッションを期限付きで発行する。
+  - Redis（Upstash）利用時は Redis TTL キーに保存し、障害時は `parent_reauth_challenges` へフォールバックする。
   - TTL は 15分。
   - 期限内は管理モード継続可。
+- PIN失敗時のロックアウト:
+  - カウント単位: `guardian_id` と `IP`（`x-forwarded-for` の先頭IPを利用）。
+  - 判定窓: 10分。
+  - 失敗閾値: 5回。
+  - 閾値到達時: 5分のクールダウンを発行し、`POST /api/auth/parent/reauth/start` は `429` を返す。
+- ロックアウト解除:
+  - 時間経過による自動解除: クールダウン TTL（5分）満了で解除。
+  - 成功入力による解除: 正しいPIN入力時に失敗カウンタとクールダウンを即時クリア。
+  - 手動解除APIは v1 では提供しない。
 
 ## 6. 画面フロー
 - `/`:
@@ -78,6 +88,10 @@
   - 4桁親PINを設定（上書き可）。
 - `POST /api/auth/parent/reauth/start`
   - 親PINを検証し、再認証記録を発行。
+  - ステータス:
+    - `200`: 検証成功（`expiresAt` を返却）
+    - `403`: PIN不一致
+    - `429`: クールダウン中、または失敗回数閾値到達でロックアウト
 - `GET /api/auth/parent/reauth/verify`
   - 有効な再認証記録の有無を返す。
 
@@ -113,8 +127,11 @@
   - `NEXT_PUBLIC_AUTH_MODE=production`
   - `NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT=false`
 - 開発ショートカットは開発時だけ有効化する。
+- Redis利用時は以下をサーバー環境変数に設定する（`NEXT_PUBLIC_` は付けない）:
+  - `UPSTASH_REDIS_REST_URL`
+  - `UPSTASH_REDIS_REST_TOKEN`
 
 ## 11. 将来拡張
 - 複数保護者（招待制）対応。
 - 管理機能単位の細粒度権限。
-- 親PINの変更履歴・試行回数制限・ロックアウト。
+- 親PINの変更履歴。

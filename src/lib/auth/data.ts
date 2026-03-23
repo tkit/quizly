@@ -1,4 +1,5 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
+import { isParentReauthUnlocked } from '@/lib/auth/parentReauth';
 
 export type ChildProfile = {
   id: string;
@@ -180,20 +181,7 @@ export async function getDashboardSnapshot(supabase: SupabaseClient, activeChild
 }
 
 export async function isParentUnlocked(supabase: SupabaseClient, guardianId: string) {
-  const { data, error } = await supabase
-    .from('parent_reauth_challenges')
-    .select('expires_at')
-    .eq('guardian_id', guardianId)
-    .gt('expires_at', new Date().toISOString())
-    .order('expires_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  return Boolean(data);
+  return isParentReauthUnlocked(supabase, guardianId);
 }
 
 export async function getParentManagementSnapshot(supabase: SupabaseClient): Promise<ParentManagementSnapshot> {
