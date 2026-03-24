@@ -5,6 +5,7 @@ import MessageCard from '@/components/feedback/MessageCard';
 import PageShell from '@/components/layout/PageShell';
 import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
 import { getAuthenticatedUser, createServerSupabaseClient } from '@/lib/auth/server';
+import { getQuizQuestionSet, type QuizQuestionRow } from '@/lib/quiz/questionSet';
 
 type GenreRow = {
   id: string;
@@ -13,27 +14,6 @@ type GenreRow = {
   color_hint: string | null;
   parent_id: string | null;
 };
-
-type QuestionRow = {
-  id: string;
-  genre_id: string;
-  question_text: string;
-  options: string[];
-  correct_index: number;
-  explanation: string | null;
-  image_url: string | null;
-};
-
-function buildStableQuestionOrderKey(childId: string, genreId: string, questionId: string) {
-  const source = `${childId}:${genreId}:${questionId}`;
-  let hash = 0;
-
-  for (let index = 0; index < source.length; index += 1) {
-    hash = (hash * 31 + source.charCodeAt(index)) >>> 0;
-  }
-
-  return hash;
-}
 
 export const revalidate = 0;
 
@@ -107,15 +87,14 @@ export default async function QuizPage({
     );
   }
 
-  const { data, error: questionsError } = await supabase
-    .from('questions')
-    .select('*')
-    .eq('genre_id', genreId)
-    .eq('is_active', true);
-
-  const allQuestions = (data ?? []) as QuestionRow[];
-
-  if (questionsError || !allQuestions) {
+  let questions: QuizQuestionRow[] = [];
+  try {
+    questions = await getQuizQuestionSet(supabase, {
+      childId: activeChildId,
+      genreId,
+      requestedCount: parsedCount,
+    });
+  } catch {
     return (
       <PageShell maxWidthClass="max-w-3xl" mainClassName="flex flex-1 items-center justify-center">
         <MessageCard
@@ -128,19 +107,6 @@ export default async function QuizPage({
       </PageShell>
     );
   }
-
-  const count =
-    parsedCount && parsedCount > 0
-      ? Math.min(parsedCount, allQuestions.length)
-      : allQuestions.length;
-
-  const questions = [...allQuestions]
-    .sort(
-      (left, right) =>
-        buildStableQuestionOrderKey(activeChildId, genreId, left.id) -
-        buildStableQuestionOrderKey(activeChildId, genreId, right.id),
-    )
-    .slice(0, count);
 
   return (
     <PageShell maxWidthClass="max-w-3xl" mainClassName="flex h-full flex-1 flex-col">

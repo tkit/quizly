@@ -75,6 +75,7 @@ const contentObjectKey = requiredEnv('CONTENT_OBJECT_KEY');
 const upstashUrl = process.env.UPSTASH_REDIS_REST_URL ?? null;
 const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? null;
 const DASHBOARD_CATALOG_CACHE_KEY = 'quizly:dashboard:catalog:v1';
+const QUIZ_ORDER_VERSION_KEY_PREFIX = 'quizly:quiz_order_version:v1:';
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
   auth: {
@@ -117,6 +118,29 @@ async function invalidateDashboardCatalogCache() {
 
   await runRedisCommand(['DEL', DASHBOARD_CATALOG_CACHE_KEY]);
   console.log('[content-sync] Dashboard catalog cache invalidated');
+}
+
+async function invalidateQuizQuestionSetCache(plan) {
+  if (!upstashUrl || !upstashToken) {
+    console.log('[content-sync] Quiz question-set cache invalidation skipped (Upstash env vars are not set)');
+    return;
+  }
+
+  const genreIds = new Set();
+  for (const row of plan.inserts) genreIds.add(row.genre_id);
+  for (const row of plan.updates) genreIds.add(row.genre_id);
+  for (const row of plan.deactivations) genreIds.add(row.genre_id);
+
+  if (genreIds.size === 0) {
+    console.log('[content-sync] Quiz question-set cache invalidation skipped (no question changes)');
+    return;
+  }
+
+  for (const genreId of genreIds) {
+    await runRedisCommand(['INCR', `${QUIZ_ORDER_VERSION_KEY_PREFIX}${genreId}`]);
+  }
+
+  console.log(`[content-sync] Quiz question-set cache invalidated for ${genreIds.size} genres`);
 }
 
 function toGenreId(mode) {
@@ -522,6 +546,7 @@ async function main() {
 
   await applySyncPlan(plan);
   await invalidateDashboardCatalogCache();
+  await invalidateQuizQuestionSetCache(plan);
   console.log('[content-sync] Sync completed');
 }
 
