@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getBrowserSupabaseClient } from '@/lib/auth/browser';
 import { ArrowRight, CheckCircle, PartyPopper, X, XCircle } from 'lucide-react';
 import { calculateSessionPoints } from '@/lib/points';
 import { fireCorrectEffect } from '@/lib/effects/confetti';
@@ -37,13 +36,13 @@ export default function QuizClient({
   questions: Question[];
 }) {
   const router = useRouter();
-  const supabase = getBrowserSupabaseClient();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptionDisplayIndex, setSelectedOptionDisplayIndex] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [historyRecords, setHistoryRecords] = useState<{question_id: string; is_correct: boolean; selected_index: number}[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [idempotencyKey] = useState(() => `quiz-${crypto.randomUUID().replace(/-/g, '')}`);
 
   const currentQuestion = questions[currentIndex];
 
@@ -132,23 +131,30 @@ export default function QuizClient({
           : null,
       ].filter((transaction): transaction is { points: number; reason: string } => transaction !== null);
 
-      const { data: sessionId, error: completionError } = await supabase.rpc('complete_study_session', {
-        p_child_id: childId,
-        p_genre_id: genre.id,
-        p_mode: 'normal',
-        p_total_questions: questions.length,
-        p_correct_count: correctCount,
-        p_earned_points: pointsResult.totalPoints,
-        p_completed_at: new Date().toISOString(),
-        p_history_records: historyRecords,
-        p_point_transactions: pointTransactions,
+      const response = await fetch('/api/study-sessions/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idempotencyKey,
+          genreId: genre.id,
+          mode: 'normal',
+          totalQuestions: questions.length,
+          correctCount,
+          earnedPoints: pointsResult.totalPoints,
+          completedAt: new Date().toISOString(),
+          historyRecords,
+          pointTransactions,
+        }),
       });
 
-      if (completionError || !sessionId) {
-        throw completionError ?? new Error('Failed to complete study session');
+      const body = (await response.json().catch(() => null)) as { sessionId?: string; error?: string } | null;
+      if (!response.ok || !body?.sessionId) {
+        throw new Error(body?.error ?? 'Failed to complete study session');
       }
 
-      router.push(`/result?session_id=${sessionId}`);
+      router.push(`/result?session_id=${body.sessionId}`);
     } catch (err) {
       console.error('Failed to save session:', err);
       alert('結果の保存に失敗しました。');

@@ -47,6 +47,11 @@ export async function setRedisString(key: string, value: string, ttlSeconds: num
   return result;
 }
 
+export async function setRedisStringIfNotExists(key: string, value: string, ttlSeconds: number) {
+  const result = await executeUpstashCommand<string>(['SET', key, value, 'EX', ttlSeconds, 'NX']);
+  return result === 'OK';
+}
+
 export async function deleteRedisKey(key: string) {
   const result = await executeUpstashCommand<number>(['DEL', key]);
   return result ?? 0;

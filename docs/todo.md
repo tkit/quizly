@@ -359,13 +359,13 @@
 - [x] セッション確定直後の取得に限定して短TTL運用（例: 1〜5分）を導入
 
 ### 15-6. セッション保存の冪等性強化（低〜中優先）
-- [ ] `complete_study_session` 呼び出し時の重複送信を防ぐ冪等キー（Redis）を導入
-- [ ] 二重送信時の扱い（同一結果返却 / エラー返却）を仕様化
+- [x] `complete_study_session` 呼び出し時の重複送信を防ぐ冪等キー（Redis）を導入
+- [x] 二重送信時の扱い（同一結果返却 / エラー返却）を仕様化
 
 ### 実装メモ
 - [x] Upstash REST API を利用する `src/lib/cache`（共通ラッパ）を作成
 - [x] 環境変数（`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`）を `.env.local.example` に追記
-- [ ] キー命名規約（prefix, version, tenant/guardian/child 境界）を `docs/` に明記
+- [x] キー命名規約（prefix, version, tenant/guardian/child 境界）を `docs/` に明記
 - [x] フォールバック方針（Redis 障害時は DB 直読みに退避）を実装
 
 ---
