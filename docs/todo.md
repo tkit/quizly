@@ -217,9 +217,9 @@
 
 ---
 
-## 14. ⬜ 開発環境と本番環境の分離（Supabase / Auth）
+## 14. ⬜ 開発環境と本番環境の分離（Supabase / Auth / Upstash Redis）
 
-**目的**: 認証プロバイダ設定・RLS・migration 適用を安全に運用し、開発操作が本番データに影響しない状態にする。
+**目的**: 認証プロバイダ設定・RLS・migration・Redis キャッシュ運用を安全に分離し、開発操作が本番データに影響しない状態にする。
 
 ### やること
 - [ ] Supabase プロジェクトを `dev` / `prod` で分離する（URL / anon key / project ref を分離）
@@ -229,9 +229,14 @@
 - [ ] migration 運用ルールを整理する（`dev` に先適用 -> 検証後 `prod` に適用）
 - [ ] migration 適用手順書を更新する（どの project ref に対して `db:migration:up` を実行するか明記）
 - [ ] dev/prod のシードデータ方針を分ける（開発用テストデータの本番混入防止）
+- [ ] Upstash Redis DB を `dev` / `prod` で分離する（URL / REST TOKEN を分離）
+- [ ] `.env.local` / `.env.content.local`（開発）と本番環境変数（Vercel）で Redis 接続先を明示的に切り替える
+- [ ] dev/prod でキーprefixを分離する（例: `quizly:dev:*`, `quizly:prod:*`）または DB 分離のみで衝突しないことを明文化
+- [ ] `content:sync` 実行先環境（dev/prod）と Redis 無効化対象が一致していることをチェックリスト化
 
 ### 備考
 - 現在は暫定的に「開発/本番同一環境」で運用中。上記完了まで本番データ操作に注意。
+- 現在の Upstash Redis も dev/prod 共用のため、環境分離完了まではキャッシュ無効化操作に注意。
 
 ### 追加Runbook（本番ドメイン移行: `study-quizly.vercel.app` -> `quizly.fruits-drill.com`）
 1. **Cloudflare DNS 準備**
@@ -305,6 +310,9 @@
 - [ ] `.env.local` は `dev` Supabase を参照
 - [ ] 本番（Vercel など）は `prod` Supabase を参照
 - [ ] `NEXT_PUBLIC_AUTH_MODE` / `NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT` を dev/prod で分ける
+- [ ] `.env.local` / `.env.content.local` の `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` は `dev` 用を参照
+- [ ] 本番（Vercel）は `prod` 用 `UPSTASH_REDIS_REST_*` を参照
+- [ ] Redis キーprefix（`dev`/`prod`）戦略を決めて実装値を統一
 
 5. **Auth Provider 設定（環境別）**
 - [ ] Supabase `dev` の `Site URL` を `http://localhost:3000` に設定
@@ -329,6 +337,7 @@
 - [ ] `README` に「日次運用コマンド例（dev/prod）」を追記
 - [ ] 「本番適用前チェックリスト」を作成（RLS / Auth / build / smoke test）
 - [ ] 重大操作（本番 migration, Auth 設定変更）の実施ログを残す
+- [ ] `content:sync` 実行時に「どの Redis を無効化するか」をログで明示し、誤実行を検知できるようにする
 
 ---
 
