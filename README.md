@@ -178,3 +178,21 @@ npm run dev
 ```
 
 ブラウザで [http://localhost:3000](http://localhost:3000) を開いてアプリケーションにアクセスします。
+
+## 🖼️ Badge Asset Workflow
+
+バッジ画像は用途ごとにディレクトリを分離して運用します。
+
+- `public/badges/64`: アプリ配信用（通常サイズ）
+- `public/badges/32`: アプリ配信用（小サイズ）
+- `assets/badges/master`: 保管用マスター（`512x512`）
+- `original/`: 元画像置き場（生成入力、Git管理外）
+- `.tmp/badges/transparent`: 中間生成物（透過処理後、Git管理外）
+
+変換コマンド:
+
+```bash
+./scripts/generate_badges.sh
+```
+
+このスクリプトは `original/*.png` を入力に、背景透過 -> `master(512)` -> `64` / `32` を生成します。

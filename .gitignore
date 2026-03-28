@@ -46,6 +46,13 @@ next-env.d.ts
 
 # local content sources
 contents/
+original/
+
+# generated badge work files
+.tmp/
+assets/badges/transparent/
+public/badges/transparent/
+public/badges/master/
 
 # content sync legacy sql (do not manage content data in git)
 supabase/migrations/*_seed_japanese_grammar_*.sql
