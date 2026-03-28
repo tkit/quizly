@@ -181,4 +181,10 @@ npm run dev
 
 ## 🖼️ Badge Asset Workflow
 
-バッジ運用（命名規約・画像生成・追加手順・マニフェスト方針）は [`docs/badge_operations.md`](docs/badge_operations.md) を参照してください。
+現行バッジは SVG を配信しており、生成と運用は以下です。
+
+- 生成スクリプト: `./scripts/generate_badges_arcade_style.sh`
+- 配信先: `public/badges-arcade/svg`
+- 制作ソース: `assets/badges/arcade_style/svg`
+
+詳細手順は [`docs/badge_operations.md`](docs/badge_operations.md) を参照してください。

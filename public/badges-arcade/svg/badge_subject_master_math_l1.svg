@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="g_badge_subject_master_math_l1" cx="36%" cy="30%" r="72%">
+      <stop offset="0%" stop-color="#C7FFF3"/>
+      <stop offset="65%" stop-color="#3DDCBE"/>
+      <stop offset="100%" stop-color="#0E8A74"/>
+    </radialGradient>
+  </defs>
+  <path d="M32 4 L52 12 V28 C52 41 44 50 32 56 C20 50 12 41 12 28 V12 Z" fill="#101418"/>
+<path d="M32 7 L49 14 V28 C49 39 42 47 32 52 C22 47 15 39 15 28 V14 Z" fill="#FFFFFF"/>
+<path d="M32 10 L46 16 V28 C46 37 40 44 32 48 C24 44 18 37 18 28 V16 Z" fill="url(#g_badge_subject_master_math_l1)"/>
+<path d="M24 16 C24 12.8 26.4 10.3 29 9.4 C30 11.7 31 13 32 14.9 C33 13 34 11.7 35 9.4 C37.6 10.3 40 12.8 40 16 C38.4 17.7 36.4 19.2 32 19.2 C27.6 19.2 25.6 17.7 24 16 Z" fill="#FFFFFF" opacity="0.85"/>
+  
+  <circle cx="32" cy="32" r="14.5" fill="#FFFFFF" opacity="0.96"/>
+  <circle cx="32" cy="32" r="12.6" fill="#C7FFF3" opacity="0.5"/>
+  <g fill="#064E3B" stroke="#064E3B" color="#064E3B">
+    <path d="M24 24 H30 M27 21 V27" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M34 24 H40" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M24 37 L30 31 M30 37 L24 31" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M34 34 H40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="37" cy="30.6" r="1.1" fill="currentColor"/><circle cx="37" cy="37.4" r="1.1" fill="currentColor"/>
+  </g>
+  <g>
+    <circle cx="20" cy="54" r="2.1" fill="#34D399" stroke="#111827" stroke-width="0.7"/><circle cx="26" cy="54" r="2.1" fill="#FFFFFF" opacity="0.7" stroke="#111827" stroke-width="0.7"/><circle cx="32" cy="54" r="2.1" fill="#FFFFFF" opacity="0.7" stroke="#111827" stroke-width="0.7"/><circle cx="38" cy="54" r="2.1" fill="#FFFFFF" opacity="0.7" stroke="#111827" stroke-width="0.7"/><circle cx="44" cy="54" r="2.1" fill="#FFFFFF" opacity="0.7" stroke="#111827" stroke-width="0.7"/>
+  </g>
+</svg>

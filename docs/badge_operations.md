@@ -1,15 +1,15 @@
-# バッジ運用ガイド
+# バッジ運用ガイド（SVG版）
 
 ## 1. 命名規約
 
 ### 画像ファイル名
-- 公開バッジ: `badge_<family>_l<level>.png`
-- シークレット: `badge_secret_<key>.png`
+- 公開バッジ: `badge_<family>_l<level>.svg`
+- シークレット: `badge_secret_<key>.svg`
 
 例:
-- `badge_streak_days_l1.png`
-- `badge_subject_master_math_l4.png`
-- `badge_secret_comeback.png`
+- `badge_streak_days_l1.svg`
+- `badge_subject_master_math_l4.svg`
+- `badge_secret_comeback.svg`
 
 ### DBキー
 - 公開バッジ: `<family>_l<level>` または `subject_master_<subject>_l<level>`
@@ -23,86 +23,64 @@
 
 ## 2. ディレクトリ運用
 
-- 配信用（実行時に参照）:
-  - `public/badges/64`
-  - `public/badges/32`
-- 保管用マスター:
-  - `assets/badges/master`（`512x512`）
-- 生成入力/中間:
-  - `original`（Git管理外）
-  - `.tmp/badges/transparent`（Git管理外）
+- 制作ソース:
+  - `assets/badges/arcade_style/svg`
+- 配信用（実行時参照）:
+  - `public/badges-arcade/svg`
+- 生成入力:
+  - `original`（Git管理外、キー一覧用途）
 
 ## 3. 追加手順（運用フロー）
 
-1. 画像を準備
-- `original/*.png` に元画像を配置
-- `./scripts/generate_badges.sh` を実行して `master / 64 / 32` を生成
+1. SVGを生成
+- `./scripts/generate_badges_arcade_style.sh`
 
-2. DB定義を追加（migration）
-- `badge_definitions` に新規キーを `INSERT`
+2. DB定義を追加または更新（migration）
+- `badge_definitions` の `icon_path` は `'/badges-arcade/svg/<filename>.svg'`
 - 必須項目:
   - `key`
   - `family`
-  - `name`（ユーザー向け表示名）
-  - `icon_path`（`/badges/64/...`）
+  - `name`
+  - `icon_path`
   - `condition_json`
   - `sort_order`
 
 3. 表示確認
-- `/result` でバッジ名・条件文・画像が崩れないこと
-- `/history` で「手に入れたバッジ一覧」「次のバッジまで」に反映されること
+- `/result` と `/history` でレイアウト崩れがないこと
+- 64px相当で視認性が保たれていること
 - 画像欠損時フォールバックが効くこと
 
 4. 最終チェック
-- `npm run build` が成功
-- `npm run db:migration:up` でmigration適用
+- `npm run build`
+- `npm run db:migration:up`
 
-## 4. マニフェスト方式（定義）
+## 4. デザインルール（現行）
 
-将来のバッジ追加でコード変更を最小化するため、以下の方針で運用する。
-
-- 正本は `badge_definitions`（DB）
-- 補助資料として `assets/badges/manifest.json` を持つ
-  - 目的: `key` と画像ファイルの対応確認、運用レビュー
-  - 主に人間向け（現時点ではアプリ実行時には未使用）
-
-想定フォーマット:
-
-```json
-{
-  "version": 1,
-  "items": [
-    {
-      "key": "streak_days_l1",
-      "family": "streak_days",
-      "icon_64": "/badges/64/badge_streak_days_l1.png",
-      "icon_32": "/badges/32/badge_streak_days_l1.png"
-    }
-  ]
-}
-```
+- `perfect_sessions` は六角勲章外形
+- `subject_master` は盾型外形
+- その他は花形 + 王冠外形
+- レベル色:
+  - `L1`: 青緑
+  - `L2`: 青
+  - `L3`: 銀
+  - `L4`: 金
+  - `L5`: 紫（オーラ/星の特別演出）
 
 ## 5. 非採用方針
 
 - `/parent` に子ども別バッジ一覧は追加しない
-  - 子どもごとの学習状況確認は `/history` を基本導線とする
-  - 世帯内比較を主目的にしない
-- バッジ専用 feature flag は現時点で導入しない
-  - 本アプリ全体でfeature flag運用を行っていないため
+- バッジ専用 feature flag は導入しない
 
 ## 6. 障害時の最小対応（運用）
-
-重大不具合でバッジ表示のみ一時停止したい場合は、以下の最小差分で対応する。
 
 1. 表示停止対象を決める
 - `/result` の新規バッジ通知
 - `/history` のバッジまとめ
 - `/dashboard` のバッジサマリ
 
-2. UIだけを一時的に無効化
-- データ保存（DB/RPC）は止めず、画面表示のみを外す
-- 影響範囲が小さいため、短時間で復旧しやすい
+2. UIのみ一時停止
+- データ保存（DB/RPC）は継続
 
 3. 復旧時
 - UI表示コードを戻す
-- `npm run build` で確認後に再デプロイ
+- `npm run build` 確認後に再デプロイ
