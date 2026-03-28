@@ -6,6 +6,7 @@ import PageShell from '@/components/layout/PageShell';
 import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
 import { clearParentReauthSession } from '@/lib/auth/parentReauth';
 import { getDashboardGenreCatalog, getDashboardSnapshot } from '@/lib/auth/data';
+import { getBadgeSummary, type BadgeSummary } from '@/lib/badges/overview';
 import { getAuthenticatedUser } from '@/lib/auth/server';
 import { createServerSupabaseClient } from '@/lib/auth/server';
 
@@ -45,6 +46,13 @@ export default async function DashboardPage() {
     );
   }
 
+  let badgeSummary: BadgeSummary | null = null;
+  try {
+    badgeSummary = await getBadgeSummary(supabase, { childId: initialActiveChildId });
+  } catch {
+    badgeSummary = null;
+  }
+
   return (
     <PageShell maxWidthClass="max-w-4xl">
       <DashboardClient
@@ -52,6 +60,7 @@ export default async function DashboardPage() {
         canSwitchChild={snapshot.canSwitchChild}
         genres={genresWithQuestionCount}
         studyStatusByGenreId={snapshot.studyStatusByGenreId}
+        badgeSummary={badgeSummary}
       />
     </PageShell>
   );

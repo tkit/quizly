@@ -53,7 +53,7 @@ export default async function ResultPage({
 
   return (
     <PageShell maxWidthClass="max-w-3xl">
-      <ResultClient session={snapshot.session} history={snapshot.history} />
+      <ResultClient session={snapshot.session} history={snapshot.history} unlockedBadges={snapshot.unlockedBadges} />
     </PageShell>
   );
 }

@@ -22,6 +22,13 @@ type PointTransaction = {
   reason: string;
 };
 
+export type UnlockedBadge = {
+  key: string;
+  name: string;
+  icon_path: string;
+  is_secret: boolean;
+};
+
 type Body = {
   idempotencyKey?: string;
   genreId?: string;
@@ -36,7 +43,12 @@ type Body = {
 
 type IdempotencyState =
   | { status: 'pending'; createdAt: string }
-  | { status: 'done'; sessionId: string; createdAt: string };
+  | { status: 'done'; sessionId: string; unlockedBadges: UnlockedBadge[]; createdAt: string };
+
+type CompleteStudySessionResult = {
+  sessionId: string;
+  unlockedBadges?: UnlockedBadge[];
+};
 
 function buildIdempotencyKey(guardianId: string, childId: string, idempotencyKey: string) {
   return `quizly:study_session_complete:idempotency:v1:${guardianId}:${childId}:${idempotencyKey}`;
@@ -99,7 +111,11 @@ export async function POST(request: NextRequest) {
     const existing = parseIdempotencyState(existingRaw);
 
     if (existing?.status === 'done') {
-      return NextResponse.json({ sessionId: existing.sessionId, deduplicated: true });
+      return NextResponse.json({
+        sessionId: existing.sessionId,
+        unlockedBadges: existing.unlockedBadges ?? [],
+        deduplicated: true,
+      });
     }
 
     const acquired = await setRedisStringIfNotExists(
@@ -113,7 +129,11 @@ export async function POST(request: NextRequest) {
       const nowState = parseIdempotencyState(nowRaw);
 
       if (nowState?.status === 'done') {
-        return NextResponse.json({ sessionId: nowState.sessionId, deduplicated: true });
+        return NextResponse.json({
+          sessionId: nowState.sessionId,
+          unlockedBadges: nowState.unlockedBadges ?? [],
+          deduplicated: true,
+        });
       }
 
       return NextResponse.json({ error: 'A duplicated completion request is in progress' }, { status: 409 });
@@ -125,7 +145,7 @@ export async function POST(request: NextRequest) {
   const correctCount = Number(body.correctCount ?? 0);
   const earnedPoints = Number(body.earnedPoints ?? 0);
 
-  const { data: sessionId, error: completionError } = await supabase.rpc('complete_study_session', {
+  const { data: completionResult, error: completionError } = await supabase.rpc('complete_study_session', {
     p_child_id: activeChildId,
     p_genre_id: body.genreId,
     p_mode: mode,
@@ -136,6 +156,10 @@ export async function POST(request: NextRequest) {
     p_history_records: body.historyRecords,
     p_point_transactions: body.pointTransactions,
   });
+
+  const completionData = (completionResult ?? null) as CompleteStudySessionResult | null;
+  const sessionId = completionData?.sessionId ?? null;
+  const unlockedBadges = Array.isArray(completionData?.unlockedBadges) ? completionData.unlockedBadges : [];
 
   if (completionError || !sessionId) {
     if (isUpstashConfigured()) {
@@ -151,11 +175,12 @@ export async function POST(request: NextRequest) {
       JSON.stringify({
         status: 'done',
         sessionId,
+        unlockedBadges,
         createdAt: new Date().toISOString(),
       } satisfies IdempotencyState),
       IDEMPOTENCY_TTL_SECONDS,
     ).catch(() => null);
   }
 
-  return NextResponse.json({ sessionId, deduplicated: false });
+  return NextResponse.json({ sessionId, unlockedBadges, deduplicated: false });
 }

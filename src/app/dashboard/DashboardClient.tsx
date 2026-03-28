@@ -2,12 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, LogOut, Shield, Sparkles, Star, UserRound } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Shield, Sparkles, Star, UserRound, Users } from 'lucide-react';
 import { getBrowserSupabaseClient } from '@/lib/auth/browser';
 import { GenreIcon } from '@/components/GenreIcon';
 import QuizlyLogo from '@/components/QuizlyLogo';
 import { resolveSubjectTone } from '@/lib/ui/subjectTone';
 import type { DashboardActiveChild, StudyStatus } from '@/lib/auth/data';
+import type { BadgeSummary } from '@/lib/badges/overview';
 
 interface Genre {
   id: string;
@@ -24,11 +25,13 @@ export default function DashboardClient({
   canSwitchChild,
   genres,
   studyStatusByGenreId,
+  badgeSummary,
 }: {
   activeChild: DashboardActiveChild;
   canSwitchChild: boolean;
   genres: Genre[];
   studyStatusByGenreId: Record<string, StudyStatus>;
+  badgeSummary: BadgeSummary | null;
 }) {
   const router = useRouter();
   const supabase = getBrowserSupabaseClient();
@@ -70,12 +73,12 @@ export default function DashboardClient({
         />
       </div>
 
-      <header className="flex w-full flex-col gap-4 rounded-[2rem] border-4 border-zinc-400 bg-white p-4 shadow-brutal sm:flex-row sm:items-center sm:justify-between sm:p-6">
+      <header className="w-full rounded-[2rem] border-4 border-zinc-400 bg-white p-4 shadow-brutal sm:p-6">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-4 border-zinc-400 bg-slate-200 text-zinc-900 shadow-brutal-sm sm:h-14 sm:w-14">
             <UserRound className="h-6 w-6" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="font-display text-[clamp(1.25rem,5.5vw,1.9rem)] font-black tracking-wide text-zinc-800">
               {activeChild.display_name} さん
             </h1>
@@ -83,41 +86,72 @@ export default function DashboardClient({
               今日も学習を進めよう
               <Sparkles className="h-4 w-4" />
             </p>
-            <div className="mt-2">
-              <div className="inline-flex max-w-full items-center gap-1.5 rounded-full border-2 border-zinc-300 bg-white px-3 py-1 shadow-brutal-sm sm:gap-2 sm:px-3.5">
-                <Star className="h-4 w-4 shrink-0 text-amber-600 fill-amber-300" />
-                <span className="text-xs font-black text-zinc-700 sm:text-sm">保有ポイント</span>
-                <span className="text-base font-black tabular-nums text-zinc-900 sm:text-lg">{activeChild.total_points.toLocaleString()}</span>
-                <span className="text-xs font-black text-zinc-700 sm:text-sm">pt</span>
-              </div>
-            </div>
           </div>
         </div>
-        <div className="flex gap-2 self-end sm:self-auto">
-          <button
-            onClick={() => router.push('/parent')}
-            className="min-h-11 rounded-xl border-2 border-zinc-300 bg-slate-100 px-3 py-2 text-sm font-black text-zinc-700 hover:bg-slate-200"
-          >
-            <span className="inline-flex items-center gap-1">
-              <Shield className="h-4 w-4" />
-              保護者管理
+
+        <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="inline-flex h-11 max-w-full items-center gap-1.5 rounded-xl border-2 border-zinc-300 bg-white px-3 shadow-brutal-sm sm:gap-2 sm:px-3.5">
+              <Star className="h-4 w-4 shrink-0 text-amber-600 fill-amber-300" />
+              <span className="text-xs font-black text-zinc-700 sm:text-sm">保有ポイント</span>
+              <span className="text-base font-black tabular-nums text-zinc-900 sm:text-lg">{activeChild.total_points.toLocaleString()}</span>
+              <span className="text-xs font-black text-zinc-700 sm:text-sm">pt</span>
             </span>
-          </button>
-          {canSwitchChild && (
+            {badgeSummary && (
+              <>
+                <span className="inline-flex h-11 items-center gap-1.5 text-sm font-black text-amber-900">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  連続{badgeSummary.current_streak}日
+                </span>
+                <span
+                  className="inline-flex h-11 items-center gap-1.5 text-sm font-black text-zinc-700"
+                  aria-label={`手に入れたバッジ ${badgeSummary.unlocked_count}個`}
+                >
+                  <span aria-hidden>🏅</span>
+                  <span>バッジ {badgeSummary.unlocked_count}</span>
+                </span>
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={handleSwitchChild}
-              className="min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-3 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-200"
+              onClick={() => router.push('/history')}
+              className="min-h-11 whitespace-nowrap rounded-lg border-2 border-emerald-400 bg-emerald-500 px-3 py-2 text-sm font-black text-white transition-colors hover:bg-emerald-600"
             >
-              子を切り替える
+              学習記録
             </button>
-          )}
-          <button
-            onClick={handleParentLogout}
-            className="group flex min-h-11 min-w-11 items-center justify-center rounded-2xl border-4 border-zinc-400 bg-amber-100 p-2.5 text-amber-700 shadow-brutal transition-colors hover:bg-amber-200"
-            title="保護者ログアウト"
-          >
-            <LogOut className="h-6 w-6" />
-          </button>
+
+            <button
+              onClick={() => router.push('/parent')}
+              className="min-h-11 whitespace-nowrap rounded-lg border-2 border-zinc-300 bg-white px-3 py-2 text-sm font-black text-zinc-700 transition-colors hover:bg-zinc-100"
+            >
+              <span className="inline-flex items-center gap-1">
+                <Shield className="h-4 w-4" />
+                保護者管理
+              </span>
+            </button>
+
+            {canSwitchChild && (
+              <button
+                onClick={handleSwitchChild}
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border-2 border-zinc-300 bg-white px-3 py-2 text-zinc-700 transition-colors hover:bg-zinc-100"
+                title="子を切り替える"
+                aria-label="子を切り替える"
+              >
+                <Users className="h-5 w-5" />
+              </button>
+            )}
+
+            <button
+              onClick={handleParentLogout}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border-2 border-zinc-300 bg-white px-3 py-2 text-zinc-700 transition-colors hover:bg-zinc-100"
+              title="保護者ログアウト"
+              aria-label="保護者ログアウト"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </header>
 
