@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image, { type ImageLoaderProps } from 'next/image';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ArrowLeft, CalendarDays, Sparkles, Trophy } from 'lucide-react';
@@ -58,24 +59,6 @@ function remainingUnit(family: string) {
   if (family === 'streak_days') return '日';
   if (family === 'genre_explorer') return '種類';
   return '回';
-}
-
-function subjectNameFromKey(key: string) {
-  if (key.includes('_japanese_')) return '国語';
-  if (key.includes('_math_')) return '算数';
-  if (key.includes('_science_')) return '理科';
-  if (key.includes('_social_')) return '社会';
-  return '教科';
-}
-
-function badgeTrackLabelFromKey(key: string, family: string) {
-  if (family === 'streak_days') return '連続して学習した日数';
-  if (family === 'perfect_sessions') return '全問正解できた回数';
-  if (family === 'genre_explorer') return '挑戦したジャンル数';
-  if (family === 'subject_master') return `${subjectNameFromKey(key)}を学習した回数`;
-  if (key === 'secret_comeback') return '学習再開チャレンジ';
-  if (key === 'secret_perfect_recovery') return 'リベンジ全問正解';
-  return '達成チャレンジ';
 }
 
 function compactTrackLabel(family: string) {
@@ -212,10 +195,14 @@ function formatHeatmapTooltipLabel(dateKey: string, count: number) {
 }
 
 function formatHeatmapMonthLabel(dateKey: string) {
-  const [yearText, monthText] = dateKey.split('-');
+  const [, monthText] = dateKey.split('-');
   const month = Number(monthText);
   if (!Number.isFinite(month)) return '';
   return `${month}月`;
+}
+
+function passthroughImageLoader({ src }: ImageLoaderProps) {
+  return src;
 }
 
 function formatHeatmapPeriodLabel(startDateKey: string, endDateKey: string) {
@@ -376,7 +363,15 @@ export default async function HistoryPage() {
                 <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {badgeOverview.unlocked_badges.map((badge) => (
                     <div key={`${badge.key}-${badge.unlocked_at}`} className="flex items-center gap-3 rounded-lg border-2 border-zinc-300 bg-white p-3">
-                      <img src={badge.icon_path} alt={badge.name} className="h-14 w-14 rounded-lg border border-zinc-300 bg-white object-contain p-0.5" />
+                      <Image
+                        src={badge.icon_path}
+                        alt={badge.name}
+                        width={56}
+                        height={56}
+                        loader={passthroughImageLoader}
+                        unoptimized
+                        className="h-14 w-14 rounded-lg border border-zinc-300 bg-white object-contain p-0.5"
+                      />
                       <div className="min-w-0">
                         <p className="truncate text-sm font-black text-zinc-900">{badge.name}</p>
                         <p className="text-xs font-bold text-zinc-600">{badge.detail_text}</p>
@@ -397,9 +392,13 @@ export default async function HistoryPage() {
                     return (
                       <div key={target.key} className="h-full min-h-[132px] rounded-lg border-2 border-zinc-300 bg-white p-3">
                         <div className="flex h-full items-start gap-3">
-                          <img
+                          <Image
                             src={target.icon_path}
                             alt={target.name}
+                            width={56}
+                            height={56}
+                            loader={passthroughImageLoader}
+                            unoptimized
                             className="h-14 w-14 rounded-lg border border-zinc-300 bg-white object-contain p-0.5 opacity-55 grayscale"
                           />
                           <div className="min-w-0 flex min-h-[96px] flex-1 flex-col">
@@ -430,9 +429,13 @@ export default async function HistoryPage() {
                       <div key={subject.subject_id} className="rounded-lg border-2 border-zinc-300 bg-white px-3 py-3">
                         <div className="flex items-center gap-3">
                           {subject.next_badge_icon_path && (
-                            <img
+                            <Image
                               src={subject.next_badge_icon_path}
                               alt={`${subject.subject_name}の次バッジ`}
+                              width={48}
+                              height={48}
+                              loader={passthroughImageLoader}
+                              unoptimized
                               className="h-12 w-12 rounded-lg border border-zinc-300 bg-white object-contain p-0.5 opacity-50 grayscale"
                             />
                           )}
