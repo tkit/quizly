@@ -28,6 +28,32 @@ type GenreMapRow = {
   color_hint: string | null;
 };
 
+type StudyDayRow = {
+  completed_at: string | null;
+  started_at: string;
+};
+
+type StudyHeatmapCell = {
+  dateKey: string;
+  count: number;
+  level: 0 | 1 | 2 | 3 | 4;
+  column: number;
+  weekday: number;
+};
+
+const TOKYO_TIMEZONE = 'Asia/Tokyo';
+const HEATMAP_WEEKS = 26;
+const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'] as const;
+const WEEKDAY_INDEX_MAP: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
 function remainingUnit(family: string) {
   if (family === 'streak_days') return '日';
   if (family === 'genre_explorer') return '種類';
@@ -86,6 +112,125 @@ function subjectChipClass(subjectId: string | null) {
   return 'border-zinc-300 bg-zinc-100 text-zinc-700';
 }
 
+function formatDateKeyInTimezone(value: Date | string, timeZone = TOKYO_TIMEZONE) {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  return formatter.format(typeof value === 'string' ? new Date(value) : value);
+}
+
+function parseDateKeyToUtcNoon(key: string) {
+  const [year, month, day] = key.split('-').map((value) => Number(value));
+  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
+}
+
+function getWeekdayInTimezone(value: Date, timeZone = TOKYO_TIMEZONE) {
+  const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone }).format(value);
+  return WEEKDAY_INDEX_MAP[weekday] ?? 0;
+}
+
+function heatmapLevel(count: number, maxCount: number): 0 | 1 | 2 | 3 | 4 {
+  if (count <= 0 || maxCount <= 0) return 0;
+  const ratio = count / maxCount;
+  if (ratio <= 0.25) return 1;
+  if (ratio <= 0.5) return 2;
+  if (ratio <= 0.75) return 3;
+  return 4;
+}
+
+function heatmapCellClass(level: StudyHeatmapCell['level']) {
+  if (level === 0) return 'bg-zinc-100 border-zinc-200';
+  if (level === 1) return 'bg-emerald-100 border-emerald-200';
+  if (level === 2) return 'bg-emerald-200 border-emerald-300';
+  if (level === 3) return 'bg-emerald-400 border-emerald-500';
+  return 'bg-emerald-600 border-emerald-700';
+}
+
+function buildStudyHeatmap(dateKeys: string[], weeks = HEATMAP_WEEKS) {
+  const todayKey = formatDateKeyInTimezone(new Date());
+  const todayDate = parseDateKeyToUtcNoon(todayKey);
+  const todayWeekday = getWeekdayInTimezone(todayDate);
+  const currentWeekStartDate = new Date(todayDate);
+  currentWeekStartDate.setUTCDate(todayDate.getUTCDate() - todayWeekday);
+  const firstWeekStartDate = new Date(currentWeekStartDate);
+  firstWeekStartDate.setUTCDate(currentWeekStartDate.getUTCDate() - (weeks - 1) * 7);
+
+  const dateCountMap = new Map<string, number>();
+  for (const key of dateKeys) {
+    dateCountMap.set(key, (dateCountMap.get(key) ?? 0) + 1);
+  }
+
+  const allCounts = Array.from(dateCountMap.values());
+  const maxCount = allCounts.length > 0 ? Math.max(...allCounts) : 0;
+
+  const cells: StudyHeatmapCell[] = [];
+  for (let column = 0; column < weeks; column += 1) {
+    for (let weekday = 0; weekday < 7; weekday += 1) {
+      const date = new Date(firstWeekStartDate);
+      date.setUTCDate(firstWeekStartDate.getUTCDate() + column * 7 + weekday);
+
+      const dateKey = formatDateKeyInTimezone(date);
+      const isFuture = date.getTime() > todayDate.getTime();
+      const count = isFuture ? 0 : (dateCountMap.get(dateKey) ?? 0);
+
+      cells.push({
+        dateKey,
+        count,
+        level: heatmapLevel(count, maxCount),
+        column,
+        weekday,
+      });
+    }
+  }
+
+  return { cells, maxCount, todayKey };
+}
+
+function formatCalendarDateLabel(dateKey: string) {
+  const date = parseDateKeyToUtcNoon(dateKey);
+  return new Intl.DateTimeFormat('ja-JP', {
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+    timeZone: TOKYO_TIMEZONE,
+  }).format(date);
+}
+
+function formatHeatmapTooltipLabel(dateKey: string, count: number) {
+  const date = parseDateKeyToUtcNoon(dateKey);
+  const dateText = new Intl.DateTimeFormat('ja-JP', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+    timeZone: TOKYO_TIMEZONE,
+  }).format(date);
+  return `${dateText}: ${count}回学習`;
+}
+
+function formatHeatmapMonthLabel(dateKey: string) {
+  const [yearText, monthText] = dateKey.split('-');
+  const month = Number(monthText);
+  if (!Number.isFinite(month)) return '';
+  return `${month}月`;
+}
+
+function formatHeatmapPeriodLabel(startDateKey: string, endDateKey: string) {
+  const [startYearText, startMonthText] = startDateKey.split('-');
+  const [endYearText, endMonthText] = endDateKey.split('-');
+  const startYear = Number(startYearText);
+  const startMonth = Number(startMonthText);
+  const endYear = Number(endYearText);
+  const endMonth = Number(endMonthText);
+  if (!Number.isFinite(startYear) || !Number.isFinite(startMonth) || !Number.isFinite(endYear) || !Number.isFinite(endMonth)) {
+    return '';
+  }
+  return `${startYear}年${startMonth}月〜${endYear}年${endMonth}月`;
+}
+
 function resolveSubjectInfo(
   genre: { id: string; name: string; parent_id: string | null; color_hint: string | null } | null,
   genreById: Map<string, GenreMapRow>,
@@ -113,7 +258,7 @@ export default async function HistoryPage() {
   }
 
   const supabase = await createServerSupabaseClient();
-  const [{ data: child, error: childError }, { data: sessionsData, error: sessionsError }, { data: genresData, error: genresError }] = await Promise.all([
+  const [{ data: child, error: childError }, { data: sessionsData, error: sessionsError }, { data: genresData, error: genresError }, { data: heatmapData, error: heatmapError }] = await Promise.all([
     supabase.from('child_profiles').select('id, display_name').eq('id', activeChildId).maybeSingle(),
     supabase
       .from('study_sessions')
@@ -132,9 +277,15 @@ export default async function HistoryPage() {
       .order('completed_at', { ascending: false, nullsFirst: false })
       .limit(12),
     supabase.from('genres').select('id, name, parent_id, color_hint'),
+    supabase
+      .from('study_sessions')
+      .select('completed_at, started_at')
+      .eq('child_id', activeChildId)
+      .order('started_at', { ascending: false })
+      .limit(HEATMAP_WEEKS * 7 * 2),
   ]);
 
-  if (childError || !child || sessionsError || genresError) {
+  if (childError || !child || sessionsError || genresError || heatmapError) {
     return (
       <PageShell maxWidthClass="max-w-4xl" mainClassName="flex flex-1 items-center justify-center">
         <MessageCard
@@ -156,9 +307,35 @@ export default async function HistoryPage() {
   }
 
   const sessions = (sessionsData ?? []) as HistorySessionRow[];
+  const heatmapRows = (heatmapData ?? []) as StudyDayRow[];
   const genreById = new Map<string, GenreMapRow>(((genresData ?? []) as GenreMapRow[]).map((genre) => [genre.id, genre] as const));
   const totalBadgeCount = badgeOverview?.unlocked_badges.length ?? 0;
+  const studyDateKeys = heatmapRows.map((row) => formatDateKeyInTimezone(row.completed_at ?? row.started_at));
+  const { cells: studyHeatmapCells, todayKey: heatmapTodayKey } = buildStudyHeatmap(studyDateKeys);
+  const heatmapPeriodLabel =
+    studyHeatmapCells.length > 0
+      ? formatHeatmapPeriodLabel(studyHeatmapCells[0].dateKey, heatmapTodayKey)
+      : '';
+  const heatmapMonthLabels = Array.from({ length: HEATMAP_WEEKS }).map((_, weekIndex) => {
+    const headerCell = studyHeatmapCells[weekIndex * 7];
+    if (!headerCell) return '';
 
+    const [currentYearText, currentMonthText] = headerCell.dateKey.split('-');
+    const currentYear = Number(currentYearText);
+    const currentMonth = Number(currentMonthText);
+
+    const previousHeaderCell = weekIndex > 0 ? studyHeatmapCells[(weekIndex - 1) * 7] : null;
+    if (!previousHeaderCell) {
+      return formatHeatmapMonthLabel(headerCell.dateKey);
+    }
+
+    const [previousYearText, previousMonthText] = previousHeaderCell.dateKey.split('-');
+    const previousYear = Number(previousYearText);
+    const previousMonth = Number(previousMonthText);
+    const monthChanged = previousYear !== currentYear || previousMonth !== currentMonth;
+    if (!monthChanged) return '';
+    return formatHeatmapMonthLabel(headerCell.dateKey);
+  });
   return (
     <PageShell maxWidthClass="max-w-4xl">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-1 sm:gap-8 sm:p-2">
@@ -281,6 +458,59 @@ export default async function HistoryPage() {
             <CalendarDays className="h-4 w-4 text-blue-600" />
             最近の学習
           </h2>
+          <div className="mt-4 rounded-2xl border-2 border-zinc-300 bg-zinc-50 p-3 sm:p-4">
+            <p className="text-sm font-black text-zinc-900">学習カレンダー（過去{HEATMAP_WEEKS}週間）</p>
+            {heatmapPeriodLabel && <p className="mt-1 text-xs font-bold text-zinc-600">{heatmapPeriodLabel}</p>}
+            <div className="mt-3 overflow-x-auto">
+              <div
+                className="mx-auto inline-grid min-w-max gap-x-1 gap-y-1"
+                style={{ gridTemplateColumns: `1.5rem repeat(${HEATMAP_WEEKS}, minmax(0, 1rem))` }}
+              >
+                <div />
+                {Array.from({ length: HEATMAP_WEEKS }).map((_, weekIndex) => (
+                  <div key={`week-label-${weekIndex}`} className="text-center text-[10px] font-bold text-zinc-500">
+                    {heatmapMonthLabels[weekIndex]}
+                  </div>
+                ))}
+                {WEEKDAY_LABELS.map((label, weekday) => (
+                  <div key={`row-${label}`} className="contents">
+                    <div key={`weekday-${label}`} className="pr-1 text-right text-[10px] font-bold text-zinc-500">
+                      {weekday === 1 || weekday === 3 || weekday === 5 ? label : ''}
+                    </div>
+                    {Array.from({ length: HEATMAP_WEEKS }).map((_, column) => {
+                      const cell = studyHeatmapCells.find((item) => item.weekday === weekday && item.column === column) ?? null;
+                      const count = cell?.count ?? 0;
+                      const dateLabel = cell ? formatCalendarDateLabel(cell.dateKey) : '';
+                      const isFutureCell = cell ? cell.dateKey > heatmapTodayKey : false;
+                      const tooltipLabel = cell && !isFutureCell ? formatHeatmapTooltipLabel(cell.dateKey, count) : null;
+                      return (
+                        <div key={`cell-${weekday}-${column}`} className="group/cell relative">
+                          <button
+                            type="button"
+                            className={`h-4 w-4 rounded-[3px] border ${heatmapCellClass(cell?.level ?? 0)} cursor-default appearance-none`}
+                            aria-label={cell ? (isFutureCell ? `${dateLabel}: 未到来` : `${dateLabel}: ${count}回`) : '記録なし'}
+                            title={tooltipLabel ?? undefined}
+                          />
+                          {tooltipLabel && (
+                            <span className="pointer-events-none absolute -top-8 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-zinc-800 px-2 py-1 text-[11px] font-bold text-white shadow-lg group-hover/cell:block group-focus-within/cell:block">
+                              {tooltipLabel}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-end gap-1 text-[10px] font-bold text-zinc-600">
+              <span>少ない</span>
+              {[0, 1, 2, 3, 4].map((level) => (
+                <span key={`legend-${level}`} className={`h-4 w-4 rounded-[3px] border ${heatmapCellClass(level as StudyHeatmapCell['level'])}`} />
+              ))}
+              <span>多い</span>
+            </div>
+          </div>
           {sessions.length === 0 ? (
             <p className="mt-4 rounded-xl border-2 border-zinc-300 bg-zinc-50 p-4 text-sm font-bold text-zinc-700">
               まだ学習記録がありません。ダッシュボードから学習を始めましょう。
