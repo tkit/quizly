@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import Image, { type ImageLoaderProps } from 'next/image';
 import { BadgeCheck, CheckCircle, Home, NotebookPen, RotateCcw, Sparkles, Star, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { POINTS_PER_CORRECT } from '@/lib/points';
@@ -44,6 +44,10 @@ interface UnlockedBadge {
   icon_path: string;
   is_secret: boolean;
   condition_text: string;
+}
+
+function passthroughImageLoader({ src }: ImageLoaderProps) {
+  return src;
 }
 
 function fallbackConditionTextFromKey(badge: UnlockedBadge) {
@@ -97,11 +101,13 @@ function BadgeIcon({ src, alt }: { src: string; alt: string }) {
   }, [src]);
 
   return (
-    <img
+    <Image
       src={currentSrc}
       alt={alt}
       width={64}
       height={64}
+      loader={passthroughImageLoader}
+      unoptimized
       className="h-14 w-14 rounded-xl border-2 border-zinc-300 bg-white object-contain p-1 sm:h-16 sm:w-16"
       onError={() => setCurrentSrc('/icons/icon-192.png')}
     />
@@ -175,11 +181,13 @@ export default function ResultClient({
     toast.custom(
       (toastItem) => (
         <div className="flex w-[min(92vw,560px)] items-center gap-3 rounded-2xl border-4 border-zinc-400 bg-white px-3 py-2 text-zinc-900 shadow-brutal-sm sm:px-4 sm:py-3">
-          <img
+          <Image
             src={primaryBadge.icon_path}
             alt={primaryBadge.name}
             width={52}
             height={52}
+            loader={passthroughImageLoader}
+            unoptimized
             className="h-11 w-11 shrink-0 rounded-xl border-2 border-zinc-300 bg-white object-contain p-1 sm:h-13 sm:w-13"
             onError={(event) => {
               event.currentTarget.src = '/icons/icon-192.png';
