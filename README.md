@@ -179,6 +179,22 @@ npm run dev
 
 ブラウザで [http://localhost:3000](http://localhost:3000) を開いてアプリケーションにアクセスします。
 
+### 7. CI/CD (GitHub Actions + Vercel)
+
+このリポジトリでは以下の流れでデプロイします。
+
+1. PR作成時に `CI` workflow が実行され、`lint` / `typecheck` / `build` を検証
+2. `main` へのマージ（push）時にも `CI` を実行
+3. `CI` が成功した場合のみ `Deploy to Vercel (After CI)` workflow で本番デプロイ
+
+`main` ブランチは `vercel.json` で Vercel の自動 Git デプロイを無効化しています。
+
+GitHub Secrets（Repository secrets）には以下を設定してください。
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
 ## 🖼️ Badge Asset Workflow
 
 現行バッジは SVG を配信しており、生成と運用は以下です。
