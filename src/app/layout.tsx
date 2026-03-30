@@ -64,10 +64,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body
-        className="bg-slate-50 font-sans antialiased selection:bg-slate-200 selection:text-slate-900"
-        style={{ backgroundImage: "none" }}
-      >
+      <body className="bg-background font-sans antialiased text-foreground selection:bg-slate-200 selection:text-slate-900">
         <ServiceWorkerRegister />
         {children}
       </body>

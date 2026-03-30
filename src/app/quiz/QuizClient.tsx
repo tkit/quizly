@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, CheckCircle, PartyPopper, X, XCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, PartyPopper, X, XCircle } from 'lucide-react';
 import { calculateSessionPoints } from '@/lib/points';
 import { fireCorrectEffect } from '@/lib/effects/confetti';
 import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
@@ -162,6 +162,12 @@ export default function QuizClient({
     }
   };
 
+  const handleBackToDashboard = () => {
+    const canLeave = window.confirm('学習を中断してダッシュボードに戻りますか？');
+    if (!canLeave) return;
+    router.push('/dashboard');
+  };
+
   const tone = resolveSubjectTone(genre.parent_id ?? genre.id, genre.color_hint);
 
   if (questions.length === 0) {
@@ -190,6 +196,18 @@ export default function QuizClient({
 
   return (
     <div className="flex h-full flex-1 flex-col gap-4">
+      <div className="flex items-center justify-between gap-3 rounded-2xl border-4 border-zinc-400 bg-white p-3 shadow-brutal-sm sm:p-4">
+        <button
+          type="button"
+          onClick={handleBackToDashboard}
+          className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-zinc-300 bg-zinc-100 px-3 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-200"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          戻る
+        </button>
+        <p className="text-sm font-black text-zinc-700 sm:text-base">{genre.name}</p>
+      </div>
+
       <div className="rounded-2xl border-4 border-zinc-400 bg-white p-4 shadow-brutal-sm">
         <div className="mb-2 flex items-center justify-between text-sm font-black text-zinc-700">
           <span>
@@ -263,7 +281,7 @@ export default function QuizClient({
       <button
         disabled={!isAnswered || isSubmitting}
         onClick={handleNext}
-        className="mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-4 border-zinc-400 bg-zinc-100 px-6 py-3 text-lg font-black text-zinc-900 shadow-brutal transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+        className="focus-ring mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-4 border-zinc-400 bg-zinc-100 px-6 py-3 text-lg font-black text-zinc-900 shadow-brutal transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {currentIndex < questions.length - 1 ? 'つぎへ' : isSubmitting ? '保存中...' : '結果を見る'}
         <ArrowRight className="h-5 w-5" />
