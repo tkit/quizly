@@ -9,6 +9,12 @@ import {
   setRedisStringIfNotExists,
 } from '@/lib/cache/upstash';
 import { invalidateBadgeOverviewCache } from '@/lib/badges/overview';
+import {
+  calculateSessionPoints,
+  CONSECUTIVE_CORRECT_STREAK_BONUS_POINTS,
+  CONSECUTIVE_CORRECT_STREAK_THRESHOLD,
+  DAILY_CHALLENGE_BONUS_POINTS,
+} from '@/lib/points';
 
 const IDEMPOTENCY_TTL_SECONDS = 60 * 60;
 
@@ -20,7 +26,7 @@ type HistoryRecord = {
 
 type PointTransaction = {
   points: number;
-  reason: string;
+  reason: 'correct_answer' | 'perfect_bonus' | 'daily_challenge_bonus' | 'correct_streak_bonus';
 };
 
 export type UnlockedBadge = {
@@ -36,10 +42,15 @@ type Body = {
   mode?: string;
   totalQuestions?: number;
   correctCount?: number;
-  earnedPoints?: number;
   completedAt?: string;
   historyRecords?: HistoryRecord[];
-  pointTransactions?: PointTransaction[];
+};
+
+type ChildDailyPointState = {
+  state_date: string;
+  consecutive_correct_count: number;
+  streak_bonus_count: number;
+  daily_challenge_awarded: boolean;
 };
 
 type IdempotencyState =
@@ -69,6 +80,40 @@ function parseIdempotencyState(raw: string | null): IdempotencyState | null {
   }
 }
 
+function formatJstDate(value: Date) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(value);
+}
+
+async function restoreDailyPointState(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  childId: string,
+  previousState: ChildDailyPointState | null,
+) {
+  if (!previousState) {
+    await supabase
+      .from('child_daily_point_state')
+      .delete()
+      .eq('child_id', childId);
+    return;
+  }
+
+  await supabase
+    .from('child_daily_point_state')
+    .upsert({
+      child_id: childId,
+      state_date: previousState.state_date,
+      consecutive_correct_count: previousState.consecutive_correct_count,
+      streak_bonus_count: previousState.streak_bonus_count,
+      daily_challenge_awarded: previousState.daily_challenge_awarded,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'child_id' });
+}
+
 export async function POST(request: NextRequest) {
   const { user } = await getAuthenticatedUser();
   if (!user) {
@@ -90,8 +135,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid idempotency key' }, { status: 400 });
   }
 
-  if (!body.genreId || !body.completedAt || !Array.isArray(body.historyRecords) || !Array.isArray(body.pointTransactions)) {
+  if (!body.genreId || !body.completedAt || !Array.isArray(body.historyRecords)) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+  }
+
+  const completedAt = new Date(body.completedAt);
+  if (Number.isNaN(completedAt.getTime())) {
+    return NextResponse.json({ error: 'Invalid completedAt' }, { status: 400 });
   }
 
   const supabase = await createServerSupabaseClient();
@@ -144,7 +194,111 @@ export async function POST(request: NextRequest) {
   const mode = body.mode ?? 'normal';
   const totalQuestions = Number(body.totalQuestions ?? 0);
   const correctCount = Number(body.correctCount ?? 0);
-  const earnedPoints = Number(body.earnedPoints ?? 0);
+  const pointsResult = calculateSessionPoints(correctCount, totalQuestions);
+  const completedDateJst = formatJstDate(completedAt);
+
+  const { data: existingDailyStateRaw, error: dailyStateError } = await supabase
+    .from('child_daily_point_state')
+    .select('state_date, consecutive_correct_count, streak_bonus_count, daily_challenge_awarded')
+    .eq('child_id', activeChildId)
+    .maybeSingle();
+
+  if (dailyStateError) {
+    if (isUpstashConfigured()) {
+      await deleteRedisKey(cacheKey).catch(() => null);
+    }
+    return NextResponse.json({ error: 'Failed to read daily point state' }, { status: 500 });
+  }
+
+  const existingDailyState = (existingDailyStateRaw ?? null) as ChildDailyPointState | null;
+  const previousDailyState = existingDailyState
+    ? {
+        ...existingDailyState,
+      }
+    : null;
+
+  let dailyState: ChildDailyPointState = {
+    state_date: completedDateJst,
+    consecutive_correct_count: 0,
+    streak_bonus_count: 0,
+    daily_challenge_awarded: false,
+  };
+
+  if (existingDailyState && existingDailyState.state_date === completedDateJst) {
+    dailyState = existingDailyState;
+  }
+
+  const dailyChallengeBonusPoints = dailyState.daily_challenge_awarded ? 0 : DAILY_CHALLENGE_BONUS_POINTS;
+  dailyState.daily_challenge_awarded = true;
+
+  const previousStreakBonusCount = dailyState.streak_bonus_count;
+  let runningConsecutiveCorrect = dailyState.consecutive_correct_count;
+  let streakBonusCount = dailyState.streak_bonus_count;
+
+  for (const record of body.historyRecords) {
+    if (record.is_correct) {
+      runningConsecutiveCorrect += 1;
+      const reachedThresholdCount = Math.floor(runningConsecutiveCorrect / CONSECUTIVE_CORRECT_STREAK_THRESHOLD);
+      if (reachedThresholdCount > streakBonusCount) {
+        streakBonusCount = reachedThresholdCount;
+      }
+      continue;
+    }
+
+    runningConsecutiveCorrect = 0;
+  }
+
+  dailyState.consecutive_correct_count = runningConsecutiveCorrect;
+  dailyState.streak_bonus_count = streakBonusCount;
+
+  const newStreakBonusCount = Math.max(0, streakBonusCount - previousStreakBonusCount);
+  const streakBonusPoints = newStreakBonusCount * CONSECUTIVE_CORRECT_STREAK_BONUS_POINTS;
+  const earnedPoints = pointsResult.totalPoints + dailyChallengeBonusPoints + streakBonusPoints;
+
+  const pointTransactions: PointTransaction[] = [
+    pointsResult.basePoints > 0
+      ? {
+          points: pointsResult.basePoints,
+          reason: 'correct_answer',
+        }
+      : null,
+    pointsResult.bonusPoints > 0
+      ? {
+          points: pointsResult.bonusPoints,
+          reason: 'perfect_bonus',
+        }
+      : null,
+    dailyChallengeBonusPoints > 0
+      ? {
+          points: dailyChallengeBonusPoints,
+          reason: 'daily_challenge_bonus',
+        }
+      : null,
+    streakBonusPoints > 0
+      ? {
+          points: streakBonusPoints,
+          reason: 'correct_streak_bonus',
+        }
+      : null,
+  ].filter((transaction): transaction is PointTransaction => transaction !== null);
+
+  const { error: upsertDailyStateError } = await supabase
+    .from('child_daily_point_state')
+    .upsert({
+      child_id: activeChildId,
+      state_date: dailyState.state_date,
+      consecutive_correct_count: dailyState.consecutive_correct_count,
+      streak_bonus_count: dailyState.streak_bonus_count,
+      daily_challenge_awarded: dailyState.daily_challenge_awarded,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'child_id' });
+
+  if (upsertDailyStateError) {
+    if (isUpstashConfigured()) {
+      await deleteRedisKey(cacheKey).catch(() => null);
+    }
+    return NextResponse.json({ error: 'Failed to update daily point state' }, { status: 500 });
+  }
 
   const { data: completionResult, error: completionError } = await supabase.rpc('complete_study_session', {
     p_child_id: activeChildId,
@@ -155,7 +309,7 @@ export async function POST(request: NextRequest) {
     p_earned_points: earnedPoints,
     p_completed_at: body.completedAt,
     p_history_records: body.historyRecords,
-    p_point_transactions: body.pointTransactions,
+    p_point_transactions: pointTransactions,
   });
 
   const completionData = (completionResult ?? null) as CompleteStudySessionResult | null;
@@ -163,6 +317,8 @@ export async function POST(request: NextRequest) {
   const unlockedBadges = Array.isArray(completionData?.unlockedBadges) ? completionData.unlockedBadges : [];
 
   if (completionError || !sessionId) {
+    await restoreDailyPointState(supabase, activeChildId, previousDailyState).catch(() => null);
+
     if (isUpstashConfigured()) {
       await deleteRedisKey(cacheKey).catch(() => null);
     }

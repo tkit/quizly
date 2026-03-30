@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Image, { type ImageLoaderProps } from 'next/image';
+import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ArrowLeft, CalendarDays, Sparkles, Trophy } from 'lucide-react';
@@ -201,10 +201,6 @@ function formatHeatmapMonthLabel(dateKey: string) {
   return `${month}月`;
 }
 
-function passthroughImageLoader({ src }: ImageLoaderProps) {
-  return src;
-}
-
 function formatHeatmapPeriodLabel(startDateKey: string, endDateKey: string) {
   const [startYearText, startMonthText] = startDateKey.split('-');
   const [endYearText, endMonthText] = endDateKey.split('-');
@@ -368,7 +364,6 @@ export default async function HistoryPage() {
                         alt={badge.name}
                         width={56}
                         height={56}
-                        loader={passthroughImageLoader}
                         unoptimized
                         className="h-14 w-14 rounded-lg border border-zinc-300 bg-white object-contain p-0.5"
                       />
@@ -397,7 +392,6 @@ export default async function HistoryPage() {
                             alt={target.name}
                             width={56}
                             height={56}
-                            loader={passthroughImageLoader}
                             unoptimized
                             className="h-14 w-14 rounded-lg border border-zinc-300 bg-white object-contain p-0.5 opacity-55 grayscale"
                           />
@@ -434,7 +428,6 @@ export default async function HistoryPage() {
                               alt={`${subject.subject_name}の次バッジ`}
                               width={48}
                               height={48}
-                              loader={passthroughImageLoader}
                               unoptimized
                               className="h-12 w-12 rounded-lg border border-zinc-300 bg-white object-contain p-0.5 opacity-50 grayscale"
                             />

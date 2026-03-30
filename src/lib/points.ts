@@ -1,17 +1,20 @@
 /**
  * Point System - Calculation Utilities
  *
- * Phase 1:
+ * Session base:
  *   - +10pt per correct answer
  *   - Perfect score bonus: x1.5 multiplier
  *
- * Phase 2 (future):
- *   - Daily challenge bonus
- *   - Consecutive correct answer streak bonus (10 in a day)
+ * Daily bonuses:
+ *   - Daily challenge bonus (first challenge of the day)
+ *   - Consecutive correct answer streak bonus (every 10 consecutive correct answers in a day)
  */
 
 export const POINTS_PER_CORRECT = 10;
 export const PERFECT_BONUS_MULTIPLIER = 1.5;
+export const DAILY_CHALLENGE_BONUS_POINTS = 20;
+export const CONSECUTIVE_CORRECT_STREAK_THRESHOLD = 10;
+export const CONSECUTIVE_CORRECT_STREAK_BONUS_POINTS = 50;
 
 export interface PointsResult {
   /** Points earned from correct answers only */
