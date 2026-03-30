@@ -121,6 +121,9 @@ function buildBadgeDetailText(definition: BadgeDefinitionRow) {
   if (definition.family === 'genre_explorer') {
     return `${threshold}種類のジャンルに挑戦`;
   }
+  if (definition.family === 'total_points') {
+    return `累計${threshold}pt達成`;
+  }
   if (definition.family === 'subject_master') {
     return `${resolveSubjectName(condition.subject_id)}を${threshold}回学習`;
   }
@@ -142,7 +145,7 @@ async function loadBadgeOverviewFromDatabase(
 ): Promise<BadgeOverview> {
   const { childId } = params;
 
-  const [{ data: streakStateData, error: streakStateError }, { data: badgeDefinitionsData, error: badgeDefinitionsError }, { data: childBadgesData, error: childBadgesError }, { data: sessionsData, error: sessionsError }, { data: genresData, error: genresError }] = await Promise.all([
+  const [{ data: streakStateData, error: streakStateError }, { data: badgeDefinitionsData, error: badgeDefinitionsError }, { data: childBadgesData, error: childBadgesError }, { data: sessionsData, error: sessionsError }, { data: genresData, error: genresError }, { data: childProfileData, error: childProfileError }] = await Promise.all([
     supabase
       .from('child_streak_state')
       .select('current_streak_days, weekly_shield_count')
@@ -165,10 +168,15 @@ async function loadBadgeOverviewFromDatabase(
     supabase
       .from('genres')
       .select('id, name, parent_id'),
+    supabase
+      .from('child_profiles')
+      .select('total_points')
+      .eq('id', childId)
+      .maybeSingle(),
   ]);
 
-  if (streakStateError || badgeDefinitionsError || childBadgesError || sessionsError || genresError) {
-    throw streakStateError ?? badgeDefinitionsError ?? childBadgesError ?? sessionsError ?? genresError;
+  if (streakStateError || badgeDefinitionsError || childBadgesError || sessionsError || genresError || childProfileError) {
+    throw streakStateError ?? badgeDefinitionsError ?? childBadgesError ?? sessionsError ?? genresError ?? childProfileError;
   }
 
   const streakState = streakStateData as { current_streak_days: number; weekly_shield_count: number } | null;
@@ -176,6 +184,7 @@ async function loadBadgeOverviewFromDatabase(
   const childBadges = (childBadgesData ?? []) as ChildBadgeRow[];
   const sessions = (sessionsData ?? []) as SessionRow[];
   const genres = (genresData ?? []) as GenreRow[];
+  const childTotalPoints = Number((childProfileData as { total_points?: number } | null)?.total_points ?? 0);
 
   const unlockedKeySet = new Set(childBadges.map((row) => row.badge_key));
   const badgeDefinitionByKey = new Map(badgeDefinitions.map((row) => [row.key, row] as const));
@@ -219,9 +228,10 @@ async function loadBadgeOverviewFromDatabase(
     streak_days: currentStreak,
     perfect_sessions: perfectCount,
     genre_explorer: genreCount,
+    total_points: childTotalPoints,
   };
 
-  for (const family of ['streak_days', 'perfect_sessions', 'genre_explorer'] as const) {
+  for (const family of ['streak_days', 'perfect_sessions', 'genre_explorer', 'total_points'] as const) {
     const definitions = badgeDefinitions
       .filter((definition) => definition.family === family && !definition.is_secret && definition.level != null)
       .sort((a, b) => (a.level ?? 0) - (b.level ?? 0));

@@ -204,3 +204,4 @@ GitHub Secrets（Repository secrets）には以下を設定してください。
 - 制作ソース: `assets/badges/arcade_style/svg`
 
 詳細手順は [`docs/badge_operations.md`](docs/badge_operations.md) を参照してください。
+デザインガイドラインは [`docs/badge_design_guidelines.md`](docs/badge_design_guidelines.md) を参照してください。

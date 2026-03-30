@@ -4,12 +4,11 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 INPUT_DIR="$ROOT_DIR/original"
-OUT_SVG_DIR="$ROOT_DIR/assets/badges/arcade_style/svg"
 OUT_PUBLIC_SVG_DIR="$ROOT_DIR/public/badges-arcade/svg"
 OUT_64_DIR="$ROOT_DIR/public/badges-arcade/64"
 GENERATE_PNG="${GENERATE_PNG:-0}"
 
-mkdir -p "$OUT_SVG_DIR" "$OUT_PUBLIC_SVG_DIR" "$OUT_64_DIR"
+mkdir -p "$OUT_PUBLIC_SVG_DIR" "$OUT_64_DIR"
 
 to_output_name() {
   local filename="$1"
@@ -60,6 +59,8 @@ set_family_symbol() {
       SYMBOL='<path d="M32 18 L37 30 L32 27 L27 30 Z"/><circle cx="32" cy="31" r="8" fill="none" stroke="currentColor" stroke-width="2.6"/>' ;;
     perfect_sessions)
       SYMBOL='<path d="M24 32 L30 38 L41 25" fill="none" stroke="currentColor" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>' ;;
+    total_points)
+      SYMBOL='<ellipse cx="32" cy="24" rx="8.5" ry="3.3" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M23.5 24 V31.5 C23.5 33.5 27.3 35.2 32 35.2 C36.7 35.2 40.5 33.5 40.5 31.5 V24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="32" cy="36.5" rx="7" ry="2.8" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M25 36.5 V41 C25 42.7 28.1 44.1 32 44.1 C35.9 44.1 39 42.7 39 41 V36.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>' ;;
     subject_master_math)
       SYMBOL='<path d="M24 24 H30 M27 21 V27" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M34 24 H40" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M24 37 L30 31 M30 37 L24 31" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M34 34 H40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="37" cy="30.6" r="1.1" fill="currentColor"/><circle cx="37" cy="37.4" r="1.1" fill="currentColor"/>' ;;
     subject_master_science)
@@ -131,6 +132,18 @@ frame_subject_master() {
 EOF
 }
 
+frame_total_points() {
+  cat <<EOF
+<circle cx="32" cy="32" r="28" fill="#101418"/>
+<circle cx="32" cy="32" r="24.6" fill="#FFFFFF"/>
+<circle cx="32" cy="32" r="21.5" fill="url(#g_${out_stem})"/>
+<circle cx="32" cy="32" r="18.4" fill="#FFFFFF" opacity="0.28"/>
+<path d="M21 16 C22.2 13.2 25.4 11 29.2 10.4 C30.1 12.3 31 13.6 32 15.3 C33 13.6 33.9 12.3 34.8 10.4 C38.6 11 41.8 13.2 43 16 C40.9 18.1 38.2 19.4 32 19.4 C25.8 19.4 23.1 18.1 21 16 Z" fill="#101418"/>
+<path d="M22 16 C23.1 13.8 25.8 12.1 29 11.6 C30 13.4 31 14.6 32 16.2 C33 14.6 34 13.4 35 11.6 C38.2 12.1 40.9 13.8 42 16 C40.1 17.7 37.7 18.8 32 18.8 C26.3 18.8 23.9 17.7 22 16 Z" fill="#FFFFFF"/>
+<path d="M23 16 C24 14.3 26.2 13 28.8 12.6 C29.9 14.4 31 15.4 32 16.9 C33 15.4 34.1 14.4 35.2 12.6 C37.8 13 40 14.3 41 16 C39.4 17.3 37.2 18.2 32 18.2 C26.8 18.2 24.6 17.3 23 16 Z" fill="url(#g_${out_stem})"/>
+EOF
+}
+
 level_marks() {
   local level="$1"
   local out=""
@@ -198,14 +211,15 @@ for src in "$INPUT_DIR"/*.png; do
 
   if [[ "$family" == "perfect_sessions" ]]; then
     frame_svg="$(frame_perfect_sessions)"
+  elif [[ "$family" == "total_points" ]]; then
+    frame_svg="$(frame_total_points)"
   elif [[ "$family" == subject_master_* ]]; then
     frame_svg="$(frame_subject_master)"
   else
     frame_svg="$(frame_default)"
   fi
 
-  svg_path="$OUT_SVG_DIR/${out_stem}.svg"
-  public_svg_path="$OUT_PUBLIC_SVG_DIR/${out_stem}.svg"
+  svg_path="$OUT_PUBLIC_SVG_DIR/${out_stem}.svg"
   png64_path="$OUT_64_DIR/${out_stem}.png"
 
   cat > "$svg_path" <<EOF
@@ -229,8 +243,6 @@ for src in "$INPUT_DIR"/*.png; do
   </g>
 </svg>
 EOF
-
-  cp "$svg_path" "$public_svg_path"
 
   if [[ "$GENERATE_PNG" == "1" ]]; then
     if ! magick -background none -density 512 "$svg_path" -resize 64x64 "$png64_path"; then

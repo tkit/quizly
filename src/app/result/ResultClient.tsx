@@ -70,6 +70,10 @@ function fallbackConditionTextFromKey(badge: UnlockedBadge) {
     const thresholds = [0, 2, 4, 12, 22, 36];
     return `異なるジャンルを累計${thresholds[level] ?? '?'}種類達成`;
   }
+  if (key.startsWith('total_points_')) {
+    const thresholds = [0, 100, 500, 1500, 5000, 10000];
+    return `累計${thresholds[level] ?? '?'}pt達成`;
+  }
   if (key.startsWith('subject_master_')) {
     const subject = key.includes('_japanese_')
       ? '国語'

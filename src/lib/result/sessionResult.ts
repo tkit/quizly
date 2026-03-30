@@ -102,6 +102,9 @@ function buildBadgeConditionText(definition: BadgeDefinitionRow) {
   if (definition.family === 'genre_explorer') {
     return `異なるジャンルを累計${threshold}種類達成`;
   }
+  if (definition.family === 'total_points') {
+    return `累計${threshold}pt達成`;
+  }
   if (definition.family === 'subject_master') {
     const subjectName = resolveSubjectName(condition.subject_id);
     return `${subjectName}の学習を累計${threshold}回達成`;

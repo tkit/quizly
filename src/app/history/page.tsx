@@ -58,6 +58,7 @@ const WEEKDAY_INDEX_MAP: Record<string, number> = {
 function remainingUnit(family: string) {
   if (family === 'streak_days') return '日';
   if (family === 'genre_explorer') return '種類';
+  if (family === 'total_points') return 'pt';
   return '回';
 }
 
@@ -65,6 +66,7 @@ function compactTrackLabel(family: string) {
   if (family === 'streak_days') return '連続学習';
   if (family === 'perfect_sessions') return '全問正解';
   if (family === 'genre_explorer') return 'ジャンル挑戦';
+  if (family === 'total_points') return 'ポイント';
   if (family === 'subject_master') return '教科特化';
   return 'チャレンジ';
 }

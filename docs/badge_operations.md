@@ -1,5 +1,7 @@
 # バッジ運用ガイド（SVG版）
 
+デザイン方針は `docs/badge_design_guidelines.md` を正本とし、本ドキュメントは生成・DB反映・運用手順に特化します。
+
 ## 1. 命名規約
 
 ### 画像ファイル名
@@ -23,9 +25,7 @@
 
 ## 2. ディレクトリ運用
 
-- 制作ソース:
-  - `assets/badges/arcade_style/svg`
-- 配信用（実行時参照）:
+- SVG原本 / 配信用（実行時参照）:
   - `public/badges-arcade/svg`
 - 生成入力:
   - `original`（Git管理外、キー一覧用途）
