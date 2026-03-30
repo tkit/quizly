@@ -176,6 +176,28 @@
     min-height: 100svh;
     min-height: 100dvh;
   }
+
+  /* Typography system:
+   * - Headings and interactive controls use display font for a playful brand voice.
+   * - Body copy, descriptions, and form inputs use sans for readability.
+   */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
+  }
+
+  button {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+  }
+
+  input,
+  textarea,
+  select {
+    font-family: var(--font-sans);
+  }
 }
 
 /* Utilities for Playful Neo-Brutalism */

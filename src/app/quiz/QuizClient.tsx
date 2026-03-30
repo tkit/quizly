@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle, PartyPopper, X, XCircle } from 'lucide-react';
-import { calculateSessionPoints } from '@/lib/points';
 import { fireCorrectEffect } from '@/lib/effects/confetti';
 import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
 import { resolveSubjectTone } from '@/lib/ui/subjectTone';
@@ -115,22 +114,6 @@ export default function QuizClient({
     setIsSubmitting(true);
 
     try {
-      const pointsResult = calculateSessionPoints(correctCount, questions.length);
-      const pointTransactions = [
-        pointsResult.basePoints > 0
-          ? {
-              points: pointsResult.basePoints,
-              reason: 'correct_answer',
-            }
-          : null,
-        pointsResult.bonusPoints > 0
-          ? {
-              points: pointsResult.bonusPoints,
-              reason: 'perfect_bonus',
-            }
-          : null,
-      ].filter((transaction): transaction is { points: number; reason: string } => transaction !== null);
-
       const response = await fetch('/api/study-sessions/complete', {
         method: 'POST',
         headers: {
@@ -142,10 +125,8 @@ export default function QuizClient({
           mode: 'normal',
           totalQuestions: questions.length,
           correctCount,
-          earnedPoints: pointsResult.totalPoints,
           completedAt: new Date().toISOString(),
           historyRecords,
-          pointTransactions,
         }),
       });
 
@@ -196,32 +177,32 @@ export default function QuizClient({
 
   return (
     <div className="flex h-full flex-1 flex-col gap-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border-4 border-zinc-400 bg-white p-3 shadow-brutal-sm sm:p-4">
+      <div className="flex items-center justify-between gap-3 px-1 py-1 sm:px-2">
         <button
           type="button"
           onClick={handleBackToDashboard}
-          className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-zinc-300 bg-zinc-100 px-3 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-200"
+          className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-xl px-3 py-2 text-sm font-black text-zinc-700 hover:bg-zinc-200/70"
         >
           <ArrowLeft className="h-4 w-4" />
           戻る
         </button>
-        <p className="text-sm font-black text-zinc-700 sm:text-base">{genre.name}</p>
+        <p className="font-display text-sm font-black tracking-wide text-zinc-700/90 sm:text-base">{genre.name}</p>
       </div>
 
-      <div className="rounded-2xl border-4 border-zinc-400 bg-white p-4 shadow-brutal-sm">
-        <div className="mb-2 flex items-center justify-between text-sm font-black text-zinc-700">
+      <div className="px-1 pb-1 sm:px-2">
+        <div className="mb-2 flex items-center justify-between text-sm font-black text-zinc-700/85">
           <span>
             {currentIndex + 1} / {questions.length} 問
           </span>
           <span>{correctCount} 問正解</span>
         </div>
-        <div className="h-3 overflow-hidden rounded-full border-2 border-zinc-300 bg-zinc-100">
+        <div className="h-3 overflow-hidden rounded-full bg-zinc-300/50">
           <div className={`h-full ${tone.progressClass}`} style={{ width: `${progressValue}%` }} />
         </div>
       </div>
 
       <div className="rounded-3xl border-4 border-zinc-400 bg-white p-5 shadow-brutal sm:p-8">
-        <p className="text-[clamp(1.25rem,5vw,2rem)] font-black text-zinc-900">{currentQuestion.question_text}</p>
+        <p className="font-display text-[clamp(1.25rem,5vw,2rem)] font-black tracking-wide text-zinc-900">{currentQuestion.question_text}</p>
       </div>
 
       <div className="grid gap-3">
@@ -229,12 +210,12 @@ export default function QuizClient({
           const option = currentQuestion.options[originalIndex];
           const isSelected = selectedOptionDisplayIndex === displayIndex;
           const isCorrect = currentQuestion.correct_index === originalIndex;
-          let classes = 'border-zinc-400 bg-white hover:bg-zinc-50';
+          let classes = 'border-zinc-300 bg-white/90 hover:bg-white';
 
           if (isAnswered) {
             if (isCorrect) classes = tone.correctClass;
             else if (isSelected) classes = 'border-rose-500 bg-rose-100';
-            else classes = 'border-zinc-300 bg-zinc-100';
+            else classes = 'border-zinc-200 bg-zinc-100 text-zinc-500';
           }
 
           return (
@@ -242,7 +223,7 @@ export default function QuizClient({
               key={displayIndex}
               onClick={() => handleOptionClick(displayIndex)}
               disabled={isAnswered}
-              className={`w-full rounded-2xl border-4 p-4 text-left text-lg font-black shadow-brutal-sm transition-all ${classes}`}
+              className={`font-display w-full rounded-2xl border-2 p-4 text-left text-lg font-black tracking-wide shadow-sm transition-all ${classes}`}
             >
               <span className="inline-flex items-center gap-2">
                 {isAnswered && isCorrect && <CheckCircle className={`h-5 w-5 ${tone.successSignalClass}`} />}
@@ -259,7 +240,7 @@ export default function QuizClient({
 
       {isAnswered && (
         <div
-          className={`rounded-2xl border-4 p-4 font-black ${
+          className={`rounded-2xl border-2 p-4 font-black ${
             isCurrentCorrect ? tone.correctClass : 'border-rose-500 bg-rose-100 text-rose-800'
           }`}
         >
@@ -281,7 +262,7 @@ export default function QuizClient({
       <button
         disabled={!isAnswered || isSubmitting}
         onClick={handleNext}
-        className="focus-ring mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-4 border-zinc-400 bg-zinc-100 px-6 py-3 text-lg font-black text-zinc-900 shadow-brutal transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+        className="focus-ring font-display mt-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-4 border-zinc-400 bg-zinc-100 px-6 py-3 text-lg font-black tracking-wide text-zinc-900 shadow-brutal transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {currentIndex < questions.length - 1 ? 'つぎへ' : isSubmitting ? '保存中...' : '結果を見る'}
         <ArrowRight className="h-5 w-5" />
