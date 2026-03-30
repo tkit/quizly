@@ -34,22 +34,28 @@ export default function HomeClient({
   );
 
   const selectChild = useCallback(async (childId: string) => {
-    const response = await fetch('/api/session/child/select', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ childId }),
-    });
+    try {
+      const response = await fetch('/api/session/child/select', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ childId }),
+      });
 
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as { error?: string } | null;
-      setMessage(body?.error ?? '子プロフィールの選択に失敗しました。');
-      return;
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        setMessage(body?.error ?? '子プロフィールの選択に失敗しました。');
+        return false;
+      }
+
+      setMessage('');
+      router.replace('/dashboard');
+      return true;
+    } catch {
+      setMessage('通信エラーが発生しました。時間をおいて再度お試しください。');
+      return false;
     }
-
-    setMessage('');
-    router.replace('/dashboard');
   }, [router]);
 
   useEffect(() => {
@@ -58,7 +64,12 @@ export default function HomeClient({
     }
 
     setIsAutoSelectingChild(true);
-    void selectChild(children[0].id);
+    void (async () => {
+      const isSuccess = await selectChild(children[0].id);
+      if (!isSuccess) {
+        setIsAutoSelectingChild(false);
+      }
+    })();
   }, [children, isAutoSelectingChild, isParentAuthenticated, selectChild]);
 
   const handleGoogleSignIn = async () => {
@@ -127,24 +138,29 @@ export default function HomeClient({
     }
 
     setIsLoadingChildren(true);
-    const response = await fetch('/api/children/create', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ displayName: newChildName }),
-    });
-    const body = (await response.json().catch(() => null)) as { error?: string; child?: ChildProfile } | null;
-    if (!response.ok || !body?.child) {
-      setMessage(body?.error ?? '子プロフィール作成に失敗しました。');
-      setIsLoadingChildren(false);
-      return;
-    }
+    try {
+      const response = await fetch('/api/children/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ displayName: newChildName }),
+      });
+      const body = (await response.json().catch(() => null)) as { error?: string; child?: ChildProfile } | null;
+      if (!response.ok || !body?.child) {
+        setMessage(body?.error ?? '子プロフィール作成に失敗しました。');
+        return;
+      }
 
-    setChildren((prev) => [...prev, body.child!]);
-    setSelectedChildId((prev) => prev || body.child!.id);
-    setNewChildName('');
-    setIsLoadingChildren(false);
+      const createdChild = body.child;
+      setChildren((prev) => [...prev, createdChild]);
+      setSelectedChildId((prev) => prev || createdChild.id);
+      setNewChildName('');
+    } catch {
+      setMessage('通信エラーが発生しました。時間をおいて再度お試しください。');
+    } finally {
+      setIsLoadingChildren(false);
+    }
   };
 
   const handleChildSubmit = async (event: FormEvent) => {

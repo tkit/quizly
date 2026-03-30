@@ -29,10 +29,12 @@ export default async function DashboardPage() {
     redirect('/');
   }
 
-  let genresWithQuestionCount;
-  try {
-    genresWithQuestionCount = await getDashboardGenreCatalog(supabase);
-  } catch {
+  const [genreCatalogResult, badgeSummaryResult] = await Promise.allSettled([
+    getDashboardGenreCatalog(supabase),
+    getBadgeSummary(supabase, { childId: initialActiveChildId }),
+  ]);
+
+  if (genreCatalogResult.status === 'rejected') {
     return (
       <PageShell maxWidthClass="max-w-4xl" mainClassName="flex flex-1 items-center justify-center">
         <MessageCard
@@ -46,12 +48,9 @@ export default async function DashboardPage() {
     );
   }
 
-  let badgeSummary: BadgeSummary | null = null;
-  try {
-    badgeSummary = await getBadgeSummary(supabase, { childId: initialActiveChildId });
-  } catch {
-    badgeSummary = null;
-  }
+  const genresWithQuestionCount = genreCatalogResult.value;
+  const badgeSummary: BadgeSummary | null =
+    badgeSummaryResult.status === 'fulfilled' ? badgeSummaryResult.value : null;
 
   return (
     <PageShell maxWidthClass="max-w-4xl">
