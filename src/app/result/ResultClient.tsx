@@ -188,7 +188,7 @@ export default function ResultClient({
             height={52}
             loader={passthroughImageLoader}
             unoptimized
-            className="h-11 w-11 shrink-0 rounded-xl border-2 border-zinc-300 bg-white object-contain p-1 sm:h-13 sm:w-13"
+            className="h-11 w-11 shrink-0 rounded-xl border-2 border-zinc-300 bg-white object-contain p-1 sm:h-12 sm:w-12"
             onError={(event) => {
               event.currentTarget.src = '/icons/icon-192.png';
             }}

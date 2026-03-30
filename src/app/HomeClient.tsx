@@ -193,17 +193,17 @@ export default function HomeClient({
           {!isParentAuthenticated ? (
             <>
               <div className="grid gap-3">
-                <button onClick={handleGoogleSignIn} className="min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-3 font-bold hover:bg-zinc-200">
+                <button onClick={handleGoogleSignIn} className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-3 font-bold hover:bg-zinc-200">
                   Google でログイン
                 </button>
-                <button onClick={handlePasskeySignIn} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-3 font-bold hover:bg-zinc-200">
+                <button onClick={handlePasskeySignIn} className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-3 font-bold hover:bg-zinc-200">
                   <KeyRound className="h-4 w-4" />
                   Passkey でログイン
                 </button>
                 {DEV_SHORTCUT_ENABLED && AUTH_MODE === 'development' && (
                   <button
                     onClick={handleDevShortcut}
-                    className="min-h-11 rounded-xl border-2 border-amber-300 bg-amber-100 px-4 py-3 font-bold text-amber-800 hover:bg-amber-200"
+                    className="focus-ring min-h-11 rounded-xl border-2 border-amber-300 bg-amber-100 px-4 py-3 font-bold text-amber-800 hover:bg-amber-200"
                   >
                     開発ショートカットでログイン
                   </button>
@@ -221,13 +221,13 @@ export default function HomeClient({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isSendingMagicLink}
-                  className="min-h-11 rounded-xl border-2 border-zinc-300 bg-white px-3"
+                  className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 bg-white px-3"
                   placeholder="parent@example.com"
                 />
                 <button
                   type="submit"
                   disabled={isSendingMagicLink}
-                  className="min-h-11 rounded-xl border-2 border-zinc-300 bg-slate-100 px-4 py-2 font-bold text-zinc-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 bg-slate-100 px-4 py-2 font-bold text-zinc-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSendingMagicLink ? '送信中...' : 'Magic Link を送信'}
                 </button>
@@ -267,10 +267,10 @@ export default function HomeClient({
                 required
                 value={newChildName}
                 onChange={(e) => setNewChildName(e.target.value)}
-                className="min-h-11 rounded-xl border-2 border-zinc-300 px-3"
+                className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 px-3"
                 placeholder="たろう"
               />
-              <button type="submit" className="min-h-11 rounded-xl border-2 border-zinc-300 bg-slate-100 px-4 py-2 font-bold text-zinc-800 hover:bg-slate-200">
+              <button type="submit" className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 bg-slate-100 px-4 py-2 font-bold text-zinc-800 hover:bg-slate-200">
                 子プロフィールを作成
               </button>
             </form>
@@ -280,14 +280,14 @@ export default function HomeClient({
             <>
               <form className="grid gap-3" onSubmit={handleChildSubmit}>
                 <label className="text-sm font-bold text-zinc-700">学習する子ども</label>
-                <select value={selectedChildId} onChange={(e) => setSelectedChildId(e.target.value)} className="min-h-11 rounded-xl border-2 border-zinc-300 px-3">
+                <select value={selectedChildId} onChange={(e) => setSelectedChildId(e.target.value)} className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 px-3">
                   {children.map((child) => (
                     <option key={child.id} value={child.id}>
                       {child.display_name}
                     </option>
                   ))}
                 </select>
-                <button type="submit" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border-2 border-zinc-300 bg-slate-100 px-4 py-2 font-bold text-zinc-800 hover:bg-slate-200">
+                <button type="submit" className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border-2 border-zinc-300 bg-slate-100 px-4 py-2 font-bold text-zinc-800 hover:bg-slate-200">
                   学習をはじめる
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -302,10 +302,10 @@ export default function HomeClient({
                   required
                   value={newChildName}
                   onChange={(e) => setNewChildName(e.target.value)}
-                  className="min-h-11 rounded-xl border-2 border-zinc-300 px-3"
+                  className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 px-3"
                   placeholder="はなこ"
                 />
-                <button type="submit" className="min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-2 font-bold text-zinc-700 hover:bg-zinc-200">
+                <button type="submit" className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-2 font-bold text-zinc-700 hover:bg-zinc-200">
                   追加する
                 </button>
               </form>
