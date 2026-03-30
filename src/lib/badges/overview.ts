@@ -1,4 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { deleteRedisKey, getRedisString, isUpstashConfigured, setRedisString } from '@/lib/cache/upstash';
+
+const BADGE_OVERVIEW_CACHE_TTL_SECONDS = 60;
+const BADGE_SUMMARY_CACHE_TTL_SECONDS = 60;
 
 export type BadgeOverviewUnlocked = {
   key: string;
@@ -124,7 +128,15 @@ function buildBadgeDetailText(definition: BadgeDefinitionRow) {
   return '条件を達成';
 }
 
-export async function getBadgeOverview(
+function buildBadgeOverviewCacheKey(childId: string) {
+  return `quizly:badge_overview:overview:v1:${childId}`;
+}
+
+function buildBadgeSummaryCacheKey(childId: string) {
+  return `quizly:badge_overview:summary:v1:${childId}`;
+}
+
+async function loadBadgeOverviewFromDatabase(
   supabase: SupabaseClient,
   params: { childId: string },
 ): Promise<BadgeOverview> {
@@ -282,7 +294,7 @@ export async function getBadgeOverview(
   };
 }
 
-export async function getBadgeSummary(
+async function loadBadgeSummaryFromDatabase(
   supabase: SupabaseClient,
   params: { childId: string },
 ): Promise<BadgeSummary> {
@@ -308,4 +320,94 @@ export async function getBadgeSummary(
     current_streak: Number(streakState?.current_streak_days ?? 0),
     unlocked_count: Number(unlockedCount ?? 0),
   };
+}
+
+export async function invalidateBadgeOverviewCache(childId: string) {
+  if (!isUpstashConfigured()) {
+    return;
+  }
+
+  const overviewKey = buildBadgeOverviewCacheKey(childId);
+  const summaryKey = buildBadgeSummaryCacheKey(childId);
+
+  await Promise.all([
+    deleteRedisKey(overviewKey).catch((error) => {
+      console.warn(`[badge-overview-cache] failed to invalidate overview child=${childId}`, error);
+    }),
+    deleteRedisKey(summaryKey).catch((error) => {
+      console.warn(`[badge-overview-cache] failed to invalidate summary child=${childId}`, error);
+    }),
+  ]);
+}
+
+export async function getBadgeOverview(
+  supabase: SupabaseClient,
+  params: { childId: string },
+): Promise<BadgeOverview> {
+  const startedAt = Date.now();
+  const { childId } = params;
+  const cacheKey = buildBadgeOverviewCacheKey(childId);
+
+  if (isUpstashConfigured()) {
+    try {
+      const cached = await getRedisString(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached) as BadgeOverview;
+        console.info(`[badge-overview-cache] hit child=${childId} elapsed_ms=${Date.now() - startedAt}`);
+        return parsed;
+      }
+      console.info(`[badge-overview-cache] miss child=${childId}`);
+    } catch (error) {
+      console.warn(`[badge-overview-cache] failed to read child=${childId}`, error);
+    }
+  }
+
+  const overview = await loadBadgeOverviewFromDatabase(supabase, { childId });
+  console.info(`[badge-overview-cache] rebuilt child=${childId} elapsed_ms=${Date.now() - startedAt}`);
+
+  if (isUpstashConfigured()) {
+    try {
+      await setRedisString(cacheKey, JSON.stringify(overview), BADGE_OVERVIEW_CACHE_TTL_SECONDS);
+    } catch (error) {
+      console.warn(`[badge-overview-cache] failed to write child=${childId}`, error);
+    }
+  }
+
+  return overview;
+}
+
+export async function getBadgeSummary(
+  supabase: SupabaseClient,
+  params: { childId: string },
+): Promise<BadgeSummary> {
+  const startedAt = Date.now();
+  const { childId } = params;
+  const cacheKey = buildBadgeSummaryCacheKey(childId);
+
+  if (isUpstashConfigured()) {
+    try {
+      const cached = await getRedisString(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached) as BadgeSummary;
+        console.info(`[badge-summary-cache] hit child=${childId} elapsed_ms=${Date.now() - startedAt}`);
+        return parsed;
+      }
+      console.info(`[badge-summary-cache] miss child=${childId}`);
+    } catch (error) {
+      console.warn(`[badge-summary-cache] failed to read child=${childId}`, error);
+    }
+  }
+
+  const summary = await loadBadgeSummaryFromDatabase(supabase, { childId });
+  console.info(`[badge-summary-cache] rebuilt child=${childId} elapsed_ms=${Date.now() - startedAt}`);
+
+  if (isUpstashConfigured()) {
+    try {
+      await setRedisString(cacheKey, JSON.stringify(summary), BADGE_SUMMARY_CACHE_TTL_SECONDS);
+    } catch (error) {
+      console.warn(`[badge-summary-cache] failed to write child=${childId}`, error);
+    }
+  }
+
+  return summary;
 }

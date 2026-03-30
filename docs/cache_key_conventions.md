@@ -45,6 +45,9 @@
   - `quizly:result_session:v1:<guardian_id>:<session_id>`
 - セッション保存の冪等性
   - `quizly:study_session_complete:idempotency:v1:<guardian_id>:<child_id>:<idempotency_key>`
+- バッジ概要
+  - `quizly:badge_overview:overview:v1:<child_id>`
+  - `quizly:badge_overview:summary:v1:<child_id>`
 
 ## バージョン更新方針
 - 値構造変更時は `vN` を繰り上げる
@@ -58,3 +61,4 @@
 - クイズ問題セット: 10分
 - 結果ページセッション: 5分
 - セッション保存冪等キー: 60分
+- バッジ概要（overview/summary）: 60秒

@@ -8,6 +8,7 @@ import {
   setRedisString,
   setRedisStringIfNotExists,
 } from '@/lib/cache/upstash';
+import { invalidateBadgeOverviewCache } from '@/lib/badges/overview';
 
 const IDEMPOTENCY_TTL_SECONDS = 60 * 60;
 
@@ -181,6 +182,8 @@ export async function POST(request: NextRequest) {
       IDEMPOTENCY_TTL_SECONDS,
     ).catch(() => null);
   }
+
+  await invalidateBadgeOverviewCache(activeChildId);
 
   return NextResponse.json({ sessionId, unlockedBadges, deduplicated: false });
 }
