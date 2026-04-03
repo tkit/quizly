@@ -79,10 +79,9 @@ export type ParentManagementSnapshot = {
 
 export type StudyStatus = 'unattempted' | 'studied_not_perfect' | 'perfect_cleared';
 
-type SessionRow = {
-  genre_id: string | null;
-  correct_count: number;
-  total_questions: number;
+type ChildStudyStatusRow = {
+  genre_id: string;
+  study_status: StudyStatus | null;
 };
 
 type ParentSessionGenreRow = {
@@ -172,47 +171,36 @@ export async function listChildProfiles(supabase: SupabaseClient) {
   return (data ?? []) as ChildProfile[];
 }
 
-export function buildStudyStatusMap(sessions: SessionRow[]) {
-  const statusMap: Record<string, StudyStatus> = {};
-
-  for (const session of sessions) {
-    if (!session.genre_id) continue;
-
-    const isPerfect = session.total_questions > 0 && session.correct_count === session.total_questions;
-    const current = statusMap[session.genre_id] ?? 'unattempted';
-
-    if (isPerfect) {
-      statusMap[session.genre_id] = 'perfect_cleared';
-    } else if (current !== 'perfect_cleared') {
-      statusMap[session.genre_id] = 'studied_not_perfect';
-    }
-  }
-
-  return statusMap;
-}
-
 export async function getDashboardSnapshot(supabase: SupabaseClient, activeChildId: string) {
-  const [{ data: child }, { count: childCount }, { data: sessionsDataRaw, error: sessionsError }] = await Promise.all([
+  const [{ data: child }, { count: childCount }, { data: studyStatusRows, error: studyStatusError }] = await Promise.all([
     supabase
       .from('child_profiles')
       .select('id, display_name, total_points')
       .eq('id', activeChildId)
       .maybeSingle(),
     supabase.from('child_profiles').select('id', { count: 'exact', head: true }),
-    supabase
-      .from('study_sessions')
-      .select('genre_id, correct_count, total_questions')
-      .eq('child_id', activeChildId),
+    supabase.rpc('get_child_study_status', { p_child_id: activeChildId }),
   ]);
 
-  if (!child || sessionsError) {
+  if (!child || studyStatusError) {
     return null;
   }
+
+  const studyStatusByGenreId = ((studyStatusRows ?? []) as ChildStudyStatusRow[]).reduce<Record<string, StudyStatus>>(
+    (acc, row) => {
+      if (!row.genre_id || !row.study_status) {
+        return acc;
+      }
+      acc[row.genre_id] = row.study_status;
+      return acc;
+    },
+    {},
+  );
 
   return {
     activeChild: child as DashboardActiveChild,
     canSwitchChild: (childCount ?? 0) > 1,
-    studyStatusByGenreId: buildStudyStatusMap((sessionsDataRaw ?? []) as SessionRow[]),
+    studyStatusByGenreId,
   };
 }
 

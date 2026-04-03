@@ -1,4 +1,4 @@
-const CACHE_NAME = "quizly-pwa-v1";
+const CACHE_NAME = "quizly-pwa-v2";
 const OFFLINE_URL = "/offline";
 const PRECACHE_URLS = [
   "/",
@@ -45,20 +45,7 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          void caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(async () => {
-          const cached = await caches.match(request);
-          if (cached) {
-            return cached;
-          }
-
-          return caches.match(OFFLINE_URL);
-        }),
+      fetch(request).catch(async () => caches.match(OFFLINE_URL)),
     );
     return;
   }
