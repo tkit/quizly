@@ -174,6 +174,8 @@ export default function QuizClient({
       ? null
       : displayToOriginalOptionIndex[selectedOptionDisplayIndex];
   const isCurrentCorrect = selectedOriginalIndex === currentQuestion.correct_index;
+  const semanticCorrectClass = 'border-emerald-500 bg-emerald-100 text-emerald-900';
+  const semanticIncorrectClass = 'border-rose-500 bg-rose-100 text-rose-800';
 
   return (
     <div className="flex h-full flex-1 flex-col gap-4">
@@ -213,8 +215,8 @@ export default function QuizClient({
           let classes = 'border-zinc-300 bg-white/90 hover:bg-white';
 
           if (isAnswered) {
-            if (isCorrect) classes = tone.correctClass;
-            else if (isSelected) classes = 'border-rose-500 bg-rose-100';
+            if (isCorrect) classes = semanticCorrectClass;
+            else if (isSelected) classes = semanticIncorrectClass;
             else classes = 'border-zinc-200 bg-zinc-100 text-zinc-500';
           }
 
@@ -241,7 +243,7 @@ export default function QuizClient({
       {isAnswered && (
         <div
           className={`rounded-2xl border-2 p-4 font-black ${
-            isCurrentCorrect ? tone.correctClass : 'border-rose-500 bg-rose-100 text-rose-800'
+            isCurrentCorrect ? semanticCorrectClass : semanticIncorrectClass
           }`}
         >
           {isCurrentCorrect ? (
