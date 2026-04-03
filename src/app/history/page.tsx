@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { ArrowLeft, CalendarDays, Sparkles, Trophy } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import MessageCard from '@/components/feedback/MessageCard';
+import StudyHeatmap from '@/components/history/StudyHeatmap';
 import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
 import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
 import { getBadgeOverview } from '@/lib/badges/overview';
@@ -44,7 +45,6 @@ type StudyHeatmapCell = {
 
 const TOKYO_TIMEZONE = 'Asia/Tokyo';
 const HEATMAP_WEEKS = 26;
-const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'] as const;
 const WEEKDAY_INDEX_MAP: Record<string, number> = {
   Sun: 0,
   Mon: 1,
@@ -126,14 +126,6 @@ function heatmapLevel(count: number, maxCount: number): 0 | 1 | 2 | 3 | 4 {
   return 4;
 }
 
-function heatmapCellClass(level: StudyHeatmapCell['level']) {
-  if (level === 0) return 'bg-zinc-100 border-zinc-200';
-  if (level === 1) return 'bg-emerald-100 border-emerald-200';
-  if (level === 2) return 'bg-emerald-200 border-emerald-300';
-  if (level === 3) return 'bg-emerald-400 border-emerald-500';
-  return 'bg-emerald-600 border-emerald-700';
-}
-
 function buildStudyHeatmap(dateKeys: string[], weeks = HEATMAP_WEEKS) {
   const todayKey = formatDateKeyInTimezone(new Date());
   const todayDate = parseDateKeyToUtcNoon(todayKey);
@@ -172,28 +164,6 @@ function buildStudyHeatmap(dateKeys: string[], weeks = HEATMAP_WEEKS) {
   }
 
   return { cells, maxCount, todayKey };
-}
-
-function formatCalendarDateLabel(dateKey: string) {
-  const date = parseDateKeyToUtcNoon(dateKey);
-  return new Intl.DateTimeFormat('ja-JP', {
-    month: 'numeric',
-    day: 'numeric',
-    weekday: 'short',
-    timeZone: TOKYO_TIMEZONE,
-  }).format(date);
-}
-
-function formatHeatmapTooltipLabel(dateKey: string, count: number) {
-  const date = parseDateKeyToUtcNoon(dateKey);
-  const dateText = new Intl.DateTimeFormat('ja-JP', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'short',
-    timeZone: TOKYO_TIMEZONE,
-  }).format(date);
-  return `${dateText}: ${count}回学習`;
 }
 
 function formatHeatmapMonthLabel(dateKey: string) {
@@ -457,57 +427,7 @@ export default async function HistoryPage() {
             最近の学習
           </h2>
           <div className="mt-4 rounded-2xl border-2 border-zinc-300 bg-zinc-50 p-3 sm:p-4">
-            <p className="text-sm font-black text-zinc-900">学習カレンダー（過去{HEATMAP_WEEKS}週間）</p>
-            {heatmapPeriodLabel && <p className="mt-1 text-xs font-bold text-zinc-600">{heatmapPeriodLabel}</p>}
-            <div className="mt-3 overflow-x-auto">
-              <div
-                className="mx-auto inline-grid min-w-max gap-x-1 gap-y-1"
-                style={{ gridTemplateColumns: `1.5rem repeat(${HEATMAP_WEEKS}, minmax(0, 1rem))` }}
-              >
-                <div />
-                {Array.from({ length: HEATMAP_WEEKS }).map((_, weekIndex) => (
-                  <div key={`week-label-${weekIndex}`} className="text-center text-[10px] font-bold text-zinc-500">
-                    {heatmapMonthLabels[weekIndex]}
-                  </div>
-                ))}
-                {WEEKDAY_LABELS.map((label, weekday) => (
-                  <div key={`row-${label}`} className="contents">
-                    <div key={`weekday-${label}`} className="pr-1 text-right text-[10px] font-bold text-zinc-500">
-                      {weekday === 1 || weekday === 3 || weekday === 5 ? label : ''}
-                    </div>
-                    {Array.from({ length: HEATMAP_WEEKS }).map((_, column) => {
-                      const cell = studyHeatmapCells.find((item) => item.weekday === weekday && item.column === column) ?? null;
-                      const count = cell?.count ?? 0;
-                      const dateLabel = cell ? formatCalendarDateLabel(cell.dateKey) : '';
-                      const isFutureCell = cell ? cell.dateKey > heatmapTodayKey : false;
-                      const tooltipLabel = cell && !isFutureCell ? formatHeatmapTooltipLabel(cell.dateKey, count) : null;
-                      return (
-                        <div key={`cell-${weekday}-${column}`} className="group/cell relative">
-                          <button
-                            type="button"
-                            className={`h-4 w-4 rounded-[3px] border ${heatmapCellClass(cell?.level ?? 0)} cursor-default appearance-none`}
-                            aria-label={cell ? (isFutureCell ? `${dateLabel}: 未到来` : `${dateLabel}: ${count}回`) : '記録なし'}
-                            title={tooltipLabel ?? undefined}
-                          />
-                          {tooltipLabel && (
-                            <span className="pointer-events-none absolute -top-8 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-zinc-800 px-2 py-1 text-[11px] font-bold text-white shadow-lg group-hover/cell:block group-focus-within/cell:block">
-                              {tooltipLabel}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="mt-3 flex items-center justify-end gap-1 text-[10px] font-bold text-zinc-600">
-              <span>少ない</span>
-              {[0, 1, 2, 3, 4].map((level) => (
-                <span key={`legend-${level}`} className={`h-4 w-4 rounded-[3px] border ${heatmapCellClass(level as StudyHeatmapCell['level'])}`} />
-              ))}
-              <span>多い</span>
-            </div>
+            <StudyHeatmap cells={studyHeatmapCells} todayKey={heatmapTodayKey} monthLabels={heatmapMonthLabels} periodLabel={heatmapPeriodLabel} />
           </div>
           {sessions.length === 0 ? (
             <p className="mt-4 rounded-xl border-2 border-zinc-300 bg-zinc-50 p-4 text-sm font-bold text-zinc-700">
