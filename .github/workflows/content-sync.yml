@@ -1,0 +1,70 @@
+name: Content Sync (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      content_object_key:
+        description: "Storage object key to sync"
+        required: true
+        default: "japanese/grammar/content.json"
+      apply_changes:
+        description: "Apply changes to DB (false = dry-run only)"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-sync-production
+  cancel-in-progress: false
+
+jobs:
+  content_sync:
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate content JSON
+        run: npm run content:validate
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          CONTENT_BUCKET: ${{ secrets.CONTENT_BUCKET }}
+          CONTENT_OBJECT_KEY: ${{ inputs.content_object_key }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+
+      - name: Dry-run sync plan
+        run: npm run content:sync:dry
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          CONTENT_BUCKET: ${{ secrets.CONTENT_BUCKET }}
+          CONTENT_OBJECT_KEY: ${{ inputs.content_object_key }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+
+      - name: Apply sync
+        if: ${{ inputs.apply_changes }}
+        run: npm run content:sync
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          CONTENT_BUCKET: ${{ secrets.CONTENT_BUCKET }}
+          CONTENT_OBJECT_KEY: ${{ inputs.content_object_key }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
