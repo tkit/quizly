@@ -43,9 +43,13 @@ export default function QuizClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [idempotencyKey] = useState(() => `quiz-${crypto.randomUUID().replace(/-/g, '')}`);
 
-  const currentQuestion = questions[currentIndex];
+  const currentQuestion = questions[currentIndex] ?? null;
 
   const displayToOriginalOptionIndex = useMemo(() => {
+    if (!currentQuestion) {
+      return [];
+    }
+
     const indices = currentQuestion.options.map((_, index) => index);
 
     const buildSeed = () => {
@@ -73,7 +77,7 @@ export default function QuizClient({
     }
 
     return indices;
-  }, [childId, currentQuestion.id, currentQuestion.options]);
+  }, [childId, currentQuestion?.id, currentQuestion?.options]);
 
   const handleOptionClick = (displayIndex: number) => {
     if (isAnswered) return;
@@ -151,7 +155,7 @@ export default function QuizClient({
 
   const tone = resolveSubjectTone(genre.parent_id ?? genre.id, genre.color_hint);
 
-  if (questions.length === 0) {
+  if (!currentQuestion) {
     return (
       <div className="flex h-full flex-1 flex-col items-center justify-center gap-5 p-4 text-center sm:gap-6">
         <PartyPopper className={`${ICON_SIZE.hero} animate-bounce-soft ${tone.accentTextClass}`} strokeWidth={ICON_STROKE.regular} />
