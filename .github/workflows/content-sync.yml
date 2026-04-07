@@ -39,32 +39,29 @@ jobs:
         run: npm ci
 
       - name: Validate content JSON
-        run: npm run content:validate
+        run: npm run content:validate -- --content-object-key="${{ inputs.content_object_key }}"
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           CONTENT_BUCKET: ${{ secrets.CONTENT_BUCKET }}
-          CONTENT_OBJECT_KEY: ${{ inputs.content_object_key }}
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
 
       - name: Dry-run sync plan
-        run: npm run content:sync:dry
+        run: npm run content:sync:dry -- --content-object-key="${{ inputs.content_object_key }}"
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           CONTENT_BUCKET: ${{ secrets.CONTENT_BUCKET }}
-          CONTENT_OBJECT_KEY: ${{ inputs.content_object_key }}
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
 
       - name: Apply sync
         if: ${{ inputs.apply_changes }}
-        run: npm run content:sync
+        run: npm run content:sync -- --content-object-key="${{ inputs.content_object_key }}"
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           CONTENT_BUCKET: ${{ secrets.CONTENT_BUCKET }}
-          CONTENT_OBJECT_KEY: ${{ inputs.content_object_key }}
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}

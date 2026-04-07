@@ -49,7 +49,6 @@ UPSTASH_REDIS_REST_TOKEN=quizly-dev-token
 ```bash
 SUPABASE_SECRET_KEY=<local-secret-key>
 CONTENT_BUCKET=quiz-content
-CONTENT_OBJECT_KEY=japanese/grammar/content.json
 UPSTASH_REDIS_REST_URL=http://127.0.0.1:8079
 UPSTASH_REDIS_REST_TOKEN=quizly-dev-token
 ```

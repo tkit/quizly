@@ -2,12 +2,49 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 
-const COMMAND = process.argv[2];
-const flags = new Set(process.argv.slice(3));
-const isDryRun = flags.has('--dry-run');
+const rawArgs = process.argv.slice(2);
+const COMMAND = rawArgs[0];
+
+function parseCliOptions(args) {
+  const flags = new Set();
+  const values = new Map();
+
+  for (let i = 0; i < args.length; i += 1) {
+    const token = args[i];
+    if (!token.startsWith('-')) continue;
+
+    if (token === '-h') {
+      flags.add('help');
+      continue;
+    }
+
+    if (!token.startsWith('--')) continue;
+
+    const [keyPart, valuePart] = token.slice(2).split('=', 2);
+    if (!keyPart) continue;
+
+    if (valuePart != null) {
+      values.set(keyPart, valuePart);
+      continue;
+    }
+
+    const next = args[i + 1];
+    if (next != null && !next.startsWith('-')) {
+      values.set(keyPart, next);
+      i += 1;
+      continue;
+    }
+
+    flags.add(keyPart);
+  }
+
+  return { flags, values };
+}
+
+const cli = parseCliOptions(rawArgs.slice(1));
+const isDryRun = cli.flags.has('dry-run') || cli.values.get('dry-run') === 'true';
 const isHelp =
-  flags.has('--help') ||
-  flags.has('-h') ||
+  cli.flags.has('help') ||
   COMMAND === '--help' ||
   COMMAND === '-h' ||
   COMMAND === 'help' ||
@@ -15,14 +52,21 @@ const isHelp =
 
 function printUsage() {
   console.log('Usage:');
-  console.log('  node scripts/content-sync.mjs validate');
-  console.log('  node scripts/content-sync.mjs sync [--dry-run]');
+  console.log('  node scripts/content-sync.mjs validate [options]');
+  console.log('  node scripts/content-sync.mjs sync [--dry-run] [options]');
   console.log('');
-  console.log('Required env vars:');
+  console.log('Options:');
+  console.log('  --supabase-url <url>            overrides NEXT_PUBLIC_SUPABASE_URL');
+  console.log('  --service-role-key <key>        overrides SUPABASE_SECRET_KEY');
+  console.log('  --content-bucket <bucket>       overrides CONTENT_BUCKET');
+  console.log('  --content-object-key <key>      required (no env fallback)');
+  console.log('  --upstash-url <url>             overrides UPSTASH_REDIS_REST_URL');
+  console.log('  --upstash-token <token>         overrides UPSTASH_REDIS_REST_TOKEN');
+  console.log('');
+  console.log('Required env vars (unless overridden by options):');
   console.log('  NEXT_PUBLIC_SUPABASE_URL');
   console.log('  SUPABASE_SECRET_KEY');
   console.log('  CONTENT_BUCKET');
-  console.log('  CONTENT_OBJECT_KEY');
 }
 
 if (isHelp) {
@@ -68,12 +112,33 @@ function requiredEnv(name) {
   return value;
 }
 
-const supabaseUrl = requiredEnv('NEXT_PUBLIC_SUPABASE_URL');
-const serviceRoleKey = requiredEnv('SUPABASE_SECRET_KEY');
-const contentBucket = requiredEnv('CONTENT_BUCKET');
-const contentObjectKey = requiredEnv('CONTENT_OBJECT_KEY');
-const upstashUrl = process.env.UPSTASH_REDIS_REST_URL ?? null;
-const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? null;
+function fromCliOrEnv(optionKey, envKey, required = true) {
+  const optionValue = cli.values.get(optionKey);
+  if (optionValue != null && optionValue.length > 0) {
+    return optionValue;
+  }
+
+  if (!required) {
+    return process.env[envKey] ?? null;
+  }
+
+  return requiredEnv(envKey);
+}
+
+function requiredCliOption(optionKey) {
+  const value = cli.values.get(optionKey);
+  if (value == null || value.length === 0) {
+    throw new Error(`[content-sync] Missing required option: --${optionKey}`);
+  }
+  return value;
+}
+
+const supabaseUrl = fromCliOrEnv('supabase-url', 'NEXT_PUBLIC_SUPABASE_URL');
+const serviceRoleKey = fromCliOrEnv('service-role-key', 'SUPABASE_SECRET_KEY');
+const contentBucket = fromCliOrEnv('content-bucket', 'CONTENT_BUCKET');
+const contentObjectKey = requiredCliOption('content-object-key');
+const upstashUrl = fromCliOrEnv('upstash-url', 'UPSTASH_REDIS_REST_URL', false);
+const upstashToken = fromCliOrEnv('upstash-token', 'UPSTASH_REDIS_REST_TOKEN', false);
 const DASHBOARD_CATALOG_CACHE_KEY = 'quizly:dashboard:catalog:v1';
 const QUIZ_ORDER_VERSION_KEY_PREFIX = 'quizly:quiz_order_version:v1:';
 
@@ -153,7 +218,7 @@ function assert(condition, message) {
   }
 }
 
-function normalizeRows(rows) {
+function normalizeLegacyRows(rows) {
   assert(Array.isArray(rows), 'Content JSON must be an array');
   assert(rows.length > 0, 'Content JSON is empty');
 
@@ -222,6 +287,95 @@ function normalizeRows(rows) {
   });
 
   return { normalized, genres };
+}
+
+function normalizeManifest(payload) {
+  assert(payload != null && typeof payload === 'object', 'Content JSON must be an object in manifest mode');
+  assert(Array.isArray(payload.genres), 'manifest.genres must be an array');
+  assert(Array.isArray(payload.questions), 'manifest.questions must be an array');
+  assert(payload.genres.length > 0, 'manifest.genres is empty');
+  assert(payload.questions.length > 0, 'manifest.questions is empty');
+
+  const genres = payload.genres.map((genre, index) => {
+    const id = String(genre.id ?? '').trim();
+    const name = String(genre.name ?? '').trim();
+    const iconKey = String(genre.icon_key ?? '').trim();
+    const parentIdRaw = genre.parent_id == null ? null : String(genre.parent_id).trim();
+    const parentId = parentIdRaw === '' ? null : parentIdRaw;
+    const description = genre.description == null ? null : String(genre.description);
+    const colorHint = genre.color_hint == null ? null : String(genre.color_hint);
+
+    assert(id.length > 0, `manifest.genres[${index}].id is required`);
+    assert(name.length > 0, `manifest.genres[${index}].name is required`);
+    assert(iconKey.length > 0, `manifest.genres[${index}].icon_key is required`);
+
+    return {
+      id,
+      name,
+      parent_id: parentId,
+      icon_key: iconKey,
+      description,
+      color_hint: colorHint,
+    };
+  });
+
+  const genreIdSet = new Set(genres.map((genre) => genre.id));
+  const seenQuestionKey = new Set();
+
+  const normalized = payload.questions.map((row, index) => {
+    const genreId = String(row.genre_id ?? '').trim();
+    const questionText = String(row.question_text ?? row.question ?? '').trim();
+    const options = Array.isArray(row.options)
+      ? row.options.map((choice) => String(choice))
+      : Array.isArray(row.choices)
+        ? row.choices.map((choice) => String(choice))
+        : [];
+    const explanation = String(row.explanation ?? '').trim();
+    const answer = row.answer == null ? null : String(row.answer).trim();
+    const correctIndexRaw = row.correct_index;
+    const isActive = row.is_active == null ? true : Boolean(row.is_active);
+
+    assert(genreId.length > 0, `manifest.questions[${index}].genre_id is required`);
+    assert(genreIdSet.has(genreId), `manifest.questions[${index}] references unknown genre_id: ${genreId}`);
+    assert(questionText.length > 0, `manifest.questions[${index}].question_text/question is required`);
+    assert(options.length >= 2, `manifest.questions[${index}].options/choices must have at least 2 items`);
+    assert(explanation.length > 0, `manifest.questions[${index}].explanation is required`);
+
+    let correctIndex = Number(correctIndexRaw);
+    if (answer != null) {
+      const answerIndex = options.findIndex((choice) => choice === answer);
+      assert(answerIndex >= 0, `manifest.questions[${index}].answer not found in options`);
+      correctIndex = answerIndex;
+    }
+
+    assert(Number.isInteger(correctIndex), `manifest.questions[${index}].correct_index or answer is required`);
+    assert(
+      correctIndex >= 0 && correctIndex < options.length,
+      `manifest.questions[${index}].correct_index out of range`,
+    );
+
+    const key = `${genreId}::${questionText}`;
+    assert(!seenQuestionKey.has(key), `Duplicate question key in manifest: ${key}`);
+    seenQuestionKey.add(key);
+
+    return {
+      genre_id: genreId,
+      question_text: questionText,
+      options,
+      correct_index: correctIndex,
+      explanation,
+      is_active: isActive,
+    };
+  });
+
+  return { normalized, genres };
+}
+
+function normalizeContentPayload(payload) {
+  if (Array.isArray(payload)) {
+    return normalizeLegacyRows(payload);
+  }
+  return normalizeManifest(payload);
 }
 
 async function fetchContentRows() {
@@ -468,7 +622,7 @@ async function applySyncPlan(plan) {
 
 function printPlan(plan, prefix = '[content-sync]') {
   console.log(`${prefix} target questions: ${plan.desiredCount}`);
-  console.log(`${prefix} existing questions in jp-grammar-* genres: ${plan.existingCount}`);
+  console.log(`${prefix} existing questions in target genres: ${plan.existingCount}`);
   console.log(`${prefix} genres upsert: ${plan.genres.length}`);
   console.log(`${prefix} question inserts: ${plan.inserts.length}`);
   console.log(`${prefix} question updates: ${plan.updates.length}`);
@@ -526,8 +680,8 @@ function printPlan(plan, prefix = '[content-sync]') {
 }
 
 async function main() {
-  const rows = await fetchContentRows();
-  const { normalized, genres } = normalizeRows(rows);
+  const payload = await fetchContentRows();
+  const { normalized, genres } = normalizeContentPayload(payload);
 
   if (COMMAND === 'validate') {
     console.log('[content-sync] Validation passed');
