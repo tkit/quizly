@@ -142,7 +142,7 @@ function buildParentManagementSnapshotCacheKey(guardianId: string) {
 }
 
 function buildDashboardCatalogCacheKey() {
-  return 'quizly:dashboard:catalog:v1';
+  return 'quizly:dashboard:catalog:v2';
 }
 
 export async function ensureGuardianProfile(supabase: SupabaseClient, user: User) {
@@ -227,10 +227,24 @@ async function loadDashboardGenreCatalogFromDatabase(supabase: SupabaseClient): 
     return acc;
   }, {});
 
-  return ((genres ?? []) as DashboardGenreRow[]).map((genre) => ({
+  const catalog = ((genres ?? []) as DashboardGenreRow[]).map((genre) => ({
     ...genre,
     question_count: questionCountByGenreId[genre.id] ?? 0,
   }));
+
+  const visibleParentIds = new Set(
+    catalog
+      .filter((genre) => genre.parent_id != null && genre.question_count > 0)
+      .map((genre) => genre.parent_id)
+      .filter((parentId): parentId is string => Boolean(parentId)),
+  );
+
+  return catalog.filter((genre) => {
+    if (genre.parent_id == null) {
+      return visibleParentIds.has(genre.id) || genre.question_count > 0;
+    }
+    return genre.question_count > 0;
+  });
 }
 
 export async function getDashboardGenreCatalog(supabase: SupabaseClient): Promise<DashboardGenreWithQuestionCount[]> {
