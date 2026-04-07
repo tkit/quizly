@@ -232,17 +232,8 @@ async function loadDashboardGenreCatalogFromDatabase(supabase: SupabaseClient): 
     question_count: questionCountByGenreId[genre.id] ?? 0,
   }));
 
-  const visibleParentIds = new Set(
-    catalog
-      .filter((genre) => genre.parent_id != null && genre.question_count > 0)
-      .map((genre) => genre.parent_id)
-      .filter((parentId): parentId is string => Boolean(parentId)),
-  );
-
   return catalog.filter((genre) => {
-    if (genre.parent_id == null) {
-      return visibleParentIds.has(genre.id) || genre.question_count > 0;
-    }
+    if (genre.parent_id == null) return true;
     return genre.question_count > 0;
   });
 }

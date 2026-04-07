@@ -218,11 +218,18 @@ export default function DashboardClient({
           <div className="grid w-full grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
             {parentGenres.map((genre) => {
               const tone = resolveSubjectTone(genre.id, genre.color_hint);
+              const hasChildren = genres.some((childGenre) => childGenre.parent_id === genre.id);
               return (
                 <button
                   key={genre.id}
-                  onClick={() => setSelectedParentId(genre.id)}
-                  className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-[2rem] border-4 border-zinc-400 p-4 text-left text-zinc-900 shadow-brutal transition-all hover:-translate-y-1 hover:shadow-brutal-lg ${tone.focusRingClass} ${tone.cardClass} sm:gap-6 sm:p-6`}
+                  onClick={() => hasChildren && setSelectedParentId(genre.id)}
+                  disabled={!hasChildren}
+                  aria-disabled={!hasChildren}
+                  className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-[2rem] border-4 border-zinc-400 p-4 text-left text-zinc-900 shadow-brutal transition-all sm:gap-6 sm:p-6 ${
+                    hasChildren
+                      ? `hover:-translate-y-1 hover:shadow-brutal-lg ${tone.focusRingClass} ${tone.cardClass}`
+                      : 'cursor-not-allowed opacity-70'
+                  }`}
                 >
                   <div className={`absolute left-0 top-0 h-full w-4 ${tone.stripClass}`} />
                   <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/20 transition-transform duration-500 group-hover:scale-150" />
@@ -232,6 +239,11 @@ export default function DashboardClient({
                   <div className="z-10 min-w-0 flex-1">
                     <h3 className="font-display text-[1.45rem] font-black leading-tight tracking-wide sm:text-[1.9rem]">{genre.name}</h3>
                     <p className="mt-2 text-sm font-bold text-zinc-700/85 sm:text-base">{genre.description}</p>
+                    {!hasChildren && (
+                      <p className="mt-2 inline-flex rounded-full border-2 border-zinc-300 bg-white/85 px-3 py-1 text-xs font-black text-zinc-600">
+                        準備中
+                      </p>
+                    )}
                   </div>
                   <div className="z-10 shrink-0 self-center">
                     <span className={`inline-flex h-11 w-11 items-center justify-center rounded-full border-4 border-zinc-400 bg-white text-zinc-600 shadow-brutal-sm transition-all group-hover:translate-x-1 sm:h-14 sm:w-14 ${tone.arrowClass}`}>
