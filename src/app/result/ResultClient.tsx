@@ -32,6 +32,8 @@ interface Session {
   earned_points: number;
   mode: string;
   genres: {
+    id: string;
+    parent_id: string | null;
     name: string;
     icon_key: string;
     color_hint: string | null;
@@ -164,7 +166,7 @@ export default function ResultClient({
   const earnedPoints = session.earned_points || 0;
   const basePoints = session.correct_count * POINTS_PER_CORRECT;
   const bonusPoints = earnedPoints - basePoints;
-  const subjectTone = resolveSubjectTone(null, session.genres?.color_hint ?? null);
+  const subjectTone = resolveSubjectTone(session.genres?.parent_id ?? session.genres?.id ?? null, null);
 
   const displayPoints = useCountUp(earnedPoints, 1500);
   const hasTriggeredResultEffect = useRef(false);

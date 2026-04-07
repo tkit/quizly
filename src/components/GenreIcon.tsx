@@ -1,4 +1,5 @@
 import {
+  Bug,
   BookMarked,
   BookOpen,
   Calculator,
@@ -20,6 +21,7 @@ const ICON_BY_KEY = {
   landmark: Landmark,
   microscope: Microscope,
   flask: FlaskConical,
+  bug: Bug,
   notebook: NotebookPen,
   message: MessageCircle,
   clock: Clock3,

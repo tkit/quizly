@@ -24,9 +24,11 @@ export type ResultSession = {
   earned_points: number;
   mode: string;
   genres: {
+    id: string;
+    parent_id: string | null;
     name: string;
     icon_key: string;
-    color_hint: string;
+    color_hint: string | null;
   } | null;
 };
 
@@ -121,6 +123,8 @@ async function loadResultSessionSnapshotFromDatabase(supabase: SupabaseClient, s
         `
         *,
         genres (
+          id,
+          parent_id,
           name,
           icon_key,
           color_hint

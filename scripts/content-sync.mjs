@@ -282,7 +282,6 @@ function normalizeLegacyRows(rows) {
       parent_id: 'japanese',
       icon_key: 'notebook',
       description: `${title}の問題で語彙・表現の理解を深めます。`,
-      color_hint: 'pink',
     };
   });
 
@@ -303,7 +302,7 @@ function normalizeManifest(payload) {
     const parentIdRaw = genre.parent_id == null ? null : String(genre.parent_id).trim();
     const parentId = parentIdRaw === '' ? null : parentIdRaw;
     const description = genre.description == null ? null : String(genre.description);
-    const colorHint = genre.color_hint == null ? null : String(genre.color_hint);
+    assert(genre.color_hint == null, `manifest.genres[${index}].color_hint is not allowed`);
 
     assert(id.length > 0, `manifest.genres[${index}].id is required`);
     assert(name.length > 0, `manifest.genres[${index}].name is required`);
@@ -315,7 +314,6 @@ function normalizeManifest(payload) {
       parent_id: parentId,
       icon_key: iconKey,
       description,
-      color_hint: colorHint,
     };
   });
 

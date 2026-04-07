@@ -71,9 +71,8 @@ npm run content:sync -- --content-object-key=japanese/grammar/content.json
       "id": "jp-vocab-01",
       "name": "語彙マスター 第1回",
       "parent_id": "japanese",
-      "icon_key": "book-open",
-      "description": "語彙問題セット",
-      "color_hint": "blue"
+      "icon_key": "book_open",
+      "description": "語彙問題セット"
     }
   ],
   "questions": [
@@ -92,6 +91,7 @@ npm run content:sync -- --content-object-key=japanese/grammar/content.json
 備考:
 - `questions` では `question_text` の代わりに `question`、`options` の代わりに `choices` も使用可
 - 正解は `answer` か `correct_index` のどちらかで指定可（`answer` がある場合はそちらを優先）
+- `genres[].color_hint` は指定不可（教科ごとの固定トーンを使用）
 
 ### 4-2. `icon_key` の決め方
 
