@@ -1,6 +1,6 @@
 # 本番運用サマリ（Deploy / 外部設定）
 
-最終更新: 2026-04-04
+最終更新: 2026-04-05
 
 本書は **prod運用の正本** です。  
 ローカル開発（dev）手順は `README.md` を参照してください。
@@ -9,6 +9,7 @@
 
 - `README.md`: ローカル開発（dev）の起動・検証手順
 - `docs/operations_prod.md`（本書）: 本番（prod）のデプロイ運用と外部設定
+- Redis 接続先: dev はローカル SRH（`http://127.0.0.1:8079`）、prod は Upstash 本番URLを使用
 
 ## 2. GitHub Actions 本番デプロイフロー
 
@@ -81,3 +82,5 @@
 - `content:sync` の正本手順は `docs/content_sync.md` を参照してください。
 - 本番で `content:sync` を実行する場合は、Vercel側で `SUPABASE_SECRET_KEY` と `UPSTASH_REDIS_REST_*` の設定整合を確認してください。
 - 認証・認可仕様の正本は `docs/auth_spec.md` です。本書は運用手順と設定棚卸しに特化しています。
+- dev/prod混線防止: 実行前に `UPSTASH_REDIS_REST_URL` の host を必ず確認する（dev は `127.0.0.1`、prod は `*.upstash.io`）。
+- Redisキーprefixは現行の `quizly:*` を維持し、衝突回避は「接続先分離（dev=ローカルSRH、prod=本番Upstash）」で担保する。

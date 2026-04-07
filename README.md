@@ -30,6 +30,13 @@
 ローカル開発手順は [`docs/setup_dev.md`](docs/setup_dev.md) を参照してください。  
 上から順に実行すればセットアップできます。
 
+日常の起動/停止は次の2コマンドで実行できます。
+
+```bash
+npm run dev:up
+npm run dev:down
+```
+
 ### Prod 運用（デプロイ/外部設定）
 
 本番運用の手順・設定一覧は [`docs/operations_prod.md`](docs/operations_prod.md) を参照してください。

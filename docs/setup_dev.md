@@ -1,6 +1,6 @@
 # ローカル開発セットアップ手順（dev）
 
-最終更新: 2026-04-04
+最終更新: 2026-04-05
 
 この手順は **上から順に実行** すれば、ローカル開発環境を起動できます。  
 本番運用（prod）は `docs/operations_prod.md` を参照してください。
@@ -33,6 +33,8 @@ NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<local-publishable-key>
 NEXT_PUBLIC_AUTH_MODE=development
 NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT=true
+UPSTASH_REDIS_REST_URL=http://127.0.0.1:8079
+UPSTASH_REDIS_REST_TOKEN=quizly-dev-token
 ```
 
 `<local-publishable-key>` は手順 4 で取得します。
@@ -48,14 +50,40 @@ NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT=true
 SUPABASE_SECRET_KEY=<local-secret-key>
 CONTENT_BUCKET=quiz-content
 CONTENT_OBJECT_KEY=japanese/grammar/content.json
-UPSTASH_REDIS_REST_URL=<optional>
-UPSTASH_REDIS_REST_TOKEN=<optional>
+UPSTASH_REDIS_REST_URL=http://127.0.0.1:8079
+UPSTASH_REDIS_REST_TOKEN=quizly-dev-token
 ```
 
 ## 3. ローカルSupabaseを起動
 
 ```bash
 npm run db:local:start
+```
+
+## 3-1. ローカルRedis + SRHを起動
+
+```bash
+npm run redis:local:start
+```
+
+状態確認:
+
+```bash
+npm run redis:local:status
+```
+
+Redis/SRH 疎通確認（HTTP 200 と `result` を確認）:
+
+```bash
+curl -sS -X POST http://127.0.0.1:8079 \
+  -H "Authorization: Bearer quizly-dev-token" \
+  -H "Content-Type: application/json" \
+  -d '["SET","quizly:dev:health","ok"]'
+
+curl -sS -X POST http://127.0.0.1:8079 \
+  -H "Authorization: Bearer quizly-dev-token" \
+  -H "Content-Type: application/json" \
+  -d '["GET","quizly:dev:health"]'
 ```
 
 ## 4. ローカル接続情報を確認
@@ -115,8 +143,19 @@ dev専用のテスト問題だけを登録したい場合も、`docs/content_syn
 
 ## 10. 日常利用の最短手順（2回目以降）
 
+最短は以下の2コマンドです。
+
+```bash
+npm run dev:up
+# 停止時
+npm run dev:down
+```
+
+個別に実行する場合:
+
 ```bash
 npm run db:local:start
+npm run redis:local:start
 npm run dev
 ```
 
@@ -125,3 +164,20 @@ npm run dev
 ```bash
 npm run db:local:migration:up
 ```
+
+停止時:
+
+```bash
+npm run redis:local:stop
+npm run db:local:stop
+```
+
+## 11. よくある失敗
+
+- `401 Unauthorized`:
+  - `.env.local` / `.env.content.local` の `UPSTASH_REDIS_REST_TOKEN` が `quizly-dev-token` と一致しているか確認
+  - `curl` の `Authorization: Bearer ...` が同じ値か確認
+- `Connection refused` / `Failed to fetch`:
+  - `npm run redis:local:status` で `quizly-srh-local` が `Up` か確認
+  - `docker ps` で 8079 ポート公開を確認
+  - 既存プロセスと競合する場合は `npm run redis:local:stop` 後に再起動

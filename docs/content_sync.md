@@ -1,6 +1,6 @@
 # 問題コンテンツ同期手順（Content Sync）
 
-最終更新: 2026-04-04
+最終更新: 2026-04-05
 
 本書は、問題コンテンツ（`genres/questions`）を更新する正本手順です。  
 `migration` はスキーマ変更用、`content:sync` は問題データ更新用として使い分けます。
@@ -19,13 +19,14 @@
 SUPABASE_SECRET_KEY=<service-role-key>
 CONTENT_BUCKET=quiz-content
 CONTENT_OBJECT_KEY=japanese/grammar/content.json
-UPSTASH_REDIS_REST_URL=<optional>
-UPSTASH_REDIS_REST_TOKEN=<optional>
+UPSTASH_REDIS_REST_URL=http://127.0.0.1:8079
+UPSTASH_REDIS_REST_TOKEN=quizly-dev-token
 ```
 
 補足:
 - `SUPABASE_SECRET_KEY` は `NEXT_PUBLIC_*` として公開しない
-- `UPSTASH_REDIS_REST_*` は設定時のみキャッシュ無効化を実行
+- dev標準は SRH（`docker redis + serverless-redis-http`）を使う
+- `UPSTASH_REDIS_REST_*` が未設定の場合は、現実装どおりキャッシュ無効化をスキップして続行する
 
 ## 3. 実行手順（上から順）
 
@@ -50,7 +51,7 @@ npm run content:sync
 ## 5. dev / prod での使い分け
 
 - dev:
-  - ローカルSupabase起動後、必要に応じて `content:sync` を実行
+  - ローカルSupabase起動 + ローカルRedis/SRH起動後に `content:sync` を実行
   - 事前に `.env.content.local` を用意
 - prod:
   - 運用手順は `docs/operations_prod.md` を参照
