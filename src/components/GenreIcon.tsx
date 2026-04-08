@@ -10,6 +10,9 @@ import {
   MessageCircle,
   Microscope,
   NotebookPen,
+  Moon,
+  Star,
+  Sun,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +25,9 @@ const ICON_BY_KEY = {
   microscope: Microscope,
   flask: FlaskConical,
   bug: Bug,
+  sun: Sun,
+  star: Star,
+  moon: Moon,
   notebook: NotebookPen,
   message: MessageCircle,
   clock: Clock3,
