@@ -1,6 +1,6 @@
 # 問題コンテンツ同期手順（Content Sync）
 
-最終更新: 2026-04-08
+最終更新: 2026-04-11
 
 本書は、問題コンテンツ（`genres/questions`）を更新する正本手順です。  
 `migration` はスキーマ変更用、`content:sync` は問題データ更新用として使い分けます。
@@ -116,6 +116,14 @@ npm run content:sync -- --content-object-key=japanese/grammar/content.json
 2. `content_object_key` を指定（例: `japanese/grammar/content.json` / `japanese/vocab/content.v1.json`）
 3. まず `apply_changes=false` で実行（dry-run確認）
 4. 問題なければ `apply_changes=true` で再実行（本反映）
+
+### 5-2. 実行ログ（環境確認）
+
+- `content:sync` 実行時に、以下をログ出力します
+  - `supabase url`
+  - `upstash url`（未設定時は `(unset)`）
+  - `execution target (inferred)`（URLから推定）
+- Redis無効化時は対象キー範囲（`dashboard` キー、`quiz_order_version` prefix + genre一覧）を出力します
 
 ## 6. dev専用テスト問題を登録する手順（prod非反映）
 

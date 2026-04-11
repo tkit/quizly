@@ -175,7 +175,51 @@ async function runRedisCommand(command) {
   return json?.result ?? null;
 }
 
-async function invalidateDashboardCatalogCache() {
+function inferSupabaseEnv(hostname) {
+  if (hostname === '127.0.0.1' || hostname === 'localhost') {
+    return 'dev';
+  }
+  return 'prod';
+}
+
+function inferUpstashEnv(hostname) {
+  if (hostname === '127.0.0.1' || hostname === 'localhost') {
+    return 'dev';
+  }
+  if (hostname.endsWith('.upstash.io')) {
+    return 'prod';
+  }
+  return 'unknown';
+}
+
+function inferTargetFromUrl(rawUrl, inferFn) {
+  if (!rawUrl) return null;
+  try {
+    const hostname = new URL(rawUrl).hostname.toLowerCase();
+    return inferFn(hostname);
+  } catch {
+    return 'unknown';
+  }
+}
+
+function logExecutionContext() {
+  if (COMMAND !== 'sync') {
+    return { target: null };
+  }
+
+  const supabaseEnv = inferTargetFromUrl(supabaseUrl, inferSupabaseEnv);
+  const upstashEnv = inferTargetFromUrl(upstashUrl, inferUpstashEnv);
+  const executionTarget = upstashEnv ?? supabaseEnv ?? 'unknown';
+
+  console.log(`[content-sync] supabase url: ${supabaseUrl}`);
+  console.log(`[content-sync] upstash url: ${upstashUrl ?? '(unset)'}`);
+  console.log(`[content-sync] execution target (inferred): ${executionTarget}`);
+  return { target: executionTarget };
+}
+
+async function invalidateDashboardCatalogCache(target) {
+  console.log(`[content-sync] Redis invalidation scope: env=${target} key=${DASHBOARD_CATALOG_CACHE_KEY}`);
+
   if (!upstashUrl || !upstashToken) {
     console.log('[content-sync] Dashboard cache invalidation skipped (Upstash env vars are not set)');
     return;
@@ -185,8 +229,11 @@ async function invalidateDashboardCatalogCache() {
   console.log('[content-sync] Dashboard catalog cache invalidated');
 }
 
-async function invalidateQuizQuestionSetCache(plan) {
+async function invalidateQuizQuestionSetCache(plan, target) {
   if (!upstashUrl || !upstashToken) {
+    console.log(
+      `[content-sync] Redis invalidation scope: env=${target} key_prefix=${QUIZ_ORDER_VERSION_KEY_PREFIX}<genre_id>`,
+    );
     console.log('[content-sync] Quiz question-set cache invalidation skipped (Upstash env vars are not set)');
     return;
   }
@@ -197,9 +244,17 @@ async function invalidateQuizQuestionSetCache(plan) {
   for (const row of plan.deactivations) genreIds.add(row.genre_id);
 
   if (genreIds.size === 0) {
+    console.log(
+      `[content-sync] Redis invalidation scope: env=${target} key_prefix=${QUIZ_ORDER_VERSION_KEY_PREFIX}<genre_id>`,
+    );
     console.log('[content-sync] Quiz question-set cache invalidation skipped (no question changes)');
     return;
   }
+
+  const genreIdList = [...genreIds].sort();
+  console.log(
+    `[content-sync] Redis invalidation scope: env=${target} key_prefix=${QUIZ_ORDER_VERSION_KEY_PREFIX}<genre_id> genres=${genreIdList.join(',')}`,
+  );
 
   for (const genreId of genreIds) {
     await runRedisCommand(['INCR', `${QUIZ_ORDER_VERSION_KEY_PREFIX}${genreId}`]);
@@ -678,6 +733,8 @@ function printPlan(plan, prefix = '[content-sync]') {
 }
 
 async function main() {
+  const execution = logExecutionContext();
+
   const payload = await fetchContentRows();
   const { normalized, genres } = normalizeContentPayload(payload);
 
@@ -697,8 +754,8 @@ async function main() {
   }
 
   await applySyncPlan(plan);
-  await invalidateDashboardCatalogCache();
-  await invalidateQuizQuestionSetCache(plan);
+  await invalidateDashboardCatalogCache(execution.target);
+  await invalidateQuizQuestionSetCache(plan, execution.target);
   console.log('[content-sync] Sync completed');
 }
 
