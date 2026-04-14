@@ -18,6 +18,7 @@
 ```bash
 SUPABASE_SECRET_KEY=<service-role-key>
 CONTENT_BUCKET=quiz-content
+QUESTION_IMAGE_BUCKET=quiz-images
 UPSTASH_REDIS_REST_URL=http://127.0.0.1:8079
 UPSTASH_REDIS_REST_TOKEN=quizly-dev-token
 ```
@@ -27,6 +28,7 @@ UPSTASH_REDIS_REST_TOKEN=quizly-dev-token
 - dev標準は SRH（`docker redis + serverless-redis-http`）を使う
 - `UPSTASH_REDIS_REST_*` が未設定の場合は、現実装どおりキャッシュ無効化をスキップして続行する
 - `CONTENT_OBJECT_KEY` は env では受け付けず、CLI引数で必ず指定する
+- `QUESTION_IMAGE_BUCKET` は `scripts/upload-dev-test-content.mjs` を使う場合のみ参照（未指定時は `quiz-images`）
 
 ### 2-1. `content-sync` のCLI引数（env上書き）
 
@@ -82,6 +84,7 @@ npm run content:sync -- --content-object-key=japanese/grammar/content.json
       "options": ["手短で要点をついているさま", "はしの方にあること", "非常に長いこと", "丁寧すぎること"],
       "answer": "手短で要点をついているさま",
       "explanation": "「端的」は、要点を簡潔に示すことです。",
+      "image_url": "japanese/tanteki-01.png",
       "is_active": true
     }
   ]
@@ -91,7 +94,13 @@ npm run content:sync -- --content-object-key=japanese/grammar/content.json
 備考:
 - `questions` では `question_text` の代わりに `question`、`options` の代わりに `choices` も使用可
 - 正解は `answer` か `correct_index` のどちらかで指定可（`answer` がある場合はそちらを優先）
+- `image_url` は任意。指定する場合は **オブジェクトキー（バケット名なし）** を保存する（例: `math/triangle-001.png`）
+- `image_url` に `https://...` のような完全URLは指定しない（配信先変更時の互換性を維持するため）
 - `genres[].color_hint` は指定不可（教科ごとの固定トーンを使用）
+
+画像配信運用:
+- コンテンツJSONは `CONTENT_BUCKET`（例: `quiz-content`）に置き、必要に応じて private 運用可能
+- 問題画像は `QUESTION_IMAGE_BUCKET`（例: `quiz-images`）を Public 運用し、ブラウザが直接取得する
 
 ### 4-2. `icon_key` の決め方
 
@@ -125,24 +134,63 @@ npm run content:sync -- --content-object-key=japanese/grammar/content.json
   - `execution target (inferred)`（URLから推定）
 - Redis無効化時は対象キー範囲（`dashboard` キー、`quiz_order_version` prefix + genre一覧）を出力します
 
-## 6. dev専用テスト問題を登録する手順（prod非反映）
+## 6. dev専用コンテンツを登録する手順（prod非反映）
 
-この手順は、**ローカルSupabaseにだけ** テスト問題を入れたい場合の運用です。  
+この手順は、**ローカルSupabaseにだけ** 問題コンテンツを入れたい場合の運用です。  
 `--content-object-key` を dev専用パスで指定することで、prodの正本JSONと分離します。
 
-### 6-1. 安全確認（prod誤操作防止）
+### 6-0. 最短手順（任意の問題コンテンツ）
+
+任意のコンテンツJSONを登録する場合は、次の手順を推奨します。
+
+```bash
+# 1) ローカル環境起動（未起動なら）
+npm run db:local:start
+npm run redis:local:start
+
+# 2) 任意のJSONをStorageへ配置（例）
+node scripts/upload-content-object.mjs \
+  --local-path=./path/to/your-content.json \
+  --object-key=dev/tests/your-content.json
+
+# 3) 反映（dry-run -> apply）
+npm run content:sync:dry -- --content-object-key=dev/tests/your-content.json
+npm run content:sync -- --content-object-key=dev/tests/your-content.json
+```
+
+補足:
+- `scripts/upload-content-object.mjs` は `CONTENT_BUCKET`（既定: `quiz-content`）へ任意のファイルを upsert する
+- 必須オプションは `--local-path` と `--object-key`
+- 画像を使う場合は、`image_url` に `QUESTION_IMAGE_BUCKET` 内のオブジェクトキーを保存する
+- `UPSTASH_REDIS_REST_*` が未接続の場合は、従来どおりキャッシュ無効化をスキップして続行する
+
+### 6-1. サンプルをすぐ登録したい場合（任意）
+
+画像つきのサンプル問題をすぐ試す場合だけ、次を実行します。
+
+```bash
+node scripts/upload-dev-test-content.mjs
+npm run content:sync -- --content-object-key=dev/tests/dev-image-test.json
+```
+
+補足:
+- `scripts/upload-dev-test-content.mjs` は以下を自動作成してアップロードする
+- `CONTENT_BUCKET`（既定: `quiz-content`, private）に JSON: `dev/tests/dev-image-test.json`
+- `QUESTION_IMAGE_BUCKET`（既定: `quiz-images`, public）に画像: `dev/triangle-01.png`, `dev/clock-03-00.png`
+
+### 6-2. 安全確認（prod誤操作防止）
 
 - `.env.local` の `NEXT_PUBLIC_SUPABASE_URL` が `http://127.0.0.1:54321` であることを確認
 - `npx supabase status` がローカル接続情報を返すことを確認
 - dev専用のオブジェクトキーを決める
   - 例: `japanese/grammar/content.dev-local.json`
 
-### 6-2. dev専用JSONをStorageへ配置
+### 6-3. dev専用JSONをStorageへ配置
 
 ローカルSupabase Studio（通常 `http://127.0.0.1:54323`）で `quiz-content` バケットに  
 dev専用オブジェクト（例: `japanese/grammar/content.dev-local.json`）をアップロードします。
 
-### 6-3. 同期実行
+### 6-4. 同期実行
 
 ```bash
 npm run content:validate -- --content-object-key=japanese/grammar/content.dev-local.json
@@ -150,7 +198,7 @@ npm run content:sync:dry -- --content-object-key=japanese/grammar/content.dev-lo
 npm run content:sync -- --content-object-key=japanese/grammar/content.dev-local.json
 ```
 
-### 6-4. 後片付け（任意）
+### 6-5. 後片付け（任意）
 
 - 正本コンテンツに戻したい場合:
   - 通常キー（例: `japanese/grammar/content.json`）を指定して `content:sync` を再実行

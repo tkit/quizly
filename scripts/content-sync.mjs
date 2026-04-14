@@ -273,6 +273,14 @@ function assert(condition, message) {
   }
 }
 
+function normalizeImagePath(imagePath) {
+  if (imagePath == null) return null;
+  const normalized = String(imagePath).trim();
+  if (!normalized) return null;
+  assert(!normalized.includes('://'), `image_url must be a storage-relative path: ${normalized}`);
+  return normalized.replace(/^\/+/, '');
+}
+
 function normalizeLegacyRows(rows) {
   assert(Array.isArray(rows), 'Content JSON must be an array');
   assert(rows.length > 0, 'Content JSON is empty');
@@ -319,6 +327,7 @@ function normalizeLegacyRows(rows) {
       options: choices,
       correct_index: correctIndex,
       explanation,
+      image_url: null,
       is_active: true,
     });
   }
@@ -386,6 +395,7 @@ function normalizeManifest(payload) {
     const explanation = String(row.explanation ?? '').trim();
     const answer = row.answer == null ? null : String(row.answer).trim();
     const correctIndexRaw = row.correct_index;
+    const imageUrl = normalizeImagePath(row.image_url);
     const isActive = row.is_active == null ? true : Boolean(row.is_active);
 
     assert(genreId.length > 0, `manifest.questions[${index}].genre_id is required`);
@@ -417,6 +427,7 @@ function normalizeManifest(payload) {
       options,
       correct_index: correctIndex,
       explanation,
+      image_url: imageUrl,
       is_active: isActive,
     };
   });
@@ -462,6 +473,7 @@ function rowsEqual(left, right) {
     JSON.stringify(leftOptions) === JSON.stringify(rightOptions) &&
     Number(left.correct_index) === Number(right.correct_index) &&
     String(left.explanation ?? '') === String(right.explanation ?? '') &&
+    String(left.image_url ?? '') === String(right.image_url ?? '') &&
     Boolean(left.is_active) === Boolean(right.is_active)
   );
 }
@@ -491,6 +503,12 @@ function buildQuestionDiff(existing, desired) {
     diff.explanation = { before: beforeExplanation, after: afterExplanation };
   }
 
+  const beforeImageUrl = String(existing.image_url ?? '');
+  const afterImageUrl = String(desired.image_url ?? '');
+  if (beforeImageUrl !== afterImageUrl) {
+    diff.image_url = { before: beforeImageUrl, after: afterImageUrl };
+  }
+
   if (Boolean(existing.is_active) !== Boolean(desired.is_active)) {
     diff.is_active = { before: Boolean(existing.is_active), after: Boolean(desired.is_active) };
   }
@@ -503,7 +521,7 @@ async function buildSyncPlan(desiredRows, desiredGenres) {
 
   const { data: existingQuestions, error: existingQuestionsError } = await supabase
     .from('questions')
-    .select('id, genre_id, question_text, options, correct_index, explanation, is_active, created_at')
+    .select('id, genre_id, question_text, options, correct_index, explanation, image_url, is_active, created_at')
     .in('genre_id', genreIds);
 
   if (existingQuestionsError) {
@@ -559,6 +577,7 @@ async function buildSyncPlan(desiredRows, desiredGenres) {
       options: existing.options,
       correct_index: existing.correct_index,
       explanation: existing.explanation,
+      image_url: existing.image_url,
       is_active: existing.is_active,
     };
 
@@ -571,6 +590,7 @@ async function buildSyncPlan(desiredRows, desiredGenres) {
         options: desired.options,
         correct_index: desired.correct_index,
         explanation: desired.explanation,
+        image_url: desired.image_url,
         is_active: true,
         diff,
       });

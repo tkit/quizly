@@ -66,6 +66,7 @@
 | Vercel Project Environment Variables（Production） | `NEXT_PUBLIC_SITE_URL` | 推奨 | OGP canonical など公開URL解決 |
 | Vercel Project Environment Variables（Production） | `NEXT_PUBLIC_SUPABASE_URL` | 必須 | 本番Supabase接続先URL |
 | Vercel Project Environment Variables（Production） | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 必須 | 本番Supabase anon key |
+| Vercel Project Environment Variables（Production） | `NEXT_PUBLIC_QUESTION_IMAGE_BUCKET` | 推奨 | 問題画像を読むPublicバケット名（例: `quiz-images`） |
 | Vercel Project Environment Variables（Production） | `NEXT_PUBLIC_AUTH_MODE=production` | 必須 | 開発ショートカット無効前提 |
 | Vercel Project Environment Variables（Production） | `NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT=false` | 必須 | 開発ショートカット無効化 |
 | Vercel Project Environment Variables（Production） | `UPSTASH_REDIS_REST_URL` | 任意 | 親再認証/キャッシュでRedis利用時 |
@@ -81,6 +82,7 @@
 - 本番DB変更は原則 GitHub Actions 経由で実施します（手元端末からのprod実行は通常運用外）。
 - `content:sync` の正本手順は `docs/content_sync.md` を参照してください。
 - 本番で `content:sync` を実行する場合は、Vercel側で `SUPABASE_SECRET_KEY` と `UPSTASH_REDIS_REST_*` の設定整合を確認してください。
+- 推奨バケット分離: `CONTENT_BUCKET`（例: `quiz-content`）は private、問題画像バケット（例: `quiz-images`）は public。
 - 認証・認可仕様の正本は `docs/auth_spec.md` です。本書は運用手順と設定棚卸しに特化しています。
 - dev/prod混線防止: 実行前に `UPSTASH_REDIS_REST_URL` の host を必ず確認する（dev は `127.0.0.1`、prod は `*.upstash.io`）。
 - Redisキーprefixは現行の `quizly:*` を維持し、衝突回避は「接続先分離（dev=ローカルSRH、prod=本番Upstash）」で担保する。
