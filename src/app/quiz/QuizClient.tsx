@@ -1,11 +1,19 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import Image from 'next/image';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle, PartyPopper, X, XCircle } from 'lucide-react';
+import { resolveQuestionImagePublicUrl } from '@/lib/content/imageUrl';
 import { fireCorrectEffect } from '@/lib/effects/confetti';
 import { ICON_SIZE, ICON_STROKE } from '@/lib/ui/iconTokens';
 import { resolveSubjectTone } from '@/lib/ui/subjectTone';
+
+const EMPTY_OPTIONS: string[] = [];
+
+function shouldUseUnoptimizedImage(url: string) {
+  return url.startsWith('http://127.0.0.1:') || url.startsWith('http://localhost:');
+}
 
 interface Question {
   id: string;
@@ -41,19 +49,30 @@ export default function QuizClient({
   const [correctCount, setCorrectCount] = useState(0);
   const [historyRecords, setHistoryRecords] = useState<{question_id: string; is_correct: boolean; selected_index: number}[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasImageLoadError, setHasImageLoadError] = useState(false);
   const [idempotencyKey] = useState(() => `quiz-${crypto.randomUUID().replace(/-/g, '')}`);
 
   const currentQuestion = questions[currentIndex] ?? null;
+  const currentQuestionId = currentQuestion?.id ?? null;
+  const currentQuestionOptions = currentQuestion?.options ?? EMPTY_OPTIONS;
+  const questionImageUrl = useMemo(
+    () => resolveQuestionImagePublicUrl(currentQuestion?.image_url),
+    [currentQuestion?.image_url],
+  );
+
+  useEffect(() => {
+    setHasImageLoadError(false);
+  }, [currentQuestion?.id]);
 
   const displayToOriginalOptionIndex = useMemo(() => {
-    if (!currentQuestion) {
+    if (!currentQuestionId) {
       return [];
     }
 
-    const indices = currentQuestion.options.map((_, index) => index);
+    const indices = currentQuestionOptions.map((_, index) => index);
 
     const buildSeed = () => {
-      const source = `${childId}:${currentQuestion.id}`;
+      const source = `${childId}:${currentQuestionId}`;
       let hash = 0;
       for (let i = 0; i < source.length; i += 1) {
         hash = (hash * 31 + source.charCodeAt(i)) >>> 0;
@@ -77,7 +96,7 @@ export default function QuizClient({
     }
 
     return indices;
-  }, [childId, currentQuestion?.id, currentQuestion?.options]);
+  }, [childId, currentQuestionId, currentQuestionOptions]);
 
   const handleOptionClick = (displayIndex: number) => {
     if (isAnswered) return;
@@ -134,12 +153,17 @@ export default function QuizClient({
         }),
       });
 
-      const body = (await response.json().catch(() => null)) as { sessionId?: string; error?: string } | null;
+      const body = (await response.json().catch(() => null)) as {
+        sessionId?: string;
+        pointCapped?: boolean;
+        error?: string;
+      } | null;
       if (!response.ok || !body?.sessionId) {
         throw new Error(body?.error ?? 'Failed to complete study session');
       }
 
-      router.push(`/result?session_id=${body.sessionId}`);
+      const pointCappedQuery = body.pointCapped ? '&point_capped=1' : '';
+      router.push(`/result?session_id=${body.sessionId}${pointCappedQuery}`);
     } catch (err) {
       console.error('Failed to save session:', err);
       alert('結果の保存に失敗しました。');
@@ -209,6 +233,19 @@ export default function QuizClient({
 
       <div className="rounded-3xl border-4 border-zinc-400 bg-white p-5 shadow-brutal sm:p-8">
         <p className="font-display text-[clamp(1.25rem,5vw,2rem)] font-black tracking-wide text-zinc-900">{currentQuestion.question_text}</p>
+        {questionImageUrl && !hasImageLoadError && (
+          <div className="mt-5 overflow-hidden rounded-2xl border-2 border-zinc-300 bg-zinc-50">
+            <Image
+              src={questionImageUrl}
+              alt="問題画像"
+              width={1200}
+              height={900}
+              className="h-auto w-full object-contain"
+              unoptimized={shouldUseUnoptimizedImage(questionImageUrl)}
+              onError={() => setHasImageLoadError(true)}
+            />
+          </div>
+        )}
       </div>
 
       <div className="grid gap-3">

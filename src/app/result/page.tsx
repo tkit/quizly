@@ -8,14 +8,15 @@ import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/ser
 export default async function ResultPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session_id?: string }>;
+  searchParams: Promise<{ session_id?: string; point_capped?: string }>;
 }) {
   const { user } = await getAuthenticatedUser();
   if (!user) {
     redirect('/');
   }
 
-  const { session_id: sessionId } = await searchParams;
+  const { session_id: sessionId, point_capped: pointCappedParam } = await searchParams;
+  const pointCapped = pointCappedParam === '1';
   if (!sessionId) {
     return (
       <PageShell maxWidthClass="max-w-3xl" mainClassName="flex flex-1 items-center justify-center">
@@ -53,7 +54,12 @@ export default async function ResultPage({
 
   return (
     <PageShell maxWidthClass="max-w-3xl">
-      <ResultClient session={snapshot.session} history={snapshot.history} unlockedBadges={snapshot.unlockedBadges} />
+      <ResultClient
+        session={snapshot.session}
+        history={snapshot.history}
+        unlockedBadges={snapshot.unlockedBadges}
+        pointCapped={pointCapped}
+      />
     </PageShell>
   );
 }

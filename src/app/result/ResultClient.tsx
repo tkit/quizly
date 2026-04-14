@@ -153,10 +153,12 @@ export default function ResultClient({
   session,
   history,
   unlockedBadges,
+  pointCapped = false,
 }: {
   session: Session;
   history: HistoryItem[];
   unlockedBadges: UnlockedBadge[];
+  pointCapped?: boolean;
 }) {
   const router = useRouter();
   const [expandedHistoryByIndex, setExpandedHistoryByIndex] = useState<Record<number, boolean>>({});
@@ -333,6 +335,21 @@ export default function ResultClient({
                   </span>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {earnedPoints <= 0 && (
+          <div className="relative z-10 mt-6 sm:mt-8">
+            <div className="inline-flex max-w-full flex-col gap-2 rounded-[1.6rem] border-4 border-zinc-400 bg-white/90 px-4 py-3 text-left shadow-brutal-sm sm:px-6 sm:py-4">
+              <p className="text-base font-black text-zinc-900 sm:text-lg">
+                {pointCapped ? 'このジャンル、たくさんがんばったね。' : '今回もチャレンジできてえらいね。'}
+              </p>
+              <p className="text-sm font-bold leading-relaxed text-zinc-700 sm:text-base">
+                {pointCapped
+                  ? '同じジャンルは6回目以降ポイントがおやすみになります。学習の記録はちゃんと残っているので安心してください。'
+                  : '今回はポイント加算はありませんでしたが、学習の記録はちゃんと残っています。'}
+              </p>
             </div>
           </div>
         )}
