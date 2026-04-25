@@ -37,7 +37,7 @@
 - 保護者管理スナップショット
   - `quizly:parent_snapshot:v1:<guardian_id>`
 - ダッシュボードカタログ
-  - `quizly:dashboard:catalog:v1`
+  - `quizly:dashboard:catalog:v2`
 - クイズ問題セット
   - `quizly:quiz_order_version:v1:<genre_id>`
   - `quizly:quiz_question_set:v1:<genre_id>:<child_id>:<count>:v<genre_version>`

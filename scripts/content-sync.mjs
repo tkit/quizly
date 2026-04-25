@@ -139,7 +139,7 @@ const contentBucket = fromCliOrEnv('content-bucket', 'CONTENT_BUCKET');
 const contentObjectKey = requiredCliOption('content-object-key');
 const upstashUrl = fromCliOrEnv('upstash-url', 'UPSTASH_REDIS_REST_URL', false);
 const upstashToken = fromCliOrEnv('upstash-token', 'UPSTASH_REDIS_REST_TOKEN', false);
-const DASHBOARD_CATALOG_CACHE_KEY = 'quizly:dashboard:catalog:v1';
+const DASHBOARD_CATALOG_CACHE_KEY = 'quizly:dashboard:catalog:v2';
 const QUIZ_ORDER_VERSION_KEY_PREFIX = 'quizly:quiz_order_version:v1:';
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
