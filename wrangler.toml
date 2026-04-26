@@ -42,3 +42,9 @@ NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL = "/"
 [[env.staging.services]]
 binding = "WORKER_SELF_REFERENCE"
 service = "quizly"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "quizly-staging"
+database_id = "d7c8d446-c50b-4a01-9cb5-9faa2e347f86"
+migrations_dir = "d1/migrations"
