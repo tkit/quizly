@@ -20,7 +20,27 @@ Cloudflare migration branch 上で、現行 Supabase/Postgres model と同等の
 npm run d1:schema:verify
 ```
 
-Cloudflare D1 に適用する場合は、先に D1 database を作成して `wrangler.toml` に `d1_databases` binding を追加する。remote resource 作成は #28 の schema design には含めず、Cloudflare staging への実 binding は #29 以降でアプリ接続時に行う。
+Cloudflare D1 に適用する場合は、先に D1 database を作成して `wrangler.toml` に `d1_databases` binding を追加する。remote resource 作成は #28 の schema design には含めず、Cloudflare staging への実 binding は #29 でアプリ接続時に行う。
+
+```bash
+npx wrangler d1 create quizly-staging
+```
+
+作成後に出力された `database_id` を使って、staging env に binding を追加する。
+
+```toml
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "quizly-staging"
+database_id = "<database_id>"
+migrations_dir = "d1/migrations"
+```
+
+schema 適用:
+
+```bash
+npx wrangler d1 migrations apply quizly-staging --env staging --remote
+```
 
 ## Postgres to D1 Rewrite
 

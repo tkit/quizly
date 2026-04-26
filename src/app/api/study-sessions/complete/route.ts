@@ -9,13 +9,14 @@ import {
   setRedisStringIfNotExists,
 } from '@/lib/cache/upstash';
 import { invalidateBadgeOverviewCache } from '@/lib/badges/overview';
+import { getOptionalD1Database } from '@/lib/cloudflare/d1';
 import {
   calculateSessionPoints,
   CONSECUTIVE_CORRECT_STREAK_BONUS_POINTS,
   CONSECUTIVE_CORRECT_STREAK_THRESHOLD,
   DAILY_CHALLENGE_BONUS_POINTS,
 } from '@/lib/points';
-import { completeStudySessionInAppLayer, type UnlockedBadge } from '@/lib/study/completeSession';
+import { completeStudySessionInAppLayer, completeStudySessionInD1, type UnlockedBadge } from '@/lib/study/completeSession';
 
 const IDEMPOTENCY_TTL_SECONDS = 60 * 60;
 const MAX_POINT_ELIGIBLE_ATTEMPTS_PER_GENRE = 5;
@@ -104,6 +105,276 @@ async function restoreDailyPointState(
     }, { onConflict: 'child_id' });
 }
 
+async function restoreD1DailyPointState(
+  db: D1Database,
+  childId: string,
+  previousState: ChildDailyPointState | null,
+) {
+  if (!previousState) {
+    await db.prepare('DELETE FROM child_daily_point_state WHERE child_id = ?').bind(childId).run();
+    return;
+  }
+
+  await db
+    .prepare(
+      `
+      INSERT INTO child_daily_point_state (
+        child_id, state_date, consecutive_correct_count, streak_bonus_count,
+        daily_challenge_awarded, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(child_id) DO UPDATE SET
+        state_date = excluded.state_date,
+        consecutive_correct_count = excluded.consecutive_correct_count,
+        streak_bonus_count = excluded.streak_bonus_count,
+        daily_challenge_awarded = excluded.daily_challenge_awarded,
+        updated_at = excluded.updated_at
+    `,
+    )
+    .bind(
+      childId,
+      previousState.state_date,
+      previousState.consecutive_correct_count,
+      previousState.streak_bonus_count,
+      previousState.daily_challenge_awarded ? 1 : 0,
+      new Date().toISOString(),
+    )
+    .run();
+}
+
+async function completeWithD1(
+  db: D1Database,
+  params: {
+    guardianId: string;
+    activeChildId: string;
+    body: Body;
+    completedAt: Date;
+    cacheKey: string;
+  },
+) {
+  const { guardianId, activeChildId, body, completedAt, cacheKey } = params;
+  const child = await db
+    .prepare('SELECT id FROM child_profiles WHERE id = ? AND guardian_id = ? LIMIT 1')
+    .bind(activeChildId, guardianId)
+    .first<{ id: string }>();
+
+  if (!child) {
+    return NextResponse.json({ error: 'Child not found' }, { status: 404 });
+  }
+
+  if (isUpstashConfigured()) {
+    const existingRaw = await getRedisString(cacheKey).catch(() => null);
+    const existing = parseIdempotencyState(existingRaw);
+
+    if (existing?.status === 'done') {
+      return NextResponse.json({
+        sessionId: existing.sessionId,
+        unlockedBadges: existing.unlockedBadges ?? [],
+        pointCapped: existing.pointCapped ?? false,
+        deduplicated: true,
+      });
+    }
+
+    const acquired = await setRedisStringIfNotExists(
+      cacheKey,
+      JSON.stringify({ status: 'pending', createdAt: new Date().toISOString() } satisfies IdempotencyState),
+      IDEMPOTENCY_TTL_SECONDS,
+    ).catch(() => false);
+
+    if (!acquired) {
+      const nowRaw = await getRedisString(cacheKey).catch(() => null);
+      const nowState = parseIdempotencyState(nowRaw);
+
+      if (nowState?.status === 'done') {
+        return NextResponse.json({
+          sessionId: nowState.sessionId,
+          unlockedBadges: nowState.unlockedBadges ?? [],
+          pointCapped: nowState.pointCapped ?? false,
+          deduplicated: true,
+        });
+      }
+
+      return NextResponse.json({ error: 'A duplicated completion request is in progress' }, { status: 409 });
+    }
+  }
+
+  const mode = body.mode ?? 'normal';
+  const totalQuestions = Number(body.totalQuestions ?? 0);
+  const correctCount = Number(body.correctCount ?? 0);
+  const pointsResult = calculateSessionPoints(correctCount, totalQuestions);
+  const completedDateJst = formatJstDate(completedAt);
+
+  const genreAttemptRow = await db
+    .prepare('SELECT COUNT(*) AS count FROM study_sessions WHERE child_id = ? AND genre_id = ?')
+    .bind(activeChildId, body.genreId)
+    .first<{ count: number }>();
+  const pointCapped = Number(genreAttemptRow?.count ?? 0) >= MAX_POINT_ELIGIBLE_ATTEMPTS_PER_GENRE;
+  let previousDailyState: ChildDailyPointState | null = null;
+  let earnedPoints = 0;
+  let pointTransactions: PointTransaction[] = [];
+  let shouldRestoreDailyPointState = false;
+
+  if (!pointCapped) {
+    const existingDailyStateRaw = await db
+      .prepare(
+        `
+        SELECT state_date, consecutive_correct_count, streak_bonus_count, daily_challenge_awarded
+        FROM child_daily_point_state
+        WHERE child_id = ?
+        LIMIT 1
+      `,
+      )
+      .bind(activeChildId)
+      .first<ChildDailyPointState & { daily_challenge_awarded: number | boolean }>();
+
+    const existingDailyState = existingDailyStateRaw
+      ? {
+          ...existingDailyStateRaw,
+          daily_challenge_awarded: Boolean(existingDailyStateRaw.daily_challenge_awarded),
+        }
+      : null;
+    previousDailyState = existingDailyState ? { ...existingDailyState } : null;
+
+    let dailyState: ChildDailyPointState = {
+      state_date: completedDateJst,
+      consecutive_correct_count: 0,
+      streak_bonus_count: 0,
+      daily_challenge_awarded: false,
+    };
+
+    if (existingDailyState && existingDailyState.state_date === completedDateJst) {
+      dailyState = existingDailyState;
+    }
+
+    const dailyChallengeBonusPoints = dailyState.daily_challenge_awarded ? 0 : DAILY_CHALLENGE_BONUS_POINTS;
+    dailyState.daily_challenge_awarded = true;
+
+    const previousStreakBonusCount = dailyState.streak_bonus_count;
+    let runningConsecutiveCorrect = dailyState.consecutive_correct_count;
+    let streakBonusCount = dailyState.streak_bonus_count;
+
+    for (const record of body.historyRecords ?? []) {
+      if (record.is_correct) {
+        runningConsecutiveCorrect += 1;
+        const reachedThresholdCount = Math.floor(runningConsecutiveCorrect / CONSECUTIVE_CORRECT_STREAK_THRESHOLD);
+        if (reachedThresholdCount > streakBonusCount) {
+          streakBonusCount = reachedThresholdCount;
+        }
+        continue;
+      }
+
+      runningConsecutiveCorrect = 0;
+    }
+
+    dailyState.consecutive_correct_count = runningConsecutiveCorrect;
+    dailyState.streak_bonus_count = streakBonusCount;
+
+    const newStreakBonusCount = Math.max(0, streakBonusCount - previousStreakBonusCount);
+    const streakBonusPoints = newStreakBonusCount * CONSECUTIVE_CORRECT_STREAK_BONUS_POINTS;
+    earnedPoints = pointsResult.totalPoints + dailyChallengeBonusPoints + streakBonusPoints;
+
+    pointTransactions = [
+      pointsResult.basePoints > 0
+        ? {
+            points: pointsResult.basePoints,
+            reason: 'correct_answer',
+          }
+        : null,
+      pointsResult.bonusPoints > 0
+        ? {
+            points: pointsResult.bonusPoints,
+            reason: 'perfect_bonus',
+          }
+        : null,
+      dailyChallengeBonusPoints > 0
+        ? {
+            points: dailyChallengeBonusPoints,
+            reason: 'daily_challenge_bonus',
+          }
+        : null,
+      streakBonusPoints > 0
+        ? {
+            points: streakBonusPoints,
+            reason: 'correct_streak_bonus',
+          }
+        : null,
+    ].filter((transaction): transaction is PointTransaction => transaction !== null);
+
+    await db
+      .prepare(
+        `
+        INSERT INTO child_daily_point_state (
+          child_id, state_date, consecutive_correct_count, streak_bonus_count,
+          daily_challenge_awarded, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(child_id) DO UPDATE SET
+          state_date = excluded.state_date,
+          consecutive_correct_count = excluded.consecutive_correct_count,
+          streak_bonus_count = excluded.streak_bonus_count,
+          daily_challenge_awarded = excluded.daily_challenge_awarded,
+          updated_at = excluded.updated_at
+      `,
+      )
+      .bind(
+        activeChildId,
+        dailyState.state_date,
+        dailyState.consecutive_correct_count,
+        dailyState.streak_bonus_count,
+        dailyState.daily_challenge_awarded ? 1 : 0,
+        new Date().toISOString(),
+      )
+      .run();
+
+    shouldRestoreDailyPointState = true;
+  }
+
+  const completionResult = await completeStudySessionInD1(db, {
+    childId: activeChildId,
+    genreId: body.genreId ?? '',
+    mode,
+    totalQuestions,
+    correctCount,
+    earnedPoints,
+    completedAt: body.completedAt ?? new Date().toISOString(),
+    completedDateJst,
+    historyRecords: body.historyRecords ?? [],
+    pointTransactions,
+  }).catch((error: unknown) => ({ error }));
+
+  if ('error' in completionResult) {
+    if (shouldRestoreDailyPointState) {
+      await restoreD1DailyPointState(db, activeChildId, previousDailyState).catch(() => null);
+    }
+
+    if (isUpstashConfigured()) {
+      await deleteRedisKey(cacheKey).catch(() => null);
+    }
+
+    const message = completionResult.error instanceof Error ? completionResult.error.message : 'Failed to complete study session';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
+  const { sessionId, unlockedBadges } = completionResult;
+
+  if (isUpstashConfigured()) {
+    await setRedisString(
+      cacheKey,
+      JSON.stringify({
+        status: 'done',
+        sessionId,
+        unlockedBadges,
+        pointCapped,
+        createdAt: new Date().toISOString(),
+      } satisfies IdempotencyState),
+      IDEMPOTENCY_TTL_SECONDS,
+    ).catch(() => null);
+  }
+
+  await invalidateBadgeOverviewCache(activeChildId);
+
+  console.info(`[study-session-complete] completed via d1 guardian=${guardianId}`);
+  return NextResponse.json({ sessionId, unlockedBadges, pointCapped, deduplicated: false });
+}
+
 export async function POST(request: NextRequest) {
   const { user } = await getAuthenticatedUser();
   if (!user) {
@@ -134,6 +405,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid completedAt' }, { status: 400 });
   }
 
+  const cacheKey = buildIdempotencyKey(user.id, activeChildId, idempotencyKey);
+  const d1 = await getOptionalD1Database();
+  if (d1) {
+    return completeWithD1(d1, {
+      guardianId: user.id,
+      activeChildId,
+      body,
+      completedAt,
+      cacheKey,
+    });
+  }
+
   const supabase = await createServerSupabaseClient();
   const { data: child, error: childError } = await supabase
     .from('child_profiles')
@@ -144,8 +427,6 @@ export async function POST(request: NextRequest) {
   if (childError || !child) {
     return NextResponse.json({ error: 'Child not found' }, { status: 404 });
   }
-
-  const cacheKey = buildIdempotencyKey(user.id, activeChildId, idempotencyKey);
 
   if (isUpstashConfigured()) {
     const existingRaw = await getRedisString(cacheKey).catch(() => null);
