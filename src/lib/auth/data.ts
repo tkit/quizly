@@ -1,4 +1,5 @@
-import type { SupabaseClient, User } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { AppUser } from '@/lib/auth/server';
 import { isParentReauthUnlocked } from '@/lib/auth/parentReauth';
 import { deleteRedisKey, getRedisString, isUpstashConfigured, setRedisString } from '@/lib/cache/upstash';
 
@@ -145,8 +146,8 @@ function buildDashboardCatalogCacheKey() {
   return 'quizly:dashboard:catalog:v2';
 }
 
-export async function ensureGuardianProfile(supabase: SupabaseClient, user: User) {
-  const fallbackName = user.user_metadata?.name ?? user.email?.split('@')[0] ?? '保護者';
+export async function ensureGuardianProfile(supabase: SupabaseClient, user: AppUser) {
+  const fallbackName = user.displayName ?? user.email?.split('@')[0] ?? '保護者';
 
   await supabase.from('guardian_accounts').upsert(
     {

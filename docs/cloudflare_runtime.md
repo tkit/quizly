@@ -1,7 +1,7 @@
 # Cloudflare Runtime Bootstrap
 
-最終更新: 2026-04-25  
-対象Issue: #26 / 親Issue: #24
+最終更新: 2026-04-26  
+対象Issue: #26-#27 / 親Issue: #24
 
 ## 目的
 
@@ -57,14 +57,27 @@ npm run cf-typegen
 |---|---|
 | `CLOUDFLARE_API_TOKEN` | Wrangler deploy |
 | `CLOUDFLARE_ACCOUNT_ID` | Wrangler deploy |
+| `CLERK_SECRET_KEY` | Clerk server-side session verification |
 
-Cloudflare Worker 側にも、#26 時点では Supabase/Upstash の runtime variables/secrets を追加しない。`wrangler deploy` は `--keep-vars` 付きで実行し、Dashboard/Workers Builds 側で管理している値を削除しない。
+必要な GitHub Environment `Preview` variables または secrets:
+
+| Variable/Secret | 用途 |
+|---|---|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk browser SDK initialization |
+
+Cloudflare Worker 側にも、Supabase/Upstash の runtime variables/secrets は追加しない。#27 以降は Clerk の runtime variables/secrets だけを追加する。`wrangler deploy` は `--keep-vars` 付きで実行し、Dashboard/Workers Builds 側で管理している値を削除しない。
 
 | Worker runtime variable/secret | 用途 |
 |---|---|
 | `NEXT_PUBLIC_SITE_URL` | staging URL。`wrangler.toml` では `https://quizly.stdy.workers.dev` |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk browser SDK initialization |
+| `CLERK_SECRET_KEY` | Clerk server-side session verification |
 | `NEXT_PUBLIC_AUTH_MODE` | `production` |
 | `NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT` | `false` |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | `/` |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | `/` |
+
+Clerk の Google OAuth callback/redirect は Clerk Dashboard で `https://quizly.stdy.workers.dev/` と `https://quizly.stdy.workers.dev/sso-callback` を許可する。Cloudflare 側では `CLERK_SECRET_KEY` を secret、`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` を variable として登録する。
 
 ## Cloudflare Dashboard / Builds
 
@@ -86,7 +99,8 @@ Workers Builds を使う場合の設定:
 - [ ] Cloudflare preview deploy が成功する。
 - [ ] `https://quizly.stdy.workers.dev/api/health` が 200 と `{ "ok": true }` を返す。
 - [ ] `https://quizly.stdy.workers.dev/` が 200 を返す。
-- [ ] Supabase/Upstash 未移行箇所は後続Issueの対象として残し、#26 では新規 secrets を足さない。
+- [ ] `https://quizly.stdy.workers.dev/` から Clerk Google sign-in が開始でき、ログイン後 `/` へ戻る。
+- [ ] Supabase/Upstash 未移行箇所は後続Issueの対象として残し、Cloudflare 側へ legacy secrets を足さない。
 
 ## Follow-up Boundaries
 

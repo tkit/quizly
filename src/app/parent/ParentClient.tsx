@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useMemo, useState, useTransition } from 'react';
+import { useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import {
   BarChart3,
@@ -17,7 +18,6 @@ import {
   Trash2,
   UserRound,
 } from 'lucide-react';
-import { getBrowserSupabaseClient } from '@/lib/auth/browser';
 import type { ParentManagementSnapshot, ParentSessionHistoryItem, ParentSessionSummary } from '@/lib/auth/data';
 
 type SectionKey = 'children' | 'history' | 'analytics' | 'settings';
@@ -71,7 +71,7 @@ export default function ParentClient({
   initialSnapshot: ParentManagementSnapshot | null;
 }) {
   const router = useRouter();
-  const supabase = getBrowserSupabaseClient();
+  const { signOut } = useClerk();
   const [unlocked, setUnlocked] = useState(initialUnlocked);
   const [hasParentPin, setHasParentPin] = useState(initialHasParentPin);
   const [pin, setPin] = useState('');
@@ -450,9 +450,7 @@ export default function ParentClient({
       return;
     }
 
-    await supabase.auth.signOut();
-    router.push('/');
-    router.refresh();
+    await signOut({ redirectUrl: '/' });
   };
 
   if (!hasParentPin) {
@@ -558,8 +556,7 @@ export default function ParentClient({
             <button
               onClick={async () => {
                 await fetch('/api/session/child/logout', { method: 'POST' });
-                await supabase.auth.signOut();
-                router.push('/');
+                await signOut({ redirectUrl: '/' });
               }}
               className="inline-flex min-h-11 items-center gap-2 rounded-xl border-2 border-amber-300 bg-amber-100 px-4 py-2 text-sm font-black text-amber-800 hover:bg-amber-200"
             >

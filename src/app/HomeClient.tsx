@@ -1,12 +1,11 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useSignIn } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { getBrowserSupabaseClient } from '@/lib/auth/browser';
 import type { ChildProfile } from '@/lib/auth/data';
-import { AUTH_MODE, DEV_SHORTCUT_ENABLED } from '@/lib/auth/constants';
 import QuizlyLogo from '@/components/QuizlyLogo';
-import { ArrowRight, KeyRound, Mail, Play, PlusCircle, ShieldCheck, UserPlus } from 'lucide-react';
+import { ArrowRight, Play, PlusCircle, ShieldCheck, UserPlus } from 'lucide-react';
 
 export default function HomeClient({
   initialChildren,
@@ -16,14 +15,14 @@ export default function HomeClient({
   isParentAuthenticated: boolean;
 }) {
   const router = useRouter();
-  const supabase = getBrowserSupabaseClient();
+  const { signIn } = useSignIn();
+  const isClerkLoaded = Boolean(signIn);
 
   const [isLoadingChildren, setIsLoadingChildren] = useState(false);
   const [isAutoSelectingChild, setIsAutoSelectingChild] = useState(false);
   const [children, setChildren] = useState<ChildProfile[]>(initialChildren);
-  const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
-  const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [selectedChildId, setSelectedChildId] = useState(initialChildren[0]?.id ?? '');
   const [newChildName, setNewChildName] = useState('');
 
@@ -74,58 +73,27 @@ export default function HomeClient({
 
   const handleGoogleSignIn = async () => {
     setMessage('');
-    const redirectTo = `${window.location.origin}/auth/callback`;
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
-    if (error) setMessage(`Googleログインに失敗しました: ${error.message}`);
-  };
 
-  const handleMagicLink = async (event: FormEvent) => {
-    event.preventDefault();
-    setMessage('');
-    setIsSendingMagicLink(true);
-    const redirectTo = `${window.location.origin}/auth/callback`;
+    if (!isClerkLoaded || !signIn) {
+      setMessage('ログイン準備中です。少し待ってから再度お試しください。');
+      return;
+    }
+
+    setIsSigningIn(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
-      if (error) {
-        setMessage(`Magic Link送信に失敗しました: ${error.message}`);
-        return;
+      const result = await signIn.sso({
+        strategy: 'oauth_google',
+        redirectUrl: '/',
+        redirectCallbackUrl: '/sso-callback',
+      });
+      if (result.error) {
+        setIsSigningIn(false);
+        setMessage('Googleログインを開始できませんでした。時間をおいて再度お試しください。');
       }
-      setMessage('Magic Link を送信しました。メールをご確認ください。');
-    } finally {
-      setIsSendingMagicLink(false);
+    } catch {
+      setIsSigningIn(false);
+      setMessage('Googleログインを開始できませんでした。時間をおいて再度お試しください。');
     }
-  };
-
-  const handlePasskeySignIn = async () => {
-    setMessage('');
-    const passkeyApi = (supabase.auth as unknown as {
-      signInWithWebAuthn?: () => Promise<{ error: { message: string } | null }>;
-      signUpWithWebAuthn?: () => Promise<{ error: { message: string } | null }>;
-    });
-
-    if (!passkeyApi.signInWithWebAuthn && !passkeyApi.signUpWithWebAuthn) {
-      setMessage('この環境の SDK では Passkey API が利用できません。Google または Magic Link を使ってください。');
-      return;
-    }
-
-    const result = passkeyApi.signInWithWebAuthn
-      ? await passkeyApi.signInWithWebAuthn()
-      : await passkeyApi.signUpWithWebAuthn?.();
-
-    if (result?.error) setMessage(`Passkey認証に失敗しました: ${result.error.message}`);
-  };
-
-  const handleDevShortcut = async () => {
-    setMessage('');
-    const authAny = supabase.auth as unknown as {
-      signInAnonymously?: () => Promise<{ error: { message: string } | null }>;
-    };
-    if (!authAny.signInAnonymously) {
-      setMessage('匿名ログインAPIが利用できません。');
-      return;
-    }
-    const { error } = await authAny.signInAnonymously();
-    if (error) setMessage(`開発ショートカットログインに失敗しました: ${error.message}`);
   };
 
   const handleCreateChild = async (event: FormEvent) => {
@@ -193,45 +161,14 @@ export default function HomeClient({
           {!isParentAuthenticated ? (
             <>
               <div className="grid gap-3">
-                <button onClick={handleGoogleSignIn} className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-3 font-bold hover:bg-zinc-200">
-                  Google でログイン
-                </button>
-                <button onClick={handlePasskeySignIn} className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-3 font-bold hover:bg-zinc-200">
-                  <KeyRound className="h-4 w-4" />
-                  Passkey でログイン
-                </button>
-                {DEV_SHORTCUT_ENABLED && AUTH_MODE === 'development' && (
-                  <button
-                    onClick={handleDevShortcut}
-                    className="focus-ring min-h-11 rounded-xl border-2 border-amber-300 bg-amber-100 px-4 py-3 font-bold text-amber-800 hover:bg-amber-200"
-                  >
-                    開発ショートカットでログイン
-                  </button>
-                )}
-              </div>
-
-              <form className="mt-4 grid gap-2 rounded-2xl border-2 border-zinc-200 bg-zinc-50 p-3" onSubmit={handleMagicLink}>
-                <label className="inline-flex items-center gap-2 text-sm font-black text-zinc-700">
-                  <Mail className="h-4 w-4" />
-                  Magic Link (メール)
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isSendingMagicLink}
-                  className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 bg-white px-3"
-                  placeholder="parent@example.com"
-                />
                 <button
-                  type="submit"
-                  disabled={isSendingMagicLink}
-                  className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 bg-slate-100 px-4 py-2 font-bold text-zinc-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={handleGoogleSignIn}
+                  disabled={isSigningIn || !isClerkLoaded}
+                  className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-3 font-bold hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isSendingMagicLink ? '送信中...' : 'Magic Link を送信'}
+                  {isSigningIn ? 'ログインへ移動中...' : 'Google でログイン'}
                 </button>
-              </form>
+              </div>
             </>
           ) : (
             <div className="rounded-2xl border-2 border-zinc-300 bg-slate-50 p-3 text-sm font-bold text-slate-700">

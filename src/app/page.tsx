@@ -4,15 +4,16 @@ import HomeClient from './HomeClient';
 import PageShell from '@/components/layout/PageShell';
 import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
 import { ensureGuardianProfile, listChildProfiles } from '@/lib/auth/data';
-import { getAuthenticatedUser } from '@/lib/auth/server';
+import { createServerSupabaseClient, getAuthenticatedUser, isLegacySupabaseConfigured } from '@/lib/auth/server';
 
 export default async function Home() {
   const cookieStore = await cookies();
   const activeChildId = cookieStore.get(ACTIVE_CHILD_COOKIE)?.value;
-  const { supabase, user } = await getAuthenticatedUser();
+  const { user } = await getAuthenticatedUser();
+  const supabase = user && isLegacySupabaseConfigured() ? await createServerSupabaseClient() : null;
 
-  if (user) {
-    await ensureGuardianProfile(supabase, user);
+  if (user && supabase) {
+    await ensureGuardianProfile(supabase, user).catch(() => null);
 
     if (activeChildId) {
       const { data: activeChild } = await supabase
@@ -27,7 +28,7 @@ export default async function Home() {
     }
   }
 
-  const initialChildren = user ? await listChildProfiles(supabase) : [];
+  const initialChildren = user && supabase ? await listChildProfiles(supabase).catch(() => []) : [];
 
   return (
     <PageShell maxWidthClass="max-w-4xl" mainClassName="flex flex-col items-center gap-8 pt-6 sm:pt-10">
