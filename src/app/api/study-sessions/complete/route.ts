@@ -15,6 +15,7 @@ import {
   CONSECUTIVE_CORRECT_STREAK_THRESHOLD,
   DAILY_CHALLENGE_BONUS_POINTS,
 } from '@/lib/points';
+import { completeStudySessionInAppLayer, type UnlockedBadge } from '@/lib/study/completeSession';
 
 const IDEMPOTENCY_TTL_SECONDS = 60 * 60;
 const MAX_POINT_ELIGIBLE_ATTEMPTS_PER_GENRE = 5;
@@ -28,13 +29,6 @@ type HistoryRecord = {
 type PointTransaction = {
   points: number;
   reason: 'correct_answer' | 'perfect_bonus' | 'daily_challenge_bonus' | 'correct_streak_bonus';
-};
-
-export type UnlockedBadge = {
-  key: string;
-  name: string;
-  icon_path: string;
-  is_secret: boolean;
 };
 
 type Body = {
@@ -57,11 +51,6 @@ type ChildDailyPointState = {
 type IdempotencyState =
   | { status: 'pending'; createdAt: string }
   | { status: 'done'; sessionId: string; unlockedBadges: UnlockedBadge[]; pointCapped: boolean; createdAt: string };
-
-type CompleteStudySessionResult = {
-  sessionId: string;
-  unlockedBadges?: UnlockedBadge[];
-};
 
 function buildIdempotencyKey(guardianId: string, childId: string, idempotencyKey: string) {
   return `quizly:study_session_complete:idempotency:v1:${guardianId}:${childId}:${idempotencyKey}`;
@@ -326,23 +315,20 @@ export async function POST(request: NextRequest) {
     shouldRestoreDailyPointState = true;
   }
 
-  const { data: completionResult, error: completionError } = await supabase.rpc('complete_study_session', {
-    p_child_id: activeChildId,
-    p_genre_id: body.genreId,
-    p_mode: mode,
-    p_total_questions: totalQuestions,
-    p_correct_count: correctCount,
-    p_earned_points: earnedPoints,
-    p_completed_at: body.completedAt,
-    p_history_records: body.historyRecords,
-    p_point_transactions: pointTransactions,
-  });
+  const completionResult = await completeStudySessionInAppLayer(supabase, {
+    childId: activeChildId,
+    genreId: body.genreId,
+    mode,
+    totalQuestions,
+    correctCount,
+    earnedPoints,
+    completedAt: body.completedAt,
+    completedDateJst,
+    historyRecords: body.historyRecords,
+    pointTransactions,
+  }).catch((error: unknown) => ({ error }));
 
-  const completionData = (completionResult ?? null) as CompleteStudySessionResult | null;
-  const sessionId = completionData?.sessionId ?? null;
-  const unlockedBadges = Array.isArray(completionData?.unlockedBadges) ? completionData.unlockedBadges : [];
-
-  if (completionError || !sessionId) {
+  if ('error' in completionResult) {
     if (shouldRestoreDailyPointState) {
       await restoreDailyPointState(supabase, activeChildId, previousDailyState).catch(() => null);
     }
@@ -351,8 +337,11 @@ export async function POST(request: NextRequest) {
       await deleteRedisKey(cacheKey).catch(() => null);
     }
 
-    return NextResponse.json({ error: completionError?.message ?? 'Failed to complete study session' }, { status: 500 });
+    const message = completionResult.error instanceof Error ? completionResult.error.message : 'Failed to complete study session';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
+
+  const { sessionId, unlockedBadges } = completionResult;
 
   if (isUpstashConfigured()) {
     await setRedisString(

@@ -80,11 +80,6 @@ export type ParentManagementSnapshot = {
 
 export type StudyStatus = 'unattempted' | 'studied_not_perfect' | 'perfect_cleared';
 
-type ChildStudyStatusRow = {
-  genre_id: string;
-  study_status: StudyStatus | null;
-};
-
 type ParentSessionGenreRow = {
   name: string;
   parent_id: string | null;
@@ -119,11 +114,6 @@ type ParentHistoryRow = {
   selected_index: number;
   answered_at: string;
   questions: ParentHistoryQuestionRow | ParentHistoryQuestionRow[] | null;
-};
-
-type DashboardQuestionCountRow = {
-  genre_id: string;
-  question_count: number | string;
 };
 
 type DashboardGenreRow = {
@@ -173,30 +163,39 @@ export async function listChildProfiles(supabase: SupabaseClient) {
 }
 
 export async function getDashboardSnapshot(supabase: SupabaseClient, activeChildId: string) {
-  const [{ data: child }, { count: childCount }, { data: studyStatusRows, error: studyStatusError }] = await Promise.all([
+  const [{ data: child }, { count: childCount }, { data: studySessionRows, error: studySessionError }] = await Promise.all([
     supabase
       .from('child_profiles')
       .select('id, display_name, total_points')
       .eq('id', activeChildId)
       .maybeSingle(),
     supabase.from('child_profiles').select('id', { count: 'exact', head: true }),
-    supabase.rpc('get_child_study_status', { p_child_id: activeChildId }),
+    supabase
+      .from('study_sessions')
+      .select('genre_id, total_questions, correct_count')
+      .eq('child_id', activeChildId)
+      .not('genre_id', 'is', null),
   ]);
 
-  if (!child || studyStatusError) {
+  if (!child || studySessionError) {
     return null;
   }
 
-  const studyStatusByGenreId = ((studyStatusRows ?? []) as ChildStudyStatusRow[]).reduce<Record<string, StudyStatus>>(
-    (acc, row) => {
-      if (!row.genre_id || !row.study_status) {
-        return acc;
-      }
-      acc[row.genre_id] = row.study_status;
-      return acc;
-    },
-    {},
-  );
+  const studyStatusByGenreId = ((studySessionRows ?? []) as Array<{
+    genre_id: string | null;
+    total_questions: number;
+    correct_count: number;
+  }>).reduce<Record<string, StudyStatus>>((acc, row) => {
+    if (!row.genre_id) return acc;
+
+    const current = acc[row.genre_id];
+    const isPerfect = row.total_questions > 0 && row.correct_count === row.total_questions;
+    if (isPerfect || !current) {
+      acc[row.genre_id] = isPerfect ? 'perfect_cleared' : 'studied_not_perfect';
+    }
+
+    return acc;
+  }, {});
 
   return {
     activeChild: child as DashboardActiveChild,
@@ -206,25 +205,29 @@ export async function getDashboardSnapshot(supabase: SupabaseClient, activeChild
 }
 
 async function loadDashboardGenreCatalogFromDatabase(supabase: SupabaseClient): Promise<DashboardGenreWithQuestionCount[]> {
-  const [{ data: genres, error: genresError }, { data: questionCounts, error: questionCountsError }] = await Promise.all([
+  const [{ data: genres, error: genresError }, { data: activeQuestions, error: activeQuestionsError }] = await Promise.all([
     supabase
       .from('genres')
       .select('*')
       .order('parent_id', { ascending: true, nullsFirst: true })
       .order('id', { ascending: true }),
-    supabase.rpc('get_active_question_counts'),
+    supabase
+      .from('questions')
+      .select('genre_id')
+      .eq('is_active', true),
   ]);
 
   if (genresError) {
     throw genresError;
   }
 
-  if (questionCountsError) {
-    throw questionCountsError;
+  if (activeQuestionsError) {
+    throw activeQuestionsError;
   }
 
-  const questionCountByGenreId = ((questionCounts ?? []) as DashboardQuestionCountRow[]).reduce((acc: Record<string, number>, row) => {
-    acc[row.genre_id] = Number(row.question_count ?? 0);
+  const questionCountByGenreId = ((activeQuestions ?? []) as Array<{ genre_id: string | null }>).reduce((acc: Record<string, number>, row) => {
+    if (!row.genre_id) return acc;
+    acc[row.genre_id] = (acc[row.genre_id] ?? 0) + 1;
     return acc;
   }, {});
 
