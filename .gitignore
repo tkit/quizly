@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.open-next/
 /out/
 
 # production
@@ -62,3 +63,6 @@ supabase/migrations/*_refresh_japanese_grammar_*.sql
 # codex local skills/tooling artifacts
 .agents/skills/
 skills-lock.json
+
+# cloudflare local build/deploy cache
+.wrangler/

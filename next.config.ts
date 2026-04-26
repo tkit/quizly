@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+
+if (process.env.NODE_ENV === "development") {
+  initOpenNextCloudflareForDev();
+}
 
 function buildRemotePatterns() {
   const patterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [];
