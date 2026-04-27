@@ -7,6 +7,12 @@ workers_dev = true
 preview_urls = false
 upload_source_maps = true
 
+[observability]
+
+[observability.logs]
+enabled = true
+invocation_logs = true
+
 [assets]
 directory = ".open-next/assets"
 binding = "ASSETS"
@@ -26,6 +32,12 @@ name = "quizly"
 workers_dev = true
 preview_urls = true
 upload_source_maps = true
+
+[env.staging.observability]
+
+[env.staging.observability.logs]
+enabled = true
+invocation_logs = true
 
 [env.staging.assets]
 directory = ".open-next/assets"
