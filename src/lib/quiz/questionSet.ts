@@ -79,34 +79,6 @@ async function fetchQuestionsByIds(supabase: SupabaseClient, questionIds: string
   return questionIds.map((id) => byId.get(id)).filter((row): row is QuizQuestionRow => Boolean(row));
 }
 
-async function fetchD1QuestionsByIds(db: D1Database, questionIds: string[]) {
-  if (questionIds.length === 0) {
-    return [] as QuizQuestionRow[];
-  }
-
-  const placeholders = questionIds.map(() => '?').join(', ');
-  const result = await db
-    .prepare(
-      `
-      SELECT id, genre_id, question_text, options, correct_index, explanation, image_url
-      FROM questions
-      WHERE id IN (${placeholders}) AND is_active = 1
-    `,
-    )
-    .bind(...questionIds)
-    .all<Omit<QuizQuestionRow, 'options'> & { options: string }>();
-
-  const byId = new Map((result.results ?? []).map((row) => [
-    row.id,
-    {
-      ...row,
-      options: JSON.parse(row.options) as string[],
-    } satisfies QuizQuestionRow,
-  ] as const));
-
-  return questionIds.map((id) => byId.get(id)).filter((row): row is QuizQuestionRow => Boolean(row));
-}
-
 export async function getD1QuizQuestionSet(
   db: D1Database,
   params: {
@@ -115,34 +87,8 @@ export async function getD1QuizQuestionSet(
     requestedCount: number | null;
   },
 ) {
-  const startedAt = Date.now();
   const { childId, genreId, requestedCount } = params;
   const count = requestedCount && requestedCount > 0 ? requestedCount : 0;
-
-  const version = await getQuizOrderVersion(genreId);
-  const cacheKey = buildQuizQuestionSetCacheKey(genreId, childId, count, version);
-
-  if (isUpstashConfigured()) {
-    try {
-      const cached = await getRedisString(cacheKey);
-      if (cached) {
-        const ids = JSON.parse(cached) as string[];
-        const questions = await fetchD1QuestionsByIds(db, ids);
-
-        if (questions.length === ids.length) {
-          console.info(`[quiz-question-set-cache] d1-hit genre=${genreId} count=${count} elapsed_ms=${Date.now() - startedAt}`);
-          return questions;
-        }
-
-        await deleteRedisKey(cacheKey);
-        console.info(`[quiz-question-set-cache] d1-stale-entry-evicted genre=${genreId} count=${count}`);
-      } else {
-        console.info(`[quiz-question-set-cache] d1-miss genre=${genreId} count=${count}`);
-      }
-    } catch (error) {
-      console.warn(`[quiz-question-set-cache] d1 failed to read genre=${genreId} count=${count}`, error);
-    }
-  }
 
   const result = await db
     .prepare(
@@ -167,16 +113,6 @@ export async function getD1QuizQuestionSet(
         buildStableQuestionOrderKey(childId, genreId, right.id),
     )
     .slice(0, resolvedCount);
-
-  if (isUpstashConfigured()) {
-    try {
-      const selectedIds = selected.map((row) => row.id);
-      await setRedisString(cacheKey, JSON.stringify(selectedIds), QUIZ_QUESTION_SET_TTL_SECONDS);
-      console.info(`[quiz-question-set-cache] d1-rebuilt genre=${genreId} count=${count} elapsed_ms=${Date.now() - startedAt}`);
-    } catch (error) {
-      console.warn(`[quiz-question-set-cache] d1 failed to write genre=${genreId} count=${count}`, error);
-    }
-  }
 
   return selected;
 }

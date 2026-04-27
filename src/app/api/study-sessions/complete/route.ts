@@ -161,41 +161,7 @@ async function completeWithD1(
     return NextResponse.json({ error: 'Child not found' }, { status: 404 });
   }
 
-  if (isUpstashConfigured()) {
-    const existingRaw = await getRedisString(cacheKey).catch(() => null);
-    const existing = parseIdempotencyState(existingRaw);
-
-    if (existing?.status === 'done') {
-      return NextResponse.json({
-        sessionId: existing.sessionId,
-        unlockedBadges: existing.unlockedBadges ?? [],
-        pointCapped: existing.pointCapped ?? false,
-        deduplicated: true,
-      });
-    }
-
-    const acquired = await setRedisStringIfNotExists(
-      cacheKey,
-      JSON.stringify({ status: 'pending', createdAt: new Date().toISOString() } satisfies IdempotencyState),
-      IDEMPOTENCY_TTL_SECONDS,
-    ).catch(() => false);
-
-    if (!acquired) {
-      const nowRaw = await getRedisString(cacheKey).catch(() => null);
-      const nowState = parseIdempotencyState(nowRaw);
-
-      if (nowState?.status === 'done') {
-        return NextResponse.json({
-          sessionId: nowState.sessionId,
-          unlockedBadges: nowState.unlockedBadges ?? [],
-          pointCapped: nowState.pointCapped ?? false,
-          deduplicated: true,
-        });
-      }
-
-      return NextResponse.json({ error: 'A duplicated completion request is in progress' }, { status: 409 });
-    }
-  }
+  void cacheKey;
 
   const mode = body.mode ?? 'normal';
   const totalQuestions = Number(body.totalQuestions ?? 0);
@@ -355,31 +321,11 @@ async function completeWithD1(
       await restoreD1DailyPointState(db, activeChildId, previousDailyState).catch(() => null);
     }
 
-    if (isUpstashConfigured()) {
-      await deleteRedisKey(cacheKey).catch(() => null);
-    }
-
     const message = completionResult.error instanceof Error ? completionResult.error.message : 'Failed to complete study session';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
   const { sessionId, unlockedBadges } = completionResult;
-
-  if (isUpstashConfigured()) {
-    await setRedisString(
-      cacheKey,
-      JSON.stringify({
-        status: 'done',
-        sessionId,
-        unlockedBadges,
-        pointCapped,
-        createdAt: new Date().toISOString(),
-      } satisfies IdempotencyState),
-      IDEMPOTENCY_TTL_SECONDS,
-    ).catch(() => null);
-  }
-
-  await invalidateBadgeOverviewCache(activeChildId);
 
   console.info(`[study-session-complete] completed via d1 guardian=${guardianId}`);
   return NextResponse.json({ sessionId, unlockedBadges, pointCapped, deduplicated: false });
