@@ -66,6 +66,27 @@ type BadgeDefinitionRow = {
   condition_json: BadgeCondition | null;
 };
 
+type D1ResultSessionRow = Omit<ResultSession, 'genres'> & {
+  genre_name: string | null;
+  genre_parent_id: string | null;
+  genre_icon_key: string | null;
+  genre_color_hint: string | null;
+};
+
+type D1HistoryRow = {
+  is_correct: number | boolean;
+  selected_index: number;
+  question_text: string;
+  options: string;
+  correct_index: number;
+  explanation: string | null;
+};
+
+type D1BadgeDefinitionRow = Omit<BadgeDefinitionRow, 'is_secret' | 'condition_json'> & {
+  is_secret: number | boolean;
+  condition_json: string | BadgeCondition | null;
+};
+
 function resolveSubjectName(subjectId: string | undefined) {
   switch (subjectId) {
     case 'japanese':
@@ -196,6 +217,160 @@ async function loadResultSessionSnapshotFromDatabase(supabase: SupabaseClient, s
   return {
     session: sessionData as ResultSession,
     history: (historyData ?? []) as ResultHistoryItem[],
+    unlockedBadges,
+  };
+}
+
+function normalizeD1BadgeDefinition(row: D1BadgeDefinitionRow): BadgeDefinitionRow {
+  let conditionJson: BadgeCondition | null = null;
+
+  if (typeof row.condition_json === 'string' && row.condition_json.length > 0) {
+    conditionJson = JSON.parse(row.condition_json) as BadgeCondition;
+  } else if (row.condition_json && typeof row.condition_json === 'object') {
+    conditionJson = row.condition_json;
+  }
+
+  return {
+    ...row,
+    is_secret: Boolean(row.is_secret),
+    condition_json: conditionJson,
+  };
+}
+
+export async function getD1ResultSessionSnapshot(
+  db: D1Database,
+  params: { guardianId: string; sessionId: string },
+): Promise<ResultSessionSnapshot> {
+  const { guardianId, sessionId } = params;
+  const [sessionRow, historyResult, unlockEventsResult] = await Promise.all([
+    db
+      .prepare(
+        `
+        SELECT
+          ss.id,
+          ss.genre_id,
+          ss.total_questions,
+          ss.correct_count,
+          ss.earned_points,
+          ss.mode,
+          g.name AS genre_name,
+          g.parent_id AS genre_parent_id,
+          g.icon_key AS genre_icon_key,
+          g.color_hint AS genre_color_hint
+        FROM study_sessions ss
+        JOIN child_profiles cp ON cp.id = ss.child_id
+        LEFT JOIN genres g ON g.id = ss.genre_id
+        WHERE ss.id = ? AND cp.guardian_id = ?
+        LIMIT 1
+      `,
+      )
+      .bind(sessionId, guardianId)
+      .first<D1ResultSessionRow>(),
+    db
+      .prepare(
+        `
+        SELECT
+          sh.is_correct,
+          sh.selected_index,
+          q.question_text,
+          q.options,
+          q.correct_index,
+          q.explanation
+        FROM study_history sh
+        JOIN study_sessions ss ON ss.id = sh.session_id
+        JOIN child_profiles cp ON cp.id = ss.child_id
+        JOIN questions q ON q.id = sh.question_id
+        WHERE sh.session_id = ? AND cp.guardian_id = ?
+        ORDER BY sh.answered_at ASC
+      `,
+      )
+      .bind(sessionId, guardianId)
+      .all<D1HistoryRow>(),
+    db
+      .prepare(
+        `
+        SELECT bue.badge_key, bue.created_at
+        FROM badge_unlock_events bue
+        JOIN study_sessions ss ON ss.id = bue.session_id
+        JOIN child_profiles cp ON cp.id = ss.child_id
+        WHERE bue.session_id = ? AND cp.guardian_id = ?
+        ORDER BY bue.created_at ASC
+      `,
+      )
+      .bind(sessionId, guardianId)
+      .all<{ badge_key: string; created_at: string }>(),
+  ]);
+
+  if (!sessionRow) {
+    throw new Error('Result session not found');
+  }
+
+  const unlockEvents = unlockEventsResult.results ?? [];
+  const badgeKeys = [...new Set(unlockEvents.map((row) => row.badge_key).filter((key): key is string => Boolean(key)))];
+  let unlockedBadges: ResultUnlockedBadge[] = [];
+
+  if (badgeKeys.length > 0) {
+    const placeholders = badgeKeys.map(() => '?').join(', ');
+    const badgeDefinitionsResult = await db
+      .prepare(
+        `
+        SELECT key, family, level, name, icon_path, is_secret, condition_json
+        FROM badge_definitions
+        WHERE key IN (${placeholders})
+      `,
+      )
+      .bind(...badgeKeys)
+      .all<D1BadgeDefinitionRow>();
+
+    const badgeMap = new Map(
+      (badgeDefinitionsResult.results ?? []).map((row) => {
+        const badge = normalizeD1BadgeDefinition(row);
+        return [
+          badge.key,
+          {
+            key: badge.key,
+            name: badge.name,
+            icon_path: badge.icon_path,
+            is_secret: badge.is_secret,
+            condition_text: buildBadgeConditionText(badge),
+          } satisfies ResultUnlockedBadge,
+        ] as const;
+      }),
+    );
+
+    unlockedBadges = unlockEvents
+      .map((row) => badgeMap.get(row.badge_key))
+      .filter((badge): badge is ResultUnlockedBadge => Boolean(badge));
+  }
+
+  return {
+    session: {
+      id: sessionRow.id,
+      genre_id: sessionRow.genre_id,
+      total_questions: sessionRow.total_questions,
+      correct_count: sessionRow.correct_count,
+      earned_points: sessionRow.earned_points,
+      mode: sessionRow.mode,
+      genres: sessionRow.genre_name
+        ? {
+            id: sessionRow.genre_id,
+            parent_id: sessionRow.genre_parent_id,
+            name: sessionRow.genre_name,
+            icon_key: sessionRow.genre_icon_key ?? 'notebook',
+            color_hint: sessionRow.genre_color_hint,
+          }
+        : null,
+    },
+    history: (historyResult.results ?? []).map((row) => ({
+      is_correct: Boolean(row.is_correct),
+      selected_index: row.selected_index,
+      questions: {
+        question_text: row.question_text,
+        options: JSON.parse(row.options) as string[],
+        correct_index: row.correct_index,
+        explanation: row.explanation,
+      },
+    })),
     unlockedBadges,
   };
 }
