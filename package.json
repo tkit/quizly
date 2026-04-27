@@ -13,6 +13,7 @@
     "cf:deploy:staging": "node scripts/cloudflare-migration-build-env.mjs build --env staging && wrangler deploy --env staging --keep-vars",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "d1:schema:verify": "rm -f /tmp/quizly-d1-schema.sqlite && sqlite3 /tmp/quizly-d1-schema.sqlite < d1/migrations/0001_initial_schema.sql && sqlite3 /tmp/quizly-d1-schema.sqlite < d1/verify/schema_invariants.sql",
+    "d1:seed:reference:staging": "node scripts/d1-seed-reference-data.mjs",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "db:migration:new": "npx supabase migration new",
