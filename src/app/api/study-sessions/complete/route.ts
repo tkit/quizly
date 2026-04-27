@@ -341,6 +341,16 @@ async function completeWithD1(
   }).catch((error: unknown) => ({ error }));
 
   if ('error' in completionResult) {
+    console.error('[study-session-complete] d1 completion failed', {
+      guardianId,
+      activeChildId,
+      genreId: body.genreId,
+      totalQuestions,
+      correctCount,
+      historyRecordCount: body.historyRecords?.length ?? 0,
+      error: completionResult.error,
+    });
+
     if (shouldRestoreDailyPointState) {
       await restoreD1DailyPointState(db, activeChildId, previousDailyState).catch(() => null);
     }
