@@ -25,15 +25,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '4桁PINが必要です' }, { status: 400 });
   }
 
-  const cooldownSeconds = await getParentPinCooldownSeconds(user.id);
-
-  if (cooldownSeconds > 0) {
-    return NextResponse.json(
-      { error: `PIN入力の失敗が続いたため、しばらく待ってから再試行してください（約${cooldownSeconds}秒）` },
-      { status: 429 },
-    );
-  }
-
   const d1 = await getOptionalD1Database();
   if (d1) {
     const parentPinHash = await getD1ParentPinHash(d1, user.id);
@@ -42,21 +33,21 @@ export async function POST(request: NextRequest) {
     }
 
     if (hashPin(body.pin) !== parentPinHash) {
-      const result = await registerParentPinFailure(user.id, request.headers.get('x-forwarded-for'));
-      if (result.locked) {
-        return NextResponse.json(
-          { error: `PIN入力の失敗が続いたため、${result.retryAfterSeconds}秒後に再試行してください` },
-          { status: 429 },
-        );
-      }
-
       return NextResponse.json({ error: 'PINが一致しません' }, { status: 403 });
     }
 
-    await clearParentPinAttemptState(user.id, request.headers.get('x-forwarded-for'));
     const expiresAt = await createD1ParentReauthSession(d1, user.id);
 
     return NextResponse.json({ ok: true, expiresAt });
+  }
+
+  const cooldownSeconds = await getParentPinCooldownSeconds(user.id);
+
+  if (cooldownSeconds > 0) {
+    return NextResponse.json(
+      { error: `PIN入力の失敗が続いたため、しばらく待ってから再試行してください（約${cooldownSeconds}秒）` },
+      { status: 429 },
+    );
   }
 
   const supabase = await createServerSupabaseClient();
