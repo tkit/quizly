@@ -61,6 +61,7 @@ supabase/migrations/*_seed_japanese_grammar_*.sql
 supabase/migrations/*_refresh_japanese_grammar_*.sql
 
 # codex local skills/tooling artifacts
+.codex/
 .agents/skills/
 skills-lock.json
 
