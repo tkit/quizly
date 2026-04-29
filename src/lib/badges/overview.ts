@@ -310,13 +310,14 @@ async function loadD1BadgeOverviewFromDatabase(
     db
       .prepare(
         `
-        SELECT current_streak_days, weekly_shield_count
-        FROM child_streak_state
-        WHERE child_id = ?
+        SELECT css.current_streak_days, css.weekly_shield_count
+        FROM child_streak_state css
+        JOIN child_profiles cp ON cp.id = css.child_id
+        WHERE css.child_id = ? AND cp.guardian_id = ?
         LIMIT 1
       `,
       )
-      .bind(childId)
+      .bind(childId, guardianId)
       .first<D1StreakStateRow>(),
     db
       .prepare(
@@ -383,13 +384,14 @@ async function loadD1BadgeSummaryFromDatabase(
     db
       .prepare(
         `
-        SELECT current_streak_days
-        FROM child_streak_state
-        WHERE child_id = ?
+        SELECT css.current_streak_days
+        FROM child_streak_state css
+        JOIN child_profiles cp ON cp.id = css.child_id
+        WHERE css.child_id = ? AND cp.guardian_id = ?
         LIMIT 1
       `,
       )
-      .bind(childId)
+      .bind(childId, guardianId)
       .first<{ current_streak_days: number }>(),
     db
       .prepare(
