@@ -18,6 +18,9 @@ export type D1ChildProfile = {
 };
 
 const PARENT_REAUTH_SESSION_TTL_SECONDS = 15 * 60;
+const PARENT_PIN_ATTEMPT_WINDOW_SECONDS = 10 * 60;
+const PARENT_PIN_MAX_FAILED_ATTEMPTS = 5;
+const PARENT_PIN_COOLDOWN_SECONDS = 5 * 60;
 
 type D1ParentSessionSummaryRow = ParentSessionSummary;
 
@@ -162,6 +165,7 @@ export async function clearD1ParentReauthSession(db: D1Database, guardianId: str
 export async function createD1ParentReauthSession(db: D1Database, guardianId: string) {
   const expiresAt = new Date(Date.now() + PARENT_REAUTH_SESSION_TTL_SECONDS * 1000).toISOString();
 
+  await clearD1ParentReauthSession(db, guardianId);
   await db
     .prepare(
       `
@@ -173,6 +177,105 @@ export async function createD1ParentReauthSession(db: D1Database, guardianId: st
     .run();
 
   return expiresAt;
+}
+
+function parentPinGuardianAttemptScope(guardianId: string) {
+  return `guardian:${guardianId}`;
+}
+
+function parentPinIpAttemptScope(ipHash: string) {
+  return `ip:${ipHash}`;
+}
+
+async function incrementD1ParentPinAttempt(db: D1Database, scope: string) {
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const expiresAt = new Date(now.getTime() + PARENT_PIN_ATTEMPT_WINDOW_SECONDS * 1000).toISOString();
+
+  await db
+    .prepare('DELETE FROM parent_pin_attempt_state WHERE scope = ? AND expires_at <= ?')
+    .bind(scope, nowIso)
+    .run();
+
+  await db
+    .prepare(
+      `
+      INSERT INTO parent_pin_attempt_state (scope, attempts, expires_at, created_at, updated_at)
+      VALUES (?, 1, ?, ?, ?)
+      ON CONFLICT(scope) DO UPDATE SET
+        attempts = attempts + 1,
+        updated_at = excluded.updated_at
+    `,
+    )
+    .bind(scope, expiresAt, nowIso, nowIso)
+    .run();
+
+  const row = await db
+    .prepare('SELECT attempts FROM parent_pin_attempt_state WHERE scope = ? LIMIT 1')
+    .bind(scope)
+    .first<{ attempts: number }>();
+
+  return Number(row?.attempts ?? 0);
+}
+
+export async function getD1ParentPinCooldownSeconds(db: D1Database, guardianId: string) {
+  const now = new Date();
+  const row = await db
+    .prepare('SELECT expires_at FROM parent_pin_cooldowns WHERE guardian_id = ? AND expires_at > ? LIMIT 1')
+    .bind(guardianId, now.toISOString())
+    .first<{ expires_at: string }>();
+
+  if (!row) {
+    await db
+      .prepare('DELETE FROM parent_pin_cooldowns WHERE guardian_id = ?')
+      .bind(guardianId)
+      .run();
+    return 0;
+  }
+
+  const retryAfterMs = new Date(row.expires_at).getTime() - now.getTime();
+  return Math.max(0, Math.ceil(retryAfterMs / 1000));
+}
+
+export async function clearD1ParentPinAttemptState(db: D1Database, guardianId: string, ipHash: string | null) {
+  const scopes = [parentPinGuardianAttemptScope(guardianId)];
+  if (ipHash) {
+    scopes.push(parentPinIpAttemptScope(ipHash));
+  }
+
+  await Promise.all([
+    ...scopes.map((scope) => db.prepare('DELETE FROM parent_pin_attempt_state WHERE scope = ?').bind(scope).run()),
+    db.prepare('DELETE FROM parent_pin_cooldowns WHERE guardian_id = ?').bind(guardianId).run(),
+  ]);
+}
+
+export async function registerD1ParentPinFailure(db: D1Database, guardianId: string, ipHash: string | null) {
+  const guardianAttempts = await incrementD1ParentPinAttempt(db, parentPinGuardianAttemptScope(guardianId));
+  const ipAttempts = ipHash ? await incrementD1ParentPinAttempt(db, parentPinIpAttemptScope(ipHash)) : 0;
+  const shouldCooldown = guardianAttempts >= PARENT_PIN_MAX_FAILED_ATTEMPTS || ipAttempts >= PARENT_PIN_MAX_FAILED_ATTEMPTS;
+
+  if (!shouldCooldown) {
+    return { locked: false, retryAfterSeconds: 0 };
+  }
+
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const expiresAt = new Date(now.getTime() + PARENT_PIN_COOLDOWN_SECONDS * 1000).toISOString();
+
+  await db
+    .prepare(
+      `
+      INSERT INTO parent_pin_cooldowns (guardian_id, expires_at, created_at, updated_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(guardian_id) DO UPDATE SET
+        expires_at = excluded.expires_at,
+        updated_at = excluded.updated_at
+    `,
+    )
+    .bind(guardianId, expiresAt, nowIso, nowIso)
+    .run();
+
+  return { locked: true, retryAfterSeconds: PARENT_PIN_COOLDOWN_SECONDS };
 }
 
 export async function getD1ParentReauthSessionExpiresAt(db: D1Database, guardianId: string) {

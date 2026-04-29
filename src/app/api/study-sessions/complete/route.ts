@@ -8,8 +8,10 @@ import {
   CONSECUTIVE_CORRECT_STREAK_THRESHOLD,
   DAILY_CHALLENGE_BONUS_POINTS,
 } from '@/lib/points';
-import { completeStudySessionInD1 } from '@/lib/study/completeSession';
+import { completeStudySessionInD1, type UnlockedBadge } from '@/lib/study/completeSession';
 
+const IDEMPOTENCY_TTL_SECONDS = 60 * 60;
+const IDEMPOTENCY_LOCK_SECONDS = 60;
 const MAX_POINT_ELIGIBLE_ATTEMPTS_PER_GENRE = 5;
 
 type HistoryRecord = {
@@ -40,6 +42,20 @@ type ChildDailyPointState = {
   daily_challenge_awarded: boolean;
 };
 
+type CompletionResponseBody = {
+  sessionId: string;
+  unlockedBadges: UnlockedBadge[];
+  pointCapped: boolean;
+  deduplicated: boolean;
+};
+
+type D1IdempotencyRow = {
+  status: 'in_progress' | 'completed';
+  response_json: string | null;
+  locked_until: string;
+  expires_at: string;
+};
+
 function buildIdempotencyKey(guardianId: string, childId: string, idempotencyKey: string) {
   return `quizly:study_session_complete:idempotency:v1:${guardianId}:${childId}:${idempotencyKey}`;
 }
@@ -55,6 +71,136 @@ function formatJstDate(value: Date) {
     month: '2-digit',
     day: '2-digit',
   }).format(value);
+}
+
+function getD1ChangedRows(result: D1Result<unknown>) {
+  if (!result.meta || typeof result.meta !== 'object' || !('changes' in result.meta)) {
+    return 0;
+  }
+
+  const changes = result.meta.changes;
+  return typeof changes === 'number' ? changes : 0;
+}
+
+function parseCompletionResponse(raw: string | null): CompletionResponseBody | null {
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as CompletionResponseBody;
+  } catch {
+    return null;
+  }
+}
+
+async function acquireD1CompletionIdempotencyLock(
+  db: D1Database,
+  params: {
+    key: string;
+    guardianId: string;
+    childId: string;
+  },
+) {
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const lockedUntil = new Date(now.getTime() + IDEMPOTENCY_LOCK_SECONDS * 1000).toISOString();
+  const expiresAt = new Date(now.getTime() + IDEMPOTENCY_TTL_SECONDS * 1000).toISOString();
+
+  await db
+    .prepare('DELETE FROM study_completion_idempotency WHERE key = ? AND expires_at <= ?')
+    .bind(params.key, nowIso)
+    .run();
+
+  const insertResult = await db
+    .prepare(
+      `
+      INSERT OR IGNORE INTO study_completion_idempotency (
+        key, guardian_id, child_id, status, locked_until, expires_at, created_at, updated_at
+      ) VALUES (?, ?, ?, 'in_progress', ?, ?, ?, ?)
+    `,
+    )
+    .bind(params.key, params.guardianId, params.childId, lockedUntil, expiresAt, nowIso, nowIso)
+    .run();
+
+  if (getD1ChangedRows(insertResult) > 0) {
+    return { acquired: true as const };
+  }
+
+  const existing = await db
+    .prepare(
+      `
+      SELECT status, response_json, locked_until, expires_at
+      FROM study_completion_idempotency
+      WHERE key = ? AND guardian_id = ? AND child_id = ?
+      LIMIT 1
+    `,
+    )
+    .bind(params.key, params.guardianId, params.childId)
+    .first<D1IdempotencyRow>();
+
+  if (!existing) {
+    return { acquired: false as const, conflict: true as const };
+  }
+
+  if (existing.status === 'completed') {
+    const response = parseCompletionResponse(existing.response_json);
+    if (response) {
+      return { acquired: false as const, response: { ...response, deduplicated: true } };
+    }
+  }
+
+  if (new Date(existing.locked_until).getTime() > now.getTime()) {
+    return { acquired: false as const, conflict: true as const };
+  }
+
+  const updateResult = await db
+    .prepare(
+      `
+      UPDATE study_completion_idempotency
+      SET status = 'in_progress',
+          response_json = NULL,
+          session_id = NULL,
+          locked_until = ?,
+          expires_at = ?,
+          updated_at = ?
+      WHERE key = ?
+        AND guardian_id = ?
+        AND child_id = ?
+        AND status = 'in_progress'
+        AND locked_until <= ?
+    `,
+    )
+    .bind(lockedUntil, expiresAt, nowIso, params.key, params.guardianId, params.childId, nowIso)
+    .run();
+
+  return { acquired: getD1ChangedRows(updateResult) > 0 };
+}
+
+async function markD1CompletionIdempotencyDone(
+  db: D1Database,
+  key: string,
+  response: CompletionResponseBody,
+) {
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + IDEMPOTENCY_TTL_SECONDS * 1000).toISOString();
+
+  await db
+    .prepare(
+      `
+      UPDATE study_completion_idempotency
+      SET status = 'completed',
+          session_id = ?,
+          response_json = ?,
+          expires_at = ?,
+          updated_at = ?
+      WHERE key = ?
+    `,
+    )
+    .bind(response.sessionId, JSON.stringify(response), expiresAt, now.toISOString(), key)
+    .run();
+}
+
+async function clearD1CompletionIdempotencyLock(db: D1Database, key: string) {
+  await db.prepare('DELETE FROM study_completion_idempotency WHERE key = ?').bind(key).run();
 }
 
 async function restoreD1DailyPointState(
@@ -113,7 +259,19 @@ async function completeWithD1(
     return NextResponse.json({ error: 'Child not found' }, { status: 404 });
   }
 
-  void cacheKey;
+  const lock = await acquireD1CompletionIdempotencyLock(db, {
+    key: cacheKey,
+    guardianId,
+    childId: activeChildId,
+  });
+
+  if (!lock.acquired) {
+    if ('response' in lock && lock.response) {
+      return NextResponse.json(lock.response);
+    }
+
+    return NextResponse.json({ error: 'A duplicated completion request is in progress' }, { status: 409 });
+  }
 
   const mode = body.mode ?? 'normal';
   const totalQuestions = Number(body.totalQuestions ?? 0);
@@ -272,15 +430,20 @@ async function completeWithD1(
     if (shouldRestoreDailyPointState) {
       await restoreD1DailyPointState(db, activeChildId, previousDailyState).catch(() => null);
     }
+    await clearD1CompletionIdempotencyLock(db, cacheKey).catch(() => null);
 
     const message = completionResult.error instanceof Error ? completionResult.error.message : 'Failed to complete study session';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
   const { sessionId, unlockedBadges } = completionResult;
+  const responseBody = { sessionId, unlockedBadges, pointCapped, deduplicated: false } satisfies CompletionResponseBody;
+  await markD1CompletionIdempotencyDone(db, cacheKey, responseBody).catch((error) => {
+    console.warn('[study-session-complete] failed to mark d1 idempotency key completed', error);
+  });
 
   console.info(`[study-session-complete] completed via d1 guardian=${guardianId}`);
-  return NextResponse.json({ sessionId, unlockedBadges, pointCapped, deduplicated: false });
+  return NextResponse.json(responseBody);
 }
 
 export async function POST(request: NextRequest) {

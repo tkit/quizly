@@ -14,9 +14,6 @@ for (const [key, value] of Object.entries(defaults)) {
   }
 }
 
-delete process.env.UPSTASH_REDIS_REST_URL;
-delete process.env.UPSTASH_REDIS_REST_TOKEN;
-
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const cliPath = join(scriptDir, "../node_modules/@opennextjs/cloudflare/dist/cli/index.js");
 const child = spawn(process.execPath, [cliPath, ...process.argv.slice(2)], {
