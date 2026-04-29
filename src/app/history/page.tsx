@@ -9,7 +9,7 @@ import StudyHeatmap from '@/components/history/StudyHeatmap';
 import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
 import { getD1ChildProfile } from '@/lib/auth/d1';
 import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
-import { getBadgeOverview } from '@/lib/badges/overview';
+import { getBadgeOverview, getD1BadgeOverview } from '@/lib/badges/overview';
 import { getOptionalD1Database } from '@/lib/cloudflare/d1';
 
 type HistorySessionRow = {
@@ -299,7 +299,7 @@ export default async function HistoryPage() {
     })) satisfies HistorySessionRow[];
     const heatmapRows = heatmapResult.results ?? [];
     const genreById = new Map<string, GenreMapRow>((genresResult.results ?? []).map((genre) => [genre.id, genre] as const));
-    const badgeOverview = null;
+    const badgeOverview = await getD1BadgeOverview(d1, { childId: activeChildId, guardianId: user.id });
     const studyDateKeys = heatmapRows.map((row) => formatDateKeyInTimezone(row.completed_at ?? row.started_at));
     const { cells: studyHeatmapCells, todayKey: heatmapTodayKey } = buildStudyHeatmap(studyDateKeys);
     const heatmapPeriodLabel =
