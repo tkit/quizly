@@ -8,8 +8,8 @@ import MessageCard from '@/components/feedback/MessageCard';
 import StudyHeatmap from '@/components/history/StudyHeatmap';
 import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
 import { getD1ChildProfile } from '@/lib/auth/d1';
-import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
-import { getBadgeOverview, getD1BadgeOverview } from '@/lib/badges/overview';
+import { getAuthenticatedUser } from '@/lib/auth/server';
+import { getD1BadgeOverview, type BadgeOverview } from '@/lib/badges/overview';
 import { getOptionalD1Database } from '@/lib/cloudflare/d1';
 
 type HistorySessionRow = {
@@ -222,152 +222,55 @@ export default async function HistoryPage() {
   }
 
   const d1 = await getOptionalD1Database();
-  if (d1) {
-    const [child, sessionsResult, genresResult, heatmapResult] = await Promise.all([
-      getD1ChildProfile(d1, user.id, activeChildId),
-      d1
-        .prepare(
-          `
-          SELECT
-            ss.id,
-            ss.genre_id,
-            ss.total_questions,
-            ss.correct_count,
-            ss.earned_points,
-            ss.started_at,
-            ss.completed_at,
-            g.name AS genre_name,
-            g.parent_id AS genre_parent_id,
-            g.color_hint AS genre_color_hint
-          FROM study_sessions ss
-          JOIN child_profiles cp ON cp.id = ss.child_id
-          LEFT JOIN genres g ON g.id = ss.genre_id
-          WHERE ss.child_id = ? AND cp.guardian_id = ?
-          ORDER BY COALESCE(ss.completed_at, ss.started_at) DESC
-          LIMIT 12
-        `,
-        )
-        .bind(activeChildId, user.id)
-        .all<D1HistorySessionRow>(),
-      d1
-        .prepare('SELECT id, name, parent_id, color_hint FROM genres')
-        .all<GenreMapRow>(),
-      d1
-        .prepare(
-          `
-          SELECT ss.completed_at, ss.started_at
-          FROM study_sessions ss
-          JOIN child_profiles cp ON cp.id = ss.child_id
-          WHERE ss.child_id = ? AND cp.guardian_id = ?
-          ORDER BY ss.started_at DESC
-          LIMIT ?
-        `,
-        )
-        .bind(activeChildId, user.id, HEATMAP_WEEKS * 7 * 2)
-        .all<StudyDayRow>(),
-    ]);
-
-    if (!child) {
-      return (
-        <PageShell maxWidthClass="max-w-4xl" mainClassName="flex flex-1 items-center justify-center">
-          <MessageCard
-            title="学習記録の読み込みに失敗しました。"
-            description="時間をおいて再度お試しください。"
-            actionLabel="ダッシュボードへ戻る"
-            actionHref="/dashboard"
-            tone="error"
-          />
-        </PageShell>
-      );
-    }
-
-    const sessions = (sessionsResult.results ?? []).map((session) => ({
-      id: session.id,
-      total_questions: session.total_questions,
-      correct_count: session.correct_count,
-      earned_points: session.earned_points,
-      started_at: session.started_at,
-      completed_at: session.completed_at,
-      genres: session.genre_id && session.genre_name
-        ? {
-            id: session.genre_id,
-            name: session.genre_name,
-            parent_id: session.genre_parent_id,
-            color_hint: session.genre_color_hint,
-          }
-        : null,
-    })) satisfies HistorySessionRow[];
-    const heatmapRows = heatmapResult.results ?? [];
-    const genreById = new Map<string, GenreMapRow>((genresResult.results ?? []).map((genre) => [genre.id, genre] as const));
-    const badgeOverview = await getD1BadgeOverview(d1, { childId: activeChildId, guardianId: user.id });
-    const studyDateKeys = heatmapRows.map((row) => formatDateKeyInTimezone(row.completed_at ?? row.started_at));
-    const { cells: studyHeatmapCells, todayKey: heatmapTodayKey } = buildStudyHeatmap(studyDateKeys);
-    const heatmapPeriodLabel =
-      studyHeatmapCells.length > 0
-        ? formatHeatmapPeriodLabel(studyHeatmapCells[0].dateKey, heatmapTodayKey)
-        : '';
-    const heatmapMonthLabels = Array.from({ length: HEATMAP_WEEKS }).map((_, weekIndex) => {
-      const headerCell = studyHeatmapCells[weekIndex * 7];
-      if (!headerCell) return '';
-
-      const [currentYearText, currentMonthText] = headerCell.dateKey.split('-');
-      const currentYear = Number(currentYearText);
-      const currentMonth = Number(currentMonthText);
-
-      const previousHeaderCell = weekIndex > 0 ? studyHeatmapCells[(weekIndex - 1) * 7] : null;
-      if (!previousHeaderCell) {
-        return formatHeatmapMonthLabel(headerCell.dateKey);
-      }
-
-      const [previousYearText, previousMonthText] = previousHeaderCell.dateKey.split('-');
-      const previousYear = Number(previousYearText);
-      const previousMonth = Number(previousMonthText);
-      const monthChanged = previousYear !== currentYear || previousMonth !== currentMonth;
-      if (!monthChanged) return '';
-      return formatHeatmapMonthLabel(headerCell.dateKey);
-    });
-
-    return renderHistoryPage({
-      child,
-      sessions,
-      genreById,
-      badgeOverview,
-      studyHeatmapCells,
-      heatmapTodayKey,
-      heatmapMonthLabels,
-      heatmapPeriodLabel,
-    });
+  if (!d1) {
+    throw new Error('D1 binding is required');
   }
 
-  const supabase = await createServerSupabaseClient();
-  const [{ data: child, error: childError }, { data: sessionsData, error: sessionsError }, { data: genresData, error: genresError }, { data: heatmapData, error: heatmapError }] = await Promise.all([
-    supabase.from('child_profiles').select('id, display_name').eq('id', activeChildId).maybeSingle(),
-    supabase
-      .from('study_sessions')
-      .select(
+  const [child, sessionsResult, genresResult, heatmapResult] = await Promise.all([
+    getD1ChildProfile(d1, user.id, activeChildId),
+    d1
+      .prepare(
         `
-        id,
-        total_questions,
-        correct_count,
-        earned_points,
-        started_at,
-        completed_at,
-        genres ( id, name, parent_id, color_hint )
+        SELECT
+          ss.id,
+          ss.genre_id,
+          ss.total_questions,
+          ss.correct_count,
+          ss.earned_points,
+          ss.started_at,
+          ss.completed_at,
+          g.name AS genre_name,
+          g.parent_id AS genre_parent_id,
+          g.color_hint AS genre_color_hint
+        FROM study_sessions ss
+        JOIN child_profiles cp ON cp.id = ss.child_id
+        LEFT JOIN genres g ON g.id = ss.genre_id
+        WHERE ss.child_id = ? AND cp.guardian_id = ?
+        ORDER BY COALESCE(ss.completed_at, ss.started_at) DESC
+        LIMIT 12
       `,
       )
-      .eq('child_id', activeChildId)
-      .order('completed_at', { ascending: false, nullsFirst: false })
-      .limit(12),
-    supabase.from('genres').select('id, name, parent_id, color_hint'),
-    supabase
-      .from('study_sessions')
-      .select('completed_at, started_at')
-      .eq('child_id', activeChildId)
-      .order('started_at', { ascending: false })
-      .limit(HEATMAP_WEEKS * 7 * 2),
+      .bind(activeChildId, user.id)
+      .all<D1HistorySessionRow>(),
+    d1
+      .prepare('SELECT id, name, parent_id, color_hint FROM genres')
+      .all<GenreMapRow>(),
+    d1
+      .prepare(
+        `
+        SELECT ss.completed_at, ss.started_at
+        FROM study_sessions ss
+        JOIN child_profiles cp ON cp.id = ss.child_id
+        WHERE ss.child_id = ? AND cp.guardian_id = ?
+        ORDER BY ss.started_at DESC
+        LIMIT ?
+      `,
+      )
+      .bind(activeChildId, user.id, HEATMAP_WEEKS * 7 * 2)
+      .all<StudyDayRow>(),
   ]);
 
-  if (childError || !child || sessionsError || genresError || heatmapError) {
+  if (!child) {
     return (
       <PageShell maxWidthClass="max-w-4xl" mainClassName="flex flex-1 items-center justify-center">
         <MessageCard
@@ -381,16 +284,25 @@ export default async function HistoryPage() {
     );
   }
 
-  let badgeOverview = null;
-  try {
-    badgeOverview = await getBadgeOverview(supabase, { childId: activeChildId });
-  } catch {
-    badgeOverview = null;
-  }
-
-  const sessions = (sessionsData ?? []) as HistorySessionRow[];
-  const heatmapRows = (heatmapData ?? []) as StudyDayRow[];
-  const genreById = new Map<string, GenreMapRow>(((genresData ?? []) as GenreMapRow[]).map((genre) => [genre.id, genre] as const));
+  const sessions = (sessionsResult.results ?? []).map((session) => ({
+    id: session.id,
+    total_questions: session.total_questions,
+    correct_count: session.correct_count,
+    earned_points: session.earned_points,
+    started_at: session.started_at,
+    completed_at: session.completed_at,
+    genres: session.genre_id && session.genre_name
+      ? {
+          id: session.genre_id,
+          name: session.genre_name,
+          parent_id: session.genre_parent_id,
+          color_hint: session.genre_color_hint,
+        }
+      : null,
+  })) satisfies HistorySessionRow[];
+  const heatmapRows = heatmapResult.results ?? [];
+  const genreById = new Map<string, GenreMapRow>((genresResult.results ?? []).map((genre) => [genre.id, genre] as const));
+  const badgeOverview = await getD1BadgeOverview(d1, { childId: activeChildId, guardianId: user.id });
   const studyDateKeys = heatmapRows.map((row) => formatDateKeyInTimezone(row.completed_at ?? row.started_at));
   const { cells: studyHeatmapCells, todayKey: heatmapTodayKey } = buildStudyHeatmap(studyDateKeys);
   const heatmapPeriodLabel =
@@ -443,7 +355,7 @@ function renderHistoryPage({
   child: { display_name: string };
   sessions: HistorySessionRow[];
   genreById: Map<string, GenreMapRow>;
-  badgeOverview: Awaited<ReturnType<typeof getBadgeOverview>> | null;
+  badgeOverview: BadgeOverview | null;
   studyHeatmapCells: StudyHeatmapCell[];
   heatmapTodayKey: string;
   heatmapMonthLabels: string[];

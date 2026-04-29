@@ -1,9 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { deleteRedisKey, getRedisString, isUpstashConfigured, setRedisString } from '@/lib/cache/upstash';
-
-const BADGE_OVERVIEW_CACHE_TTL_SECONDS = 60;
-const BADGE_SUMMARY_CACHE_TTL_SECONDS = 60;
-
 export type BadgeOverviewUnlocked = {
   key: string;
   name: string;
@@ -143,14 +137,6 @@ function buildBadgeDetailText(definition: BadgeDefinitionRow) {
   }
 
   return '条件を達成';
-}
-
-function buildBadgeOverviewCacheKey(childId: string) {
-  return `quizly:badge_overview:overview:v1:${childId}`;
-}
-
-function buildBadgeSummaryCacheKey(childId: string) {
-  return `quizly:badge_overview:summary:v1:${childId}`;
 }
 
 function normalizeD1BadgeDefinition(row: D1BadgeDefinitionRow): BadgeDefinitionRow {
@@ -296,91 +282,6 @@ function buildBadgeOverviewFromRows({
   };
 }
 
-async function loadBadgeOverviewFromDatabase(
-  supabase: SupabaseClient,
-  params: { childId: string },
-): Promise<BadgeOverview> {
-  const { childId } = params;
-
-  const [{ data: streakStateData, error: streakStateError }, { data: badgeDefinitionsData, error: badgeDefinitionsError }, { data: childBadgesData, error: childBadgesError }, { data: sessionsData, error: sessionsError }, { data: genresData, error: genresError }, { data: childProfileData, error: childProfileError }] = await Promise.all([
-    supabase
-      .from('child_streak_state')
-      .select('current_streak_days, weekly_shield_count')
-      .eq('child_id', childId)
-      .maybeSingle(),
-    supabase
-      .from('badge_definitions')
-      .select('key, family, level, name, icon_path, is_secret, condition_json')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true }),
-    supabase
-      .from('child_badges')
-      .select('badge_key, unlocked_at')
-      .eq('child_id', childId)
-      .order('unlocked_at', { ascending: false }),
-    supabase
-      .from('study_sessions')
-      .select('genre_id, total_questions, correct_count')
-      .eq('child_id', childId),
-    supabase
-      .from('genres')
-      .select('id, name, parent_id'),
-    supabase
-      .from('child_profiles')
-      .select('total_points')
-      .eq('id', childId)
-      .maybeSingle(),
-  ]);
-
-  if (streakStateError || badgeDefinitionsError || childBadgesError || sessionsError || genresError || childProfileError) {
-    throw streakStateError ?? badgeDefinitionsError ?? childBadgesError ?? sessionsError ?? genresError ?? childProfileError;
-  }
-
-  const streakState = streakStateData as { current_streak_days: number; weekly_shield_count: number } | null;
-  const badgeDefinitions = (badgeDefinitionsData ?? []) as BadgeDefinitionRow[];
-  const childBadges = (childBadgesData ?? []) as ChildBadgeRow[];
-  const sessions = (sessionsData ?? []) as SessionRow[];
-  const genres = (genresData ?? []) as GenreRow[];
-  const childTotalPoints = Number((childProfileData as { total_points?: number } | null)?.total_points ?? 0);
-
-  return buildBadgeOverviewFromRows({
-    streakState,
-    badgeDefinitions,
-    childBadges,
-    sessions,
-    genres,
-    childTotalPoints,
-  });
-}
-
-async function loadBadgeSummaryFromDatabase(
-  supabase: SupabaseClient,
-  params: { childId: string },
-): Promise<BadgeSummary> {
-  const { childId } = params;
-  const [{ data: streakStateData, error: streakStateError }, { count: unlockedCount, error: badgeCountError }] = await Promise.all([
-    supabase
-      .from('child_streak_state')
-      .select('current_streak_days')
-      .eq('child_id', childId)
-      .maybeSingle(),
-    supabase
-      .from('child_badges')
-      .select('id', { count: 'exact', head: true })
-      .eq('child_id', childId),
-  ]);
-
-  if (streakStateError || badgeCountError) {
-    throw streakStateError ?? badgeCountError;
-  }
-
-  const streakState = streakStateData as { current_streak_days: number } | null;
-  return {
-    current_streak: Number(streakState?.current_streak_days ?? 0),
-    unlocked_count: Number(unlockedCount ?? 0),
-  };
-}
-
 async function loadD1BadgeOverviewFromDatabase(
   db: D1Database,
   params: { childId: string; guardianId: string },
@@ -511,96 +412,6 @@ async function loadD1BadgeSummaryFromDatabase(
     current_streak: Number(streakState?.current_streak_days ?? 0),
     unlocked_count: Number(badgeCountRow?.count ?? 0),
   };
-}
-
-export async function invalidateBadgeOverviewCache(childId: string) {
-  if (!isUpstashConfigured()) {
-    return;
-  }
-
-  const overviewKey = buildBadgeOverviewCacheKey(childId);
-  const summaryKey = buildBadgeSummaryCacheKey(childId);
-
-  await Promise.all([
-    deleteRedisKey(overviewKey).catch((error) => {
-      console.warn(`[badge-overview-cache] failed to invalidate overview child=${childId}`, error);
-    }),
-    deleteRedisKey(summaryKey).catch((error) => {
-      console.warn(`[badge-overview-cache] failed to invalidate summary child=${childId}`, error);
-    }),
-  ]);
-}
-
-export async function getBadgeOverview(
-  supabase: SupabaseClient,
-  params: { childId: string },
-): Promise<BadgeOverview> {
-  const startedAt = Date.now();
-  const { childId } = params;
-  const cacheKey = buildBadgeOverviewCacheKey(childId);
-
-  if (isUpstashConfigured()) {
-    try {
-      const cached = await getRedisString(cacheKey);
-      if (cached) {
-        const parsed = JSON.parse(cached) as BadgeOverview;
-        console.info(`[badge-overview-cache] hit child=${childId} elapsed_ms=${Date.now() - startedAt}`);
-        return parsed;
-      }
-      console.info(`[badge-overview-cache] miss child=${childId}`);
-    } catch (error) {
-      console.warn(`[badge-overview-cache] failed to read child=${childId}`, error);
-    }
-  }
-
-  const overview = await loadBadgeOverviewFromDatabase(supabase, { childId });
-  console.info(`[badge-overview-cache] rebuilt child=${childId} elapsed_ms=${Date.now() - startedAt}`);
-
-  if (isUpstashConfigured()) {
-    try {
-      await setRedisString(cacheKey, JSON.stringify(overview), BADGE_OVERVIEW_CACHE_TTL_SECONDS);
-    } catch (error) {
-      console.warn(`[badge-overview-cache] failed to write child=${childId}`, error);
-    }
-  }
-
-  return overview;
-}
-
-export async function getBadgeSummary(
-  supabase: SupabaseClient,
-  params: { childId: string },
-): Promise<BadgeSummary> {
-  const startedAt = Date.now();
-  const { childId } = params;
-  const cacheKey = buildBadgeSummaryCacheKey(childId);
-
-  if (isUpstashConfigured()) {
-    try {
-      const cached = await getRedisString(cacheKey);
-      if (cached) {
-        const parsed = JSON.parse(cached) as BadgeSummary;
-        console.info(`[badge-summary-cache] hit child=${childId} elapsed_ms=${Date.now() - startedAt}`);
-        return parsed;
-      }
-      console.info(`[badge-summary-cache] miss child=${childId}`);
-    } catch (error) {
-      console.warn(`[badge-summary-cache] failed to read child=${childId}`, error);
-    }
-  }
-
-  const summary = await loadBadgeSummaryFromDatabase(supabase, { childId });
-  console.info(`[badge-summary-cache] rebuilt child=${childId} elapsed_ms=${Date.now() - startedAt}`);
-
-  if (isUpstashConfigured()) {
-    try {
-      await setRedisString(cacheKey, JSON.stringify(summary), BADGE_SUMMARY_CACHE_TTL_SECONDS);
-    } catch (error) {
-      console.warn(`[badge-summary-cache] failed to write child=${childId}`, error);
-    }
-  }
-
-  return summary;
 }
 
 export async function getD1BadgeOverview(

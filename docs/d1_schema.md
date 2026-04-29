@@ -5,7 +5,7 @@
 
 ## 目的
 
-Cloudflare migration branch 上で、現行 Supabase/Postgres model と同等の D1 schema を再現可能な migration script として定義する。#28 は schema design までを扱い、RPC の service 化は #29、RLS 相当の authorization guard は #30 で扱う。
+Cloudflare migration branch 上で、Quizly の D1 schema を再現可能な migration script として定義する。#28 は schema design までを扱い、service 化は #29、authorization guard は #30 で扱う。
 
 ## 成果物
 
@@ -42,13 +42,12 @@ schema 適用:
 npx wrangler d1 migrations apply quizly-staging --env staging --remote
 ```
 
-## Postgres to D1 Rewrite
+## D1 Rewrite Notes
 
-| Postgres/Supabase | D1/SQLite 方針 |
+| 元の設計要素 | D1/SQLite 方針 |
 |---|---|
 | `uuid`, `gen_random_uuid()` | `TEXT` id。D1 側の default は `lower(hex(randomblob(16)))`。Clerk user id は `guardian_accounts.id` にそのまま保存 |
 | `auth.users(id)` FK | D1 には Auth schema がないため削除。`guardian_accounts.id` を Clerk canonical user id とする |
-| `supabase_user_id` | `guardian_accounts.legacy_supabase_user_id` に保持し、backfill/audit 用に使う |
 | `timestamptz`, `timestamp with time zone`, `date` | ISO-8601 text を保存。default は `CURRENT_TIMESTAMP` |
 | `jsonb` | `TEXT CHECK (json_valid(...))` |
 | `boolean` | `INTEGER CHECK (... IN (0, 1))` |
@@ -61,7 +60,7 @@ npx wrangler d1 migrations apply quizly-staging --env staging --remote
 
 | Table | D1 key design | Notes |
 |---|---|---|
-| `guardian_accounts` | `id TEXT PRIMARY KEY` | Clerk user id。`legacy_supabase_user_id` は migration mapping 用 |
+| `guardian_accounts` | `id TEXT PRIMARY KEY` | Clerk user id |
 | `child_profiles` | random text id | `guardian_id` は Clerk id への FK |
 | `parent_reauth_challenges` | random text id | #31 で Durable Objects/KV と責務再検討 |
 | `genres` | `id TEXT PRIMARY KEY` | content taxonomy |

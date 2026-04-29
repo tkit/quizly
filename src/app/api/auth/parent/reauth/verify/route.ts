@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getParentReauthSessionExpiresAt } from '@/lib/auth/parentReauth';
 import { getD1ParentReauthSessionExpiresAt } from '@/lib/auth/d1';
-import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
+import { getAuthenticatedUser } from '@/lib/auth/server';
 import { getOptionalD1Database } from '@/lib/cloudflare/d1';
 
 export async function GET() {
@@ -12,13 +11,11 @@ export async function GET() {
 
   try {
     const d1 = await getOptionalD1Database();
-    if (d1) {
-      const expiresAt = await getD1ParentReauthSessionExpiresAt(d1, user.id);
-      return NextResponse.json({ verified: Boolean(expiresAt), expiresAt: expiresAt ?? null });
+    if (!d1) {
+      return NextResponse.json({ error: 'D1 binding is required' }, { status: 500 });
     }
 
-    const supabase = await createServerSupabaseClient();
-    const expiresAt = await getParentReauthSessionExpiresAt(supabase, user.id);
+    const expiresAt = await getD1ParentReauthSessionExpiresAt(d1, user.id);
     return NextResponse.json({ verified: Boolean(expiresAt), expiresAt: expiresAt ?? null });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to verify parent session';

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { invalidateParentManagementSnapshotCache } from '@/lib/auth/data';
 import { setD1ParentPinHash } from '@/lib/auth/d1';
-import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
+import { getAuthenticatedUser } from '@/lib/auth/server';
 import { getOptionalD1Database } from '@/lib/cloudflare/d1';
 import { hashPin, isValidPin } from '@/lib/security/pin';
 
@@ -22,25 +21,14 @@ export async function POST(request: NextRequest) {
 
   const parentPinHash = hashPin(body.pin);
   const d1 = await getOptionalD1Database();
-  if (d1) {
-    const updated = await setD1ParentPinHash(d1, user.id, parentPinHash);
-    if (!updated) {
-      return NextResponse.json({ error: 'Guardian account not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ ok: true });
+  if (!d1) {
+    return NextResponse.json({ error: 'D1 binding is required' }, { status: 500 });
   }
 
-  const supabase = await createServerSupabaseClient();
-  const { error } = await supabase
-    .from('guardian_accounts')
-    .update({ parent_pin_hash: parentPinHash })
-    .eq('id', user.id);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  const updated = await setD1ParentPinHash(d1, user.id, parentPinHash);
+  if (!updated) {
+    return NextResponse.json({ error: 'Guardian account not found' }, { status: 404 });
   }
 
-  await invalidateParentManagementSnapshotCache(user.id);
   return NextResponse.json({ ok: true });
 }

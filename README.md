@@ -7,43 +7,36 @@
 
 - **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS
 - **UI Components**: shadcn/ui, Lucide React
-- **Backend / DB**: Supabase (PostgreSQL)
-- **Deployment**: Vercel
+- **Backend / DB**: Cloudflare Workers + D1
+- **Auth**: Clerk
+- **Deployment**: Cloudflare Workers
 
 ## 📁 Project Structure
 
 - `src/app/`: Next.js アプリケーションの各画面 (App Router)
-  - `/`: ログイン画面 (PINコード認証)
+  - `/`: 保護者ログイン・子ども選択
   - `/dashboard`: トップページ (ジャンル選択)
   - `/setup`: 問題の出題設定 (問題数、モード選択)
   - `/quiz`: クイズ解答画面
   - `/result`: 学習結果・振り返り画面
-- `docs/`: 仕様書および設計ドキュメント (`requirements.md`, `db_schema.md`, `ui_design.md`)
-- 認証・認可の仕様書（正本）: `docs/auth_spec.md`
-- `supabase/migrations/`: 公式 migration（正本）
-- `supabase/migrations/20260320000000_baseline_schema.sql`: baseline（初期状態）
+- `d1/migrations/`: D1 schema migration
+- `docs/`: 仕様書および設計ドキュメント
 
 ## 🛠️ Getting Started
 
 ### Dev セットアップ（ローカル）
 
-ローカル開発手順は [`docs/setup_dev.md`](docs/setup_dev.md) を参照してください。  
-上から順に実行すればセットアップできます。
-
-日常の起動/停止は次の2コマンドで実行できます。
-
 ```bash
-npm run dev:up
-npm run dev:down
+npm install
+npm run dev
 ```
 
-### Prod 運用（デプロイ/外部設定）
+Cloudflare staging build/deploy は次のコマンドで実行します。
 
-本番運用の手順・設定一覧は [`docs/operations_prod.md`](docs/operations_prod.md) を参照してください。
-
-### 問題コンテンツ同期（Content Sync）
-
-問題更新手順は [`docs/content_sync.md`](docs/content_sync.md) を参照してください。
+```bash
+npm run cf:build:staging
+npm run cf:deploy-built:staging
+```
 
 ## 🖼️ Badge Asset Workflow
 

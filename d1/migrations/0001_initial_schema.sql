@@ -1,5 +1,4 @@
 -- Quizly D1 initial schema.
--- Source of truth: Supabase migrations through 20260415001000.
 -- Scope: schema, constraints, indexes, and key relationships only.
 -- RPC/service rewrites are tracked in #29, and app-layer authorization in #30.
 
@@ -7,7 +6,6 @@ PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS guardian_accounts (
   id TEXT PRIMARY KEY,
-  legacy_supabase_user_id TEXT UNIQUE,
   email TEXT,
   display_name TEXT,
   parent_pin_hash TEXT,

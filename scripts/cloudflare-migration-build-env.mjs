@@ -14,9 +14,6 @@ for (const [key, value] of Object.entries(defaults)) {
   }
 }
 
-delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-delete process.env.NEXT_PUBLIC_QUESTION_IMAGE_BUCKET;
 delete process.env.UPSTASH_REDIS_REST_URL;
 delete process.env.UPSTASH_REDIS_REST_TOKEN;
 

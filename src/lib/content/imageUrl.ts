@@ -1,4 +1,4 @@
-const DEFAULT_QUESTION_IMAGE_BUCKET = 'quiz-images';
+const DEFAULT_QUESTION_IMAGE_BASE_URL = '';
 
 function normalizePath(rawPath: string) {
   const trimmed = rawPath.trim();
@@ -19,9 +19,8 @@ function joinUrl(base: string, pathname: string) {
   return `${normalizedBase}/${normalizedPath}`;
 }
 
-export function buildSupabaseStoragePublicUrl(path: string, bucket = DEFAULT_QUESTION_IMAGE_BUCKET) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!supabaseUrl) {
+export function buildQuestionImagePublicUrl(path: string, baseUrl = process.env.NEXT_PUBLIC_QUESTION_IMAGE_BASE_URL ?? DEFAULT_QUESTION_IMAGE_BASE_URL) {
+  if (!baseUrl) {
     return null;
   }
 
@@ -35,11 +34,10 @@ export function buildSupabaseStoragePublicUrl(path: string, bucket = DEFAULT_QUE
     .map((segment) => encodeURIComponent(segment))
     .join('/');
 
-  return joinUrl(supabaseUrl, `/storage/v1/object/public/${bucket}/${encodedPath}`);
+  return joinUrl(baseUrl, encodedPath);
 }
 
 export function resolveQuestionImagePublicUrl(imagePath: string | null | undefined) {
   if (!imagePath) return null;
-  const bucket = process.env.NEXT_PUBLIC_QUESTION_IMAGE_BUCKET || DEFAULT_QUESTION_IMAGE_BUCKET;
-  return buildSupabaseStoragePublicUrl(imagePath, bucket);
+  return buildQuestionImagePublicUrl(imagePath);
 }

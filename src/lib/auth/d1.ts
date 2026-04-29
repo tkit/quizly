@@ -42,16 +42,15 @@ export async function ensureD1GuardianProfile(db: D1Database, user: AppUser) {
     .prepare(
       `
       INSERT INTO guardian_accounts (
-        id, email, display_name, legacy_supabase_user_id, updated_at
-      ) VALUES (?, ?, ?, ?, ?)
+        id, email, display_name, updated_at
+      ) VALUES (?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         email = excluded.email,
         display_name = excluded.display_name,
-        legacy_supabase_user_id = COALESCE(guardian_accounts.legacy_supabase_user_id, excluded.legacy_supabase_user_id),
         updated_at = excluded.updated_at
     `,
     )
-    .bind(user.id, user.email, String(fallbackName), user.legacySupabaseUserId, new Date().toISOString())
+    .bind(user.id, user.email, String(fallbackName), new Date().toISOString())
     .run();
 }
 
