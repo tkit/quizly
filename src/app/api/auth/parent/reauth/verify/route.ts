@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getParentReauthSessionExpiresAt } from '@/lib/auth/parentReauth';
+import { getD1ParentReauthSessionExpiresAt } from '@/lib/auth/d1';
 import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
+import { getOptionalD1Database } from '@/lib/cloudflare/d1';
 
 export async function GET() {
   const { user } = await getAuthenticatedUser();
@@ -8,8 +10,14 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const supabase = await createServerSupabaseClient();
   try {
+    const d1 = await getOptionalD1Database();
+    if (d1) {
+      const expiresAt = await getD1ParentReauthSessionExpiresAt(d1, user.id);
+      return NextResponse.json({ verified: Boolean(expiresAt), expiresAt: expiresAt ?? null });
+    }
+
+    const supabase = await createServerSupabaseClient();
     const expiresAt = await getParentReauthSessionExpiresAt(supabase, user.id);
     return NextResponse.json({ verified: Boolean(expiresAt), expiresAt: expiresAt ?? null });
   } catch (error) {
