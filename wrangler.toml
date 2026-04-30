@@ -27,6 +27,11 @@ NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL = "/"
 binding = "WORKER_SELF_REFERENCE"
 service = "quizly"
 
+[[r2_buckets]]
+binding = "QUESTION_IMAGES"
+bucket_name = "quizly-question-images"
+preview_bucket_name = "quizly-question-images-preview"
+
 [env.staging]
 name = "quizly"
 workers_dev = true
@@ -54,6 +59,11 @@ NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL = "/"
 [[env.staging.services]]
 binding = "WORKER_SELF_REFERENCE"
 service = "quizly"
+
+[[env.staging.r2_buckets]]
+binding = "QUESTION_IMAGES"
+bucket_name = "quizly-question-images-staging"
+preview_bucket_name = "quizly-question-images-preview"
 
 [[env.staging.d1_databases]]
 binding = "DB"

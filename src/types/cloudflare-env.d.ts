@@ -18,8 +18,22 @@ declare global {
     batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]>;
   }
 
+  interface R2Object {
+    httpEtag: string;
+    writeHttpMetadata(headers: Headers): void;
+  }
+
+  interface R2ObjectBody extends R2Object {
+    body: ReadableStream;
+  }
+
+  interface R2Bucket {
+    get(key: string): Promise<R2ObjectBody | null>;
+  }
+
   interface CloudflareEnv {
     DB?: D1Database;
+    QUESTION_IMAGES?: R2Bucket;
   }
 }
 

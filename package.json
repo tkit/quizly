@@ -14,6 +14,9 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "d1:schema:verify": "rm -f /tmp/quizly-d1-schema.sqlite && sqlite3 /tmp/quizly-d1-schema.sqlite < d1/migrations/0001_initial_schema.sql && sqlite3 /tmp/quizly-d1-schema.sqlite < d1/migrations/0002_cloudflare_state_tables.sql && sqlite3 /tmp/quizly-d1-schema.sqlite < d1/verify/schema_invariants.sql",
     "d1:seed:reference:staging": "node scripts/d1-seed-reference-data.mjs",
+    "d1:migrate:question-image-paths:staging": "node scripts/d1-migrate-question-image-paths.mjs",
+    "r2:upload:question-images:staging": "R2_QUESTION_IMAGES_BUCKET=quizly-question-images-staging node scripts/r2-upload-question-images.mjs",
+    "r2:upload:question-images:dry": "node scripts/r2-upload-question-images.mjs --dry-run",
     "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },

@@ -1,4 +1,5 @@
-const DEFAULT_QUESTION_IMAGE_BASE_URL = '';
+const DEFAULT_QUESTION_IMAGE_BASE_URL = '/api/question-images';
+const R2_SCHEME = 'r2://';
 
 function normalizePath(rawPath: string) {
   const trimmed = rawPath.trim();
@@ -24,7 +25,7 @@ export function buildQuestionImagePublicUrl(path: string, baseUrl = process.env.
     return null;
   }
 
-  const normalizedPath = normalizePath(path);
+  const normalizedPath = normalizePath(path.startsWith(R2_SCHEME) ? path.slice(R2_SCHEME.length) : path);
   if (!normalizedPath) {
     return null;
   }
