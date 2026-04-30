@@ -4,7 +4,7 @@
 
 ## 目的
 
-問題画像などのメディアは Cloudflare R2 に置き、Worker の `QUESTION_IMAGES` binding から `/api/question-images/<object-key>` で配信する。Supabase Storage の runtime dependency は使わない。
+問題画像などのメディアは Cloudflare R2 に置き、Worker の `QUESTION_IMAGES` binding から `/api/question-images/<object-key>` で配信する。
 
 ## Buckets
 
