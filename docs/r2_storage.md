@@ -32,6 +32,8 @@ npm run r2:upload:question-images:staging
 
 The upload script writes to remote R2 by default. Use `node scripts/r2-upload-question-images.mjs --local` only for local Wrangler storage.
 
+GitHub Actions also provides a manual `Cloudflare Content Update` workflow for staging R2/D1 content operations.
+
 The current staging fixture uses:
 
 - `dev/triangle-01.svg`
@@ -48,6 +50,8 @@ Then seed D1 reference data if fixture content changed:
 ```bash
 npm run d1:seed:reference:staging
 ```
+
+`contents/` is intentionally local/ignored on this branch. For GitHub Actions seeding, #33 must decide whether the canonical content source is committed fixtures, an exported artifact, or an R2 object downloaded before seeding.
 
 ## Production Cutover Notes
 
