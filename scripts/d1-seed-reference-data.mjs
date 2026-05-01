@@ -10,6 +10,7 @@ const isDryRun = args.has('--dry-run');
 const databaseName = process.env.D1_DATABASE_NAME ?? 'quizly-staging';
 const wranglerEnv = process.env.WRANGLER_ENV ?? 'staging';
 const contentsDir = process.env.CONTENT_FIXTURE_DIR ?? 'contents';
+const wranglerEnvArgs = wranglerEnv ? ['--env', wranglerEnv] : [];
 
 const parentGenres = [
   {
@@ -289,7 +290,7 @@ try {
   await writeFile(sqlPath, sql, 'utf8');
   const result = spawnSync(
     'npx',
-    ['wrangler', 'd1', 'execute', databaseName, '--env', wranglerEnv, '--remote', '--file', sqlPath],
+    ['wrangler', 'd1', 'execute', databaseName, ...wranglerEnvArgs, '--remote', '--file', sqlPath],
     { stdio: 'inherit' },
   );
 

@@ -32,6 +32,12 @@ binding = "QUESTION_IMAGES"
 bucket_name = "quizly-question-images"
 preview_bucket_name = "quizly-question-images-preview"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "quizly"
+database_id = "d745fb7e-302f-41ba-9d60-91b69944313d"
+migrations_dir = "d1/migrations"
+
 [env.staging]
 name = "quizly"
 workers_dev = true

@@ -19,7 +19,7 @@ Content JSON is also stored in R2, but it is not served by the app at runtime. I
 | 環境 | content bucket | default object key |
 | :--- | :--- | :--- |
 | staging | `quizly-content-staging` | `content/japanese/grammar.json` |
-| production | `quizly-content` | decided in #34 |
+| production | `quizly-content` | `content/japanese/grammar.json` |
 
 ## Setup
 
