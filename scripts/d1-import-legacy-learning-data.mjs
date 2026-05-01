@@ -18,6 +18,8 @@ const wranglerEnvArgs = wranglerEnv ? ['--env', wranglerEnv] : [];
 const orderedTables = [
   'guardian_accounts',
   'child_profiles',
+  'genres',
+  'questions',
   'study_sessions',
   'study_history',
   'point_transactions',
@@ -43,6 +45,18 @@ const tableColumns = {
     'total_points',
     'created_at',
     'updated_at',
+  ],
+  genres: ['id', 'name', 'parent_id', 'icon_key', 'description', 'color_hint'],
+  questions: [
+    'id',
+    'genre_id',
+    'question_text',
+    'options',
+    'correct_index',
+    'explanation',
+    'image_url',
+    'is_active',
+    'created_at',
   ],
   study_sessions: [
     'id',
@@ -87,6 +101,8 @@ const tableColumns = {
 const conflictTargets = {
   guardian_accounts: ['id'],
   child_profiles: ['id'],
+  genres: ['id'],
+  questions: ['id'],
   study_sessions: ['id'],
   study_history: ['id'],
   point_transactions: ['id'],
@@ -120,7 +136,9 @@ const numericColumns = new Set([
   'latest_progress',
 ]);
 
-const booleanColumns = new Set(['is_correct', 'daily_challenge_awarded']);
+const booleanColumns = new Set(['is_correct', 'daily_challenge_awarded', 'is_active']);
+const jsonColumns = new Set(['options']);
+const doNothingOnConflictTables = new Set(['genres', 'questions']);
 
 function sqlString(value) {
   if (value == null) return 'NULL';
@@ -131,6 +149,7 @@ function sqlValue(column, value) {
   if (value == null || value === '') return 'NULL';
   if (booleanColumns.has(column)) return value === true || value === 1 || value === '1' ? '1' : '0';
   if (numericColumns.has(column)) return String(Number(value));
+  if (jsonColumns.has(column)) return sqlString(JSON.stringify(value));
   return sqlString(value);
 }
 
@@ -210,6 +229,16 @@ function normalizeRow(table, row, maps) {
     next.started_at = next.started_at ?? next.created_at ?? next.completed_at ?? now;
   }
 
+  if (table === 'questions') {
+    next.id = stableQuestionId({
+      genre_id: String(next.genre_id).trim(),
+      question_text: String(next.question_text ?? next.question).trim(),
+    });
+    next.question_text = next.question_text ?? next.question;
+    next.is_active = next.is_active == null ? 0 : next.is_active;
+    next.created_at = next.created_at ?? now;
+  }
+
   if (table === 'study_history') {
     next.question_id = mapValue(next.question_id, maps.questions);
     next.is_correct = next.is_correct ?? false;
@@ -276,6 +305,16 @@ function upsertSql(table, row) {
   const columns = tableColumns[table];
   const values = columns.map((column) => sqlValue(column, row[column]));
   const conflictTarget = conflictTargets[table];
+  if (doNothingOnConflictTables.has(table)) {
+    return `
+INSERT INTO ${table} (
+  ${columns.join(', ')}
+) VALUES (
+  ${values.join(', ')}
+)
+ON CONFLICT(${conflictTarget.join(', ')}) DO NOTHING;`;
+  }
+
   const updateColumns = columns.filter((column) => !conflictTarget.includes(column));
   const updates = updateColumns.map((column) => `${column} = excluded.${column}`).join(',\n  ');
 
