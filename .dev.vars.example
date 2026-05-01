@@ -1,0 +1,7 @@
+NEXTJS_ENV=development
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_clerk_publishable_key
+CLERK_SECRET_KEY=sk_test_your_clerk_secret_key
+NEXT_PUBLIC_QUESTION_IMAGE_BASE_URL=/api/question-images
+NEXT_PUBLIC_AUTH_MODE=development
+NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT=true

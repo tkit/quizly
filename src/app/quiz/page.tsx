@@ -4,8 +4,10 @@ import QuizClient from './QuizClient';
 import MessageCard from '@/components/feedback/MessageCard';
 import PageShell from '@/components/layout/PageShell';
 import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
-import { getAuthenticatedUser, createServerSupabaseClient } from '@/lib/auth/server';
-import { getQuizQuestionSet, type QuizQuestionRow } from '@/lib/quiz/questionSet';
+import { getD1ChildProfile } from '@/lib/auth/d1';
+import { getAuthenticatedUser } from '@/lib/auth/server';
+import { getD1QuizQuestionSet, type QuizQuestionRow } from '@/lib/quiz/questionSet';
+import { getOptionalD1Database } from '@/lib/cloudflare/d1';
 
 type GenreRow = {
   id: string;
@@ -30,7 +32,6 @@ export default async function QuizPage({
     redirect('/');
   }
 
-  const supabase = await createServerSupabaseClient();
   const resolvedParams = await searchParams;
   const genreId = resolvedParams.genre;
   const countStr = resolvedParams.count;
@@ -50,16 +51,29 @@ export default async function QuizPage({
     );
   }
 
-  // Fetch genre
-  const { data: genre, error: genreError } = await supabase
-    .from('genres')
-    .select('*')
-    .eq('id', genreId)
-    .single();
+  const d1 = await getOptionalD1Database();
+  if (!d1) {
+    throw new Error('D1 binding is required');
+  }
 
-  const resolvedGenre = genre as GenreRow | null;
+  const activeChild = await getD1ChildProfile(d1, user.id, activeChildId);
+  if (!activeChild) {
+    redirect('/');
+  }
 
-  if (genreError || !resolvedGenre) {
+  const resolvedGenre = await d1
+    .prepare(
+      `
+      SELECT id, name, icon_key, color_hint, parent_id
+      FROM genres
+      WHERE id = ?
+      LIMIT 1
+    `,
+    )
+    .bind(genreId)
+    .first<GenreRow>();
+
+  if (!resolvedGenre) {
     return (
       <PageShell maxWidthClass="max-w-3xl" mainClassName="flex flex-1 items-center justify-center">
         <MessageCard
@@ -89,12 +103,13 @@ export default async function QuizPage({
 
   let questions: QuizQuestionRow[] = [];
   try {
-    questions = await getQuizQuestionSet(supabase, {
+    questions = await getD1QuizQuestionSet(d1, {
       childId: activeChildId,
       genreId,
       requestedCount: parsedCount,
     });
-  } catch {
+  } catch (error) {
+    console.error('[quiz] failed to load d1 question set', error);
     return (
       <PageShell maxWidthClass="max-w-3xl" mainClassName="flex flex-1 items-center justify-center">
         <MessageCard

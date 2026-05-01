@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, LogOut, Shield, Sparkles, Star, UserRound, Users } from 'lucide-react';
-import { getBrowserSupabaseClient } from '@/lib/auth/browser';
 import { GenreIcon } from '@/components/GenreIcon';
 import QuizlyLogo from '@/components/QuizlyLogo';
 import { resolveSubjectTone } from '@/lib/ui/subjectTone';
@@ -34,7 +34,7 @@ export default function DashboardClient({
   badgeSummary: BadgeSummary | null;
 }) {
   const router = useRouter();
-  const supabase = getBrowserSupabaseClient();
+  const { signOut } = useClerk();
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
 
   const parentGenres = useMemo(
@@ -59,8 +59,7 @@ export default function DashboardClient({
 
   const handleParentLogout = async () => {
     await fetch('/api/session/child/logout', { method: 'POST' });
-    await supabase.auth.signOut();
-    router.push('/');
+    await signOut({ redirectUrl: '/' });
   };
 
   return (

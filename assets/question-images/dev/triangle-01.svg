@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="三角形">
+  <rect width="640" height="420" rx="32" fill="#f8fafc"/>
+  <path d="M320 64 96 356h448L320 64Z" fill="#38bdf8" stroke="#1e293b" stroke-width="18" stroke-linejoin="round"/>
+  <circle cx="320" cy="64" r="14" fill="#fb7185"/>
+  <circle cx="96" cy="356" r="14" fill="#fb7185"/>
+  <circle cx="544" cy="356" r="14" fill="#fb7185"/>
+</svg>

@@ -1,0 +1,95 @@
+name: Cloudflare Content Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_question_images:
+        description: "Upload assets/question-images to staging R2"
+        required: true
+        type: boolean
+        default: true
+      migrate_question_image_paths:
+        description: "Update legacy question image paths in staging D1"
+        required: true
+        type: boolean
+        default: false
+      seed_reference_data:
+        description: "Download content JSON from R2 and seed genres/questions/badges into staging D1"
+        required: true
+        type: boolean
+        default: false
+      content_object_key:
+        description: "Single R2 object key for the content JSON used when seed_reference_data is true"
+        required: true
+        default: "content/japanese/grammar.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-content-update
+  cancel-in-progress: false
+
+jobs:
+  content_update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: Preview
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check Cloudflare secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "CLOUDFLARE_API_TOKEN is not configured in the Preview environment."
+            exit 1
+          fi
+
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "CLOUDFLARE_ACCOUNT_ID is not configured in the Preview environment."
+            exit 1
+          fi
+
+      - name: Upload question images to R2
+        if: inputs.upload_question_images
+        run: npm run r2:upload:question-images:staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Migrate question image paths in D1
+        if: inputs.migrate_question_image_paths
+        run: npm run d1:migrate:question-image-paths:staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Download content JSON from R2
+        if: inputs.seed_reference_data
+        run: npm run r2:download:content:staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CONTENT_OBJECT_KEY: ${{ inputs.content_object_key }}
+          CONTENT_FIXTURE_DIR: .content-sync
+
+      - name: Seed reference data to D1
+        if: inputs.seed_reference_data
+        run: npm run d1:seed:reference:staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CONTENT_FIXTURE_DIR: .content-sync

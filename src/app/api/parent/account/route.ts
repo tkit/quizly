@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
-import { invalidateParentManagementSnapshotCache, isParentUnlocked } from '@/lib/auth/data';
-import { createServerSupabaseClient, getAuthenticatedUser } from '@/lib/auth/server';
+import { deleteD1GuardianAccount, isD1ParentUnlocked } from '@/lib/auth/d1';
+import { getAuthenticatedUser } from '@/lib/auth/server';
+import { getOptionalD1Database } from '@/lib/cloudflare/d1';
 
 type Body = {
   confirmation?: string;
@@ -18,18 +19,21 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Confirmation token mismatch' }, { status: 400 });
   }
 
-  const supabase = await createServerSupabaseClient();
-  const unlocked = await isParentUnlocked(supabase, user.id);
+  const d1 = await getOptionalD1Database();
+  if (!d1) {
+    return NextResponse.json({ error: 'D1 binding is required' }, { status: 500 });
+  }
+
+  const unlocked = await isD1ParentUnlocked(d1, user.id);
   if (!unlocked) {
     return NextResponse.json({ error: 'Parent reauthentication required' }, { status: 403 });
   }
 
-  const { error } = await supabase.from('guardian_accounts').delete().eq('id', user.id);
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  const deleted = await deleteD1GuardianAccount(d1, user.id);
+  if (!deleted) {
+    return NextResponse.json({ error: 'Guardian account not found' }, { status: 404 });
   }
 
-  await invalidateParentManagementSnapshotCache(user.id);
   const response = NextResponse.json({ ok: true });
   response.cookies.set({
     name: ACTIVE_CHILD_COOKIE,

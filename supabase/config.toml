@@ -1,7 +1,0 @@
-project_id = "quizly-local"
-
-[auth]
-enabled = true
-site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000/auth/callback"]
-enable_anonymous_sign_ins = true

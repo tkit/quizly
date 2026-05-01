@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import MessageCard from '@/components/feedback/MessageCard';
 import PageShell from '@/components/layout/PageShell';
-import { createServerSupabaseClient } from '@/lib/auth/server';
+import { getOptionalD1Database } from '@/lib/cloudflare/d1';
 
 export const revalidate = 0;
 
@@ -10,7 +10,7 @@ export default async function SetupPage({
 }: {
   searchParams: Promise<{ genre?: string }>;
 }) {
-  const supabase = await createServerSupabaseClient();
+  const d1 = await getOptionalD1Database();
   const resolvedParams = await searchParams;
   const genreId = resolvedParams.genre;
 
@@ -28,15 +28,21 @@ export default async function SetupPage({
     );
   }
 
-  // Fetch genre details
-  const { data: genre, error } = await supabase
-    .from('genres')
-    .select('*')
-    .eq('id', genreId)
-    .single();
+  const genre = d1
+    ? await d1
+        .prepare(
+          `
+          SELECT id, name, parent_id
+          FROM genres
+          WHERE id = ?
+          LIMIT 1
+        `,
+        )
+        .bind(genreId)
+        .first<{ id: string; name: string; parent_id: string | null }>()
+    : null;
 
-  if (error || !genre) {
-    console.error('Error fetching genre:', error);
+  if (!genre) {
     return (
       <PageShell maxWidthClass="max-w-3xl" mainClassName="flex flex-1 items-center justify-center">
         <MessageCard
