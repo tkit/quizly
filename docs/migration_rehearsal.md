@@ -22,7 +22,7 @@
 | Input | Current Source | #33 Decision |
 | :--- | :--- | :--- |
 | Schema | `d1/migrations/*.sql` | Use repo migrations. |
-| Reference data | `contents/` local fixtures | Decide canonical source before final rehearsal. |
+| Reference data | R2 content JSON | Store content JSON outside git and import it into D1 through GitHub Actions. |
 | Question media | `assets/question-images/` | Use repo assets and upload to R2. |
 | Clerk keys | GitHub Preview environment for staging | Create/prepare Clerk Production instance before #34. |
 
@@ -30,20 +30,20 @@
 
 The old manual content sync workflow depended on legacy storage and DB secrets, so it was removed. The replacement workflow is `Cloudflare Content Update`.
 
-Open decision for #33: choose the canonical source for `genres`, `questions`, and `badge_definitions`.
+Decision: keep frequently updated question content outside the application repository. R2 is the canonical staging area for content JSON, and D1 is the runtime source of truth.
 
-Recommended options:
+Operational flow:
 
-1. Commit curated content fixtures under a non-ignored directory such as `reference-content/`.
-2. Store exported content JSON in R2 and have the workflow download it before seeding.
-3. Treat content JSON as an operator-provided artifact during rehearsal and cutover.
-
-For reproducibility, option 1 is simplest if the content is not sensitive. Option 2 is better if content should stay outside git.
+1. An operator uploads content JSON to R2.
+2. `Cloudflare Content Update` downloads the selected R2 object.
+3. The workflow validates/imports the JSON through `scripts/d1-seed-reference-data.mjs`.
+4. The app reads questions from D1 at runtime.
 
 ## Rehearsal Commands
 
 ```bash
 npm run d1:schema:verify
+npm run r2:download:content:staging
 npm run r2:upload:question-images:staging
 npm run d1:migrate:question-image-paths:staging
 npm run d1:seed:reference:staging
@@ -54,7 +54,7 @@ npm run cf:deploy-built:staging
 GitHub Actions:
 
 - `Cloudflare Preview`: build/deploy staging Worker.
-- `Cloudflare Content Update`: upload R2 images, migrate image paths, optionally seed D1 reference data.
+- `Cloudflare Content Update`: upload R2 images, download content JSON from R2, migrate image paths, optionally seed D1 reference data.
 
 ## Validation Checklist
 
@@ -88,7 +88,7 @@ Do not switch production traffic in #33.
 
 ## Current Open Items
 
-- Decide the canonical source for reference content.
+- Create and document the staging content R2 bucket/object naming convention.
 - Run a fresh rehearsal D1 rebuild/import instead of reusing the current staging database.
 - Record row counts/hashes after import.
 - Prepare Clerk Production instance steps and Google OAuth callback evidence.

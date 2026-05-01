@@ -14,11 +14,20 @@
 | production | `quizly-question-images` | `QUESTION_IMAGES` | `/api/question-images/<key>` |
 | preview/local preview | `quizly-question-images-preview` | `QUESTION_IMAGES` | `/api/question-images/<key>` |
 
+Content JSON is also stored in R2, but it is not served by the app at runtime. It is downloaded by GitHub Actions and imported into D1.
+
+| 環境 | content bucket | default object key |
+| :--- | :--- | :--- |
+| staging | `quizly-content-staging` | `reference/content.json` |
+| production | `quizly-content` | decided in #34 |
+
 ## Setup
 
 ```bash
 npx wrangler r2 bucket create quizly-question-images-staging
+npx wrangler r2 bucket create quizly-content-staging
 npx wrangler r2 bucket create quizly-question-images
+npx wrangler r2 bucket create quizly-content
 npx wrangler r2 bucket create quizly-question-images-preview
 ```
 
@@ -45,13 +54,19 @@ After uploading, update existing D1 rows if they still point at legacy `.png` fi
 npm run d1:migrate:question-image-paths:staging
 ```
 
-Then seed D1 reference data if fixture content changed:
+For question content, upload JSON to the content bucket, then download it into the local fixture directory used by the seed script:
+
+```bash
+CONTENT_OBJECT_KEY=reference/content.json npm run r2:download:content:staging
+```
+
+Then seed D1 reference data:
 
 ```bash
 npm run d1:seed:reference:staging
 ```
 
-`contents/` is intentionally local/ignored on this branch. For GitHub Actions seeding, #33 must decide whether the canonical content source is committed fixtures, an exported artifact, or an R2 object downloaded before seeding.
+`contents/` remains intentionally local/ignored. R2 content JSON is the shared source for GitHub Actions and rehearsal/cutover operations.
 
 ## Production Cutover Notes
 
