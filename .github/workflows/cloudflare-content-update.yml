@@ -19,9 +19,9 @@ on:
         type: boolean
         default: false
       content_object_key:
-        description: "R2 object key for the content JSON used when seed_reference_data is true"
+        description: "Single R2 object key for the content JSON used when seed_reference_data is true"
         required: true
-        default: "reference/content.json"
+        default: "content/japanese/grammar.json"
 
 permissions:
   contents: read

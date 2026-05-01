@@ -59,3 +59,4 @@ skills-lock.json
 
 # cloudflare local build/deploy cache
 .wrangler/
+.content-sync/

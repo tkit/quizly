@@ -39,6 +39,24 @@ Operational flow:
 3. The workflow validates/imports the JSON through `scripts/d1-seed-reference-data.mjs`.
 4. The app reads questions from D1 at runtime.
 
+Current staging content bucket:
+
+- `quizly-content-staging`
+
+Current staging content objects:
+
+- `content/japanese/grammar.json` (`genres=20`, `questions=450`)
+- `content/math/ueki-shuki.json` (`genres=2`, `questions=15`)
+- `content/science/space.json` (`genres=3`, `questions=35`)
+- `content/science/biology-01.json` (`genres=1`, `questions=15`)
+- `content/science/biology-02.json` (`genres=1`, `questions=15`)
+- `content/social/geo-01.json` (`genres=1`, `questions=15`)
+- `content/social/geo-02.json` (`genres=1`, `questions=15`)
+
+`Cloudflare Content Update` imports one content object per run. This matches the expected operation where only changed content files are uploaded/imported. For a full rebuild rehearsal, run the workflow once for each object above.
+
+R2 download check on 2026-05-01: all objects above were fetched from `quizly-content-staging` with `scripts/r2-download-content-object.mjs` and parsed as JSON successfully.
+
 ## Rehearsal Commands
 
 ```bash
@@ -54,7 +72,7 @@ npm run cf:deploy-built:staging
 GitHub Actions:
 
 - `Cloudflare Preview`: build/deploy staging Worker.
-- `Cloudflare Content Update`: upload R2 images, download content JSON from R2, migrate image paths, optionally seed D1 reference data.
+- `Cloudflare Content Update`: upload R2 images, download one content JSON object from R2, migrate image paths, optionally seed D1 reference data.
 
 ## Validation Checklist
 
@@ -88,7 +106,7 @@ Do not switch production traffic in #33.
 
 ## Current Open Items
 
-- Create and document the staging content R2 bucket/object naming convention.
+- Create and document the staging content R2 bucket/object naming convention. Done: `quizly-content-staging` with `content/...` object keys.
 - Run a fresh rehearsal D1 rebuild/import instead of reusing the current staging database.
 - Record row counts/hashes after import.
 - Prepare Clerk Production instance steps and Google OAuth callback evidence.

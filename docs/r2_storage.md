@@ -18,7 +18,7 @@ Content JSON is also stored in R2, but it is not served by the app at runtime. I
 
 | 環境 | content bucket | default object key |
 | :--- | :--- | :--- |
-| staging | `quizly-content-staging` | `reference/content.json` |
+| staging | `quizly-content-staging` | `content/japanese/grammar.json` |
 | production | `quizly-content` | decided in #34 |
 
 ## Setup
@@ -54,10 +54,10 @@ After uploading, update existing D1 rows if they still point at legacy `.png` fi
 npm run d1:migrate:question-image-paths:staging
 ```
 
-For question content, upload JSON to the content bucket, then download it into the local fixture directory used by the seed script:
+For question content, upload JSON to the content bucket, then download one object into the local fixture directory used by the seed script:
 
 ```bash
-CONTENT_OBJECT_KEY=reference/content.json npm run r2:download:content:staging
+CONTENT_OBJECT_KEY=content/japanese/grammar.json npm run r2:download:content:staging
 ```
 
 Then seed D1 reference data:
@@ -67,6 +67,18 @@ npm run d1:seed:reference:staging
 ```
 
 `contents/` remains intentionally local/ignored. R2 content JSON is the shared source for GitHub Actions and rehearsal/cutover operations.
+
+Current staging content objects:
+
+- `content/japanese/grammar.json`
+- `content/math/ueki-shuki.json`
+- `content/science/space.json`
+- `content/science/biology-01.json`
+- `content/science/biology-02.json`
+- `content/social/geo-01.json`
+- `content/social/geo-02.json`
+
+The GitHub Actions `Cloudflare Content Update` workflow imports one content object per run. Run it once for each changed object, or repeat it for every object when rebuilding a rehearsal database from scratch.
 
 ## Production Cutover Notes
 
