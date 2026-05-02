@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import "./globals.css";
 
@@ -59,13 +58,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="ja">
-        <body className="bg-background font-sans antialiased text-foreground selection:bg-slate-200 selection:text-slate-900">
-          <ServiceWorkerRegister />
-          {children}
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="ja">
+      <body className="bg-background font-sans antialiased text-foreground selection:bg-slate-200 selection:text-slate-900">
+        <ServiceWorkerRegister />
+        {children}
+      </body>
+    </html>
   );
 }

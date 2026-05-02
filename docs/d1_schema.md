@@ -46,8 +46,8 @@ npx wrangler d1 migrations apply quizly-staging --env staging --remote
 
 | 元の設計要素 | D1/SQLite 方針 |
 |---|---|
-| `uuid`, `gen_random_uuid()` | `TEXT` id。D1 側の default は `lower(hex(randomblob(16)))`。Clerk user id は `guardian_accounts.id` にそのまま保存 |
-| `auth.users(id)` FK | D1 には Auth schema がないため削除。`guardian_accounts.id` を Clerk canonical user id とする |
+| `uuid`, `gen_random_uuid()` | `TEXT` id。D1 側の default は `lower(hex(randomblob(16)))`。OAuth 移行後の `guardian_accounts.id` はアプリ内 canonical guardian id |
+| `auth.users(id)` FK | D1 には Auth schema がないため削除。Google OAuth identity は Auth.js の `users` / `accounts` に保存し、sign-in 時に `guardian_accounts` へ同期する |
 | `timestamptz`, `timestamp with time zone`, `date` | ISO-8601 text を保存。default は `CURRENT_TIMESTAMP` |
 | `jsonb` | `TEXT CHECK (json_valid(...))` |
 | `boolean` | `INTEGER CHECK (... IN (0, 1))` |
@@ -60,8 +60,12 @@ npx wrangler d1 migrations apply quizly-staging --env staging --remote
 
 | Table | D1 key design | Notes |
 |---|---|---|
-| `guardian_accounts` | `id TEXT PRIMARY KEY` | Clerk user id |
-| `child_profiles` | random text id | `guardian_id` は Clerk id への FK |
+| `guardian_accounts` | `id TEXT PRIMARY KEY` | Auth.js `users.id` と同じ値。既存 Clerk Development user は email 一致で移行 |
+| `users` | Auth.js user id | Auth.js D1 adapter 標準 table |
+| `accounts` | random text id + unique provider account | Auth.js D1 adapter 標準 table。Google OAuth identity を保持 |
+| `sessions` | session token PK | Auth.js D1 adapter 標準 table |
+| `verification_tokens` | token PK | Auth.js D1 adapter 標準 table |
+| `child_profiles` | random text id | `guardian_id` は guardian account への FK |
 | `parent_reauth_challenges` | random text id | #31 で Durable Objects/KV と責務再検討 |
 | `genres` | `id TEXT PRIMARY KEY` | content taxonomy |
 | `questions` | random text id | `options` は JSON text。Storage/R2 移行は #32 |
@@ -83,7 +87,7 @@ npx wrangler d1 migrations apply quizly-staging --env staging --remote
 
 | check_name | expected |
 |---|---|
-| `table_count` | `16` |
+| `table_count` | `23` |
 | `foreign_key_violations` | `0` |
 | `expected_tables_missing` | `0` |
 | `json_check_constraints_smoke` | `1` |

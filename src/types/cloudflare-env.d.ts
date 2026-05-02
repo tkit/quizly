@@ -34,6 +34,9 @@ declare global {
   interface CloudflareEnv {
     DB?: D1Database;
     QUESTION_IMAGES?: R2Bucket;
+    GOOGLE_OAUTH_CLIENT_ID?: string;
+    GOOGLE_OAUTH_CLIENT_SECRET?: string;
+    AUTH_SECRET?: string;
   }
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useMemo, useState, useTransition } from 'react';
-import { useClerk } from '@clerk/nextjs';
+import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import {
   BarChart3,
@@ -71,7 +71,6 @@ export default function ParentClient({
   initialSnapshot: ParentManagementSnapshot | null;
 }) {
   const router = useRouter();
-  const { signOut } = useClerk();
   const [unlocked, setUnlocked] = useState(initialUnlocked);
   const [hasParentPin, setHasParentPin] = useState(initialHasParentPin);
   const [pin, setPin] = useState('');
@@ -450,7 +449,7 @@ export default function ParentClient({
       return;
     }
 
-    await signOut({ redirectUrl: '/' });
+    await signOut({ callbackUrl: '/' });
   };
 
   if (!hasParentPin) {
@@ -556,7 +555,7 @@ export default function ParentClient({
             <button
               onClick={async () => {
                 await fetch('/api/session/child/logout', { method: 'POST' });
-                await signOut({ redirectUrl: '/' });
+                await signOut({ callbackUrl: '/' });
               }}
               className="inline-flex min-h-11 items-center gap-2 rounded-xl border-2 border-amber-300 bg-amber-100 px-4 py-2 text-sm font-black text-amber-800 hover:bg-amber-200"
             >

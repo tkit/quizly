@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { useSignIn } from '@clerk/nextjs';
+import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import type { ChildProfile } from '@/lib/auth/data';
 import QuizlyLogo from '@/components/QuizlyLogo';
@@ -15,8 +15,6 @@ export default function HomeClient({
   isParentAuthenticated: boolean;
 }) {
   const router = useRouter();
-  const { signIn } = useSignIn();
-  const isClerkLoaded = Boolean(signIn);
 
   const [isLoadingChildren, setIsLoadingChildren] = useState(false);
   const [isAutoSelectingChild, setIsAutoSelectingChild] = useState(false);
@@ -73,27 +71,8 @@ export default function HomeClient({
 
   const handleGoogleSignIn = async () => {
     setMessage('');
-
-    if (!isClerkLoaded || !signIn) {
-      setMessage('ログイン準備中です。少し待ってから再度お試しください。');
-      return;
-    }
-
     setIsSigningIn(true);
-    try {
-      const result = await signIn.sso({
-        strategy: 'oauth_google',
-        redirectUrl: '/',
-        redirectCallbackUrl: '/sso-callback',
-      });
-      if (result.error) {
-        setIsSigningIn(false);
-        setMessage('Googleログインを開始できませんでした。時間をおいて再度お試しください。');
-      }
-    } catch {
-      setIsSigningIn(false);
-      setMessage('Googleログインを開始できませんでした。時間をおいて再度お試しください。');
-    }
+    await signIn('google', { callbackUrl: '/' });
   };
 
   const handleCreateChild = async (event: FormEvent) => {
@@ -163,7 +142,7 @@ export default function HomeClient({
               <div className="grid gap-3">
                 <button
                   onClick={handleGoogleSignIn}
-                  disabled={isSigningIn || !isClerkLoaded}
+                  disabled={isSigningIn}
                   className="focus-ring min-h-11 rounded-xl border-2 border-zinc-300 bg-zinc-100 px-4 py-3 font-bold hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSigningIn ? 'ログインへ移動中...' : 'Google でログイン'}

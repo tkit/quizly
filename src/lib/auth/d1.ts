@@ -352,6 +352,21 @@ export async function deleteD1GuardianAccount(db: D1Database, guardianId: string
   return getD1ChangedRows(result) > 0;
 }
 
+export async function deleteD1AuthStateForUser(db: D1Database, userId: string) {
+  await db
+    .prepare('DELETE FROM accounts WHERE userId = ?')
+    .bind(userId)
+    .run();
+  await db
+    .prepare('DELETE FROM sessions WHERE userId = ?')
+    .bind(userId)
+    .run();
+  await db
+    .prepare('DELETE FROM users WHERE id = ?')
+    .bind(userId)
+    .run();
+}
+
 export async function getD1ParentManagementSnapshot(db: D1Database, guardianId: string): Promise<ParentManagementSnapshot> {
   const [childrenData, sessionsData, historyData, allGenresData] = await Promise.all([
     db

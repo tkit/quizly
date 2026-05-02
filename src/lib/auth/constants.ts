@@ -1,4 +1,5 @@
 export const ACTIVE_CHILD_COOKIE = 'quizly_active_child';
+export const AUTH_SESSION_COOKIE = '__Host-quizly_session';
 
 export const AUTH_MODE = process.env.NEXT_PUBLIC_AUTH_MODE ?? 'production';
 export const DEV_SHORTCUT_ENABLED =
@@ -6,3 +7,4 @@ export const DEV_SHORTCUT_ENABLED =
   process.env.NODE_ENV !== 'production';
 
 export const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+export const AUTH_SESSION_ROTATION_SECONDS = 60 * 60 * 24 * 7;

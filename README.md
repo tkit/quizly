@@ -8,7 +8,7 @@
 - **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS
 - **UI Components**: shadcn/ui, Lucide React
 - **Backend / DB**: Cloudflare Workers + D1
-- **Auth**: Clerk
+- **Auth**: Auth.js Google OAuth + Cloudflare D1 sessions
 - **Deployment**: Cloudflare Workers
 
 ## 📁 Project Structure

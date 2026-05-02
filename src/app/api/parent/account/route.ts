@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ACTIVE_CHILD_COOKIE } from '@/lib/auth/constants';
-import { deleteD1GuardianAccount, isD1ParentUnlocked } from '@/lib/auth/d1';
+import { ACTIVE_CHILD_COOKIE, AUTH_SESSION_COOKIE } from '@/lib/auth/constants';
+import { deleteD1AuthStateForUser, deleteD1GuardianAccount, isD1ParentUnlocked } from '@/lib/auth/d1';
 import { getAuthenticatedUser } from '@/lib/auth/server';
 import { getOptionalD1Database } from '@/lib/cloudflare/d1';
 
@@ -33,17 +33,18 @@ export async function DELETE(request: NextRequest) {
   if (!deleted) {
     return NextResponse.json({ error: 'Guardian account not found' }, { status: 404 });
   }
+  await deleteD1AuthStateForUser(d1, user.id);
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set({
-    name: ACTIVE_CHILD_COOKIE,
-    value: '',
+  const expiredCookieOptions = {
     maxAge: 0,
     httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    secure: true,
     path: '/',
-  });
+  };
+  response.cookies.set({ name: ACTIVE_CHILD_COOKIE, value: '', ...expiredCookieOptions });
+  response.cookies.set({ name: AUTH_SESSION_COOKIE, value: '', ...expiredCookieOptions });
 
   return response;
 }

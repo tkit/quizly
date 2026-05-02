@@ -34,7 +34,11 @@ WITH expected(name) AS (
     ('child_subject_stats'),
     ('study_completion_idempotency'),
     ('parent_pin_attempt_state'),
-    ('parent_pin_cooldowns')
+    ('parent_pin_cooldowns'),
+    ('users'),
+    ('accounts'),
+    ('sessions'),
+    ('verification_tokens')
 )
 SELECT 'expected_tables_missing' AS check_name, COUNT(*) AS value
 FROM (

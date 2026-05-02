@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useClerk } from '@clerk/nextjs';
+import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, LogOut, Shield, Sparkles, Star, UserRound, Users } from 'lucide-react';
 import { GenreIcon } from '@/components/GenreIcon';
@@ -34,7 +34,6 @@ export default function DashboardClient({
   badgeSummary: BadgeSummary | null;
 }) {
   const router = useRouter();
-  const { signOut } = useClerk();
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
 
   const parentGenres = useMemo(
@@ -59,7 +58,7 @@ export default function DashboardClient({
 
   const handleParentLogout = async () => {
     await fetch('/api/session/child/logout', { method: 'POST' });
-    await signOut({ redirectUrl: '/' });
+    await signOut({ callbackUrl: '/' });
   };
 
   return (

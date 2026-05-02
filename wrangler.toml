@@ -18,10 +18,9 @@ directory = ".open-next/assets"
 binding = "ASSETS"
 
 [vars]
+NEXT_PUBLIC_SITE_URL = "https://quizly.stdy.workers.dev"
 NEXT_PUBLIC_AUTH_MODE = "production"
 NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT = "false"
-NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL = "/"
-NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL = "/"
 
 [[services]]
 binding = "WORKER_SELF_REFERENCE"
@@ -56,11 +55,8 @@ binding = "ASSETS"
 
 [env.staging.vars]
 NEXT_PUBLIC_SITE_URL = "https://quizly.stdy.workers.dev"
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_test_c3VwcmVtZS11bmljb3JuLTAuY2xlcmsuYWNjb3VudHMuZGV2JA"
 NEXT_PUBLIC_AUTH_MODE = "production"
 NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT = "false"
-NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL = "/"
-NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL = "/"
 
 [[env.staging.services]]
 binding = "WORKER_SELF_REFERENCE"
