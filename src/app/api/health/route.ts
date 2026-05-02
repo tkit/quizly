@@ -4,6 +4,6 @@ export async function GET() {
   return NextResponse.json({
     ok: true,
     service: "quizly",
-    runtime: "cloudflare-migration",
+    runtime: "cloudflare",
   });
 }

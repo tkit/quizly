@@ -31,12 +31,14 @@ npm install
 npm run dev
 ```
 
-Cloudflare staging build/deploy は次のコマンドで実行します。
+Cloudflare build/deploy は次のコマンドで実行します。
 
 ```bash
-npm run cf:build:staging
-npm run cf:deploy-built:staging
+npm run cf:build:production
+npm run cf:deploy-built:production
 ```
+
+旧 SaaS の停止・削除前チェックは [`docs/saas_decommission.md`](docs/saas_decommission.md) を参照してください。
 
 ## 🖼️ Badge Asset Workflow
 
