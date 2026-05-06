@@ -10,8 +10,16 @@ Quizly は4つの実行環境を使い分ける。常用開発はローカルで
 | :--- | :--- | :--- | :--- |
 | local dev | `npm run dev` | UI と通常開発。Cloudflare runtime の検証対象ではない。 | `http://localhost:3000` |
 | local Cloudflare preview | `npm run cf:preview` | OpenNext/Workers 互換性をローカルで確認する。 | `http://localhost:8788` |
-| remote staging | `npm run cf:deploy:staging` / GitHub Actions `Cloudflare Staging` | production deploy 前の本番相当 smoke test。 | `https://quizly-staging.stdy.workers.dev` |
-| remote production | `npm run cf:deploy:production` / GitHub Actions `Cloudflare Production` | 実運用環境。 | `https://quizly.stdy.workers.dev` |
+| remote staging | `npm run cf:deploy:staging` / GitHub Actions `Cloudflare Deploy` | production deploy 前の本番相当 smoke test。 | `https://quizly-staging.stdy.workers.dev` |
+| remote production | `npm run cf:deploy:production` / GitHub Actions `Cloudflare Deploy` | 実運用環境。 | `https://quizly.stdy.workers.dev` |
+
+## Release Flow
+
+`main` 向け pull request が作成または更新されると、GitHub Actions `CI` が lint、typecheck、Next.js build を実行する。`CI` が成功すると GitHub Actions `Cloudflare Deploy` が同じ commit を checkout し、Cloudflare build と remote staging deploy を実行する。fork からの pull request は secrets を使えないため deploy せず、同じ repository 内の pull request だけを staging deploy 対象にする。
+
+`main` に merge されると、GitHub Actions `CI` が lint、typecheck、Next.js build を実行する。`CI` が成功すると GitHub Actions `Cloudflare Deploy` が同じ commit を checkout し、production 用 Cloudflare build と remote production deploy を実行する。production deploy は `Production` environment の secrets を使う。手動 fallback も `Cloudflare Deploy` から実行し、`target` で `staging` または `production`、`deploy=true` を選んだ場合だけ deploy する。
+
+Remote staging は共有環境のため、複数 pull request が並行している場合は最後に更新された pull request の内容で上書きされる。
 
 ## Cloudflare Resources
 
