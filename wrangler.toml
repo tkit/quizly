@@ -29,7 +29,6 @@ service = "quizly"
 [[r2_buckets]]
 binding = "QUESTION_IMAGES"
 bucket_name = "quizly-question-images"
-preview_bucket_name = "quizly-question-images-preview"
 
 [[d1_databases]]
 binding = "DB"
@@ -38,7 +37,7 @@ database_id = "d745fb7e-302f-41ba-9d60-91b69944313d"
 migrations_dir = "d1/migrations"
 
 [env.staging]
-name = "quizly"
+name = "quizly-staging"
 workers_dev = true
 preview_urls = true
 upload_source_maps = true
@@ -54,20 +53,54 @@ directory = ".open-next/assets"
 binding = "ASSETS"
 
 [env.staging.vars]
-NEXT_PUBLIC_SITE_URL = "https://quizly.stdy.workers.dev"
+NEXT_PUBLIC_SITE_URL = "https://quizly-staging.stdy.workers.dev"
 NEXT_PUBLIC_AUTH_MODE = "production"
 NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT = "false"
 
 [[env.staging.services]]
 binding = "WORKER_SELF_REFERENCE"
-service = "quizly"
+service = "quizly-staging"
 
 [[env.staging.r2_buckets]]
 binding = "QUESTION_IMAGES"
 bucket_name = "quizly-question-images-staging"
-preview_bucket_name = "quizly-question-images-preview"
 
 [[env.staging.d1_databases]]
+binding = "DB"
+database_name = "quizly-staging"
+database_id = "d7c8d446-c50b-4a01-9cb5-9faa2e347f86"
+migrations_dir = "d1/migrations"
+
+[env.cloudflare-local]
+name = "quizly-cloudflare-local"
+workers_dev = true
+preview_urls = false
+upload_source_maps = false
+
+[env.cloudflare-local.observability]
+
+[env.cloudflare-local.observability.logs]
+enabled = true
+invocation_logs = true
+
+[env.cloudflare-local.assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[env.cloudflare-local.vars]
+NEXT_PUBLIC_SITE_URL = "http://localhost:8788"
+NEXT_PUBLIC_AUTH_MODE = "production"
+NEXT_PUBLIC_ENABLE_DEV_AUTH_SHORTCUT = "false"
+
+[[env.cloudflare-local.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "quizly-cloudflare-local"
+
+[[env.cloudflare-local.r2_buckets]]
+binding = "QUESTION_IMAGES"
+bucket_name = "quizly-question-images-local"
+
+[[env.cloudflare-local.d1_databases]]
 binding = "DB"
 database_name = "quizly-staging"
 database_id = "d7c8d446-c50b-4a01-9cb5-9faa2e347f86"

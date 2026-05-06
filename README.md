@@ -34,10 +34,12 @@ npm run dev
 Cloudflare build/deploy は次のコマンドで実行します。
 
 ```bash
-npm run cf:build:production
-npm run cf:deploy-built:production
+npm run cf:preview
+npm run cf:deploy:staging
+npm run cf:deploy:production
 ```
 
+環境ごとの役割、Cloudflare resources、`.env.<environment>` ファイルの使い分けは [`docs/environments.md`](docs/environments.md) を参照してください。
 旧 SaaS の停止・削除前チェックは [`docs/saas_decommission.md`](docs/saas_decommission.md) を参照してください。
 
 ## 🖼️ Badge Asset Workflow

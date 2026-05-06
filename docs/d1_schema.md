@@ -60,7 +60,7 @@ npx wrangler d1 migrations apply quizly-staging --env staging --remote
 
 | Table | D1 key design | Notes |
 |---|---|---|
-| `guardian_accounts` | `id TEXT PRIMARY KEY` | Auth.js `users.id` と同じ値。既存 Clerk Development user は email 一致で移行 |
+| `guardian_accounts` | `id TEXT PRIMARY KEY` | Auth.js `users.id` と同じ値。旧 Clerk Development user は email 一致で移行 |
 | `users` | Auth.js user id | Auth.js D1 adapter 標準 table |
 | `accounts` | random text id + unique provider account | Auth.js D1 adapter 標準 table。Google OAuth identity を保持 |
 | `sessions` | session token PK | Auth.js D1 adapter 標準 table |

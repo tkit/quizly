@@ -1,4 +1,4 @@
-name: Cloudflare Content Update
+name: Cloudflare Staging Content Update
 
 on:
   workflow_dispatch:
@@ -27,14 +27,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: cloudflare-content-update
+  group: cloudflare-staging-content-update
   cancel-in-progress: false
 
 jobs:
   content_update:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    environment: Preview
+    environment: Staging
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -54,12 +54,12 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "CLOUDFLARE_API_TOKEN is not configured in the Preview environment."
+            echo "CLOUDFLARE_API_TOKEN is not configured in the Staging environment."
             exit 1
           fi
 
           if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "CLOUDFLARE_ACCOUNT_ID is not configured in the Preview environment."
+            echo "CLOUDFLARE_ACCOUNT_ID is not configured in the Staging environment."
             exit 1
           fi
 
